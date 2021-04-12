@@ -63,6 +63,7 @@ func main() {
 	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, ldProject, &flagOpts)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	flagKeys := make([]string, 0, len(flags.Items))
 
@@ -264,7 +265,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-	} else if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+	} else if len(flagsAdded) == 0 && len(flagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
 		// Check if this is already the body, flags could have originally been included then removed in later commit
 		if strings.Contains(existingCommentBody, "No flag references found in PR") {
 			return
