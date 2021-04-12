@@ -36,7 +36,7 @@ func main() {
 	}
 	ldInstance := os.Getenv("INPUT_INSTANCE")
 	if ldEnvironment == "" {
-		fmt.Println("`instance` is required.")
+		fmt.Println("`baseUri` is required.")
 	}
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
