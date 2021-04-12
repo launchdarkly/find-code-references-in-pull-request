@@ -1,0 +1,19 @@
+# action.yml
+name: 'Find Flags'
+description: 'Find LaunchDarkly Flags in your Pull Request'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+inputs:
+  project:
+    description: 'LaunchDarkly Project'
+    required: true
+    default: 'default'
+  environment:
+    description: 'LaunchDarkly Environment for Project'
+    required: true
+    default: 'prod'
+  instance:
+    description: 'LaunchDarkly Instance'
+    required: no
+    default: 'https://app.launchdarkly.com'
