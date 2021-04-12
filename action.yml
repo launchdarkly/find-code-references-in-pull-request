@@ -4,12 +4,18 @@ description: 'Find LaunchDarkly Flags in your Pull Request'
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    LD_PROJ_KEY: ${{ inputs.projKey }}
+    LD_ACCESS_TOKEN: ${{ inputs.accessToken }}
+    LD_BASE_URI: ${{ inputs.baseUri }}
+    LD_ENV_KEY: ${{ inputs.envKey }}
+    GITHUB_TOKEN: ${{ inputs.githubToken }}
 inputs:
-  project:
+  projKey:
     description: 'LaunchDarkly Project'
     required: true
     default: 'default'
-  environment:
+  envKey:
     description: 'LaunchDarkly Environment for Project'
     required: true
     default: 'prod'
@@ -17,3 +23,6 @@ inputs:
     description: 'LaunchDarkly Instance'
     required: no
     default: 'https://app.launchdarkly.com'
+  githubToken:
+    description: 'Token to access your GitHub repository.'
+    required: true

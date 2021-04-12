@@ -26,15 +26,15 @@ import (
 )
 
 func main() {
-	ldProject := os.Getenv("INPUT_PROJECT")
+	ldProject := os.Getenv("LD_PROJ_KEY")
 	if ldProject == "" {
 		fmt.Println("`project` is required.")
 	}
-	ldEnvironment := os.Getenv("INPUT_ENVIRONMENT")
+	ldEnvironment := os.Getenv("LD_ENV_KEY")
 	if ldEnvironment == "" {
 		fmt.Println("`environment` is required.")
 	}
-	ldInstance := os.Getenv("INPUT_INSTANCE")
+	ldInstance := os.Getenv("LD_BASE_URI")
 	if ldEnvironment == "" {
 		fmt.Println("`baseUri` is required.")
 	}
@@ -45,9 +45,9 @@ func main() {
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
-	apiToken := os.Getenv("LAUNCHDARKLY_ACCESS_TOKEN")
+	apiToken := os.Getenv("LD_ACCESS_TOKEN")
 	if apiToken == "" {
-		fmt.Println("LAUNCHDARKLY_ACCESS_TOKEN is not set.")
+		fmt.Println("LD_ACCESS_TOKEN is not set.")
 		os.Exit(1)
 	}
 
