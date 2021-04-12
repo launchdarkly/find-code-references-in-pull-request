@@ -397,7 +397,7 @@ Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`
 }
 
 func githubNoFlagComment() *github.IssueComment {
-	commentStr := `
+	commentStr := `LaunchDarkly Flag Details:
  **No flag references found in PR**`
 	comment := github.IssueComment{
 		Body: &commentStr,
