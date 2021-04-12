@@ -10,7 +10,7 @@ runs:
     LD_BASE_URI: ${{ inputs.baseUri }}
     LD_ENV_KEY: ${{ inputs.envKey }}
     GITHUB_TOKEN: ${{ inputs.githubToken }}
-    PLACEHOLDER_COMMENT: $${{ inputs.placeholderComment }}
+    PLACEHOLDER_COMMENT: ${{ inputs.placeholderComment }}
 inputs:
   projKey:
     description: 'LaunchDarkly Project'
