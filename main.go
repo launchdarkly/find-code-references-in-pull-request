@@ -256,8 +256,7 @@ func main() {
 	comment := github.IssueComment{
 		Body: &postedComments,
 	}
-	fmt.Println("comment")
-	fmt.Println(os.Getenv("PLACEHOLDER_COMMENT"))
+
 	if !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
 		if existingComment > 0 {
 			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
