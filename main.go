@@ -25,30 +25,20 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func main() {
-	ldProject := os.Getenv("LD_PROJ_KEY")
-	if ldProject == "" {
-		fmt.Println("`project` is required.")
-	}
-	ldEnvironment := os.Getenv("LD_ENV_KEY")
-	if ldEnvironment == "" {
-		fmt.Println("`environment` is required.")
-	}
-	ldInstance := os.Getenv("LD_BASE_URI")
-	if ldEnvironment == "" {
-		fmt.Println("`baseUri` is required.")
-	}
-	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+var (
+	ldProject     string
+	ldEnvironment string
+	ldInstance    string
+	owner         string
+	repo          []string
+	apiToken      string
+)
 
+func main() {
+	validateInput()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
-	}
-	apiToken := os.Getenv("LD_ACCESS_TOKEN")
-	if apiToken == "" {
-		fmt.Println("LD_ACCESS_TOKEN is not set.")
-		os.Exit(1)
 	}
 
 	// Query for flags
@@ -276,7 +266,33 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+	} else {
+		fmt.Println("No flags found.")
 	}
+}
+
+func validateInput() {
+	ldProject = os.Getenv("LD_PROJ_KEY")
+	if ldProject == "" {
+		fmt.Println("`project` is required.")
+	}
+	ldEnvironment := os.Getenv("LD_ENV_KEY")
+	if ldEnvironment == "" {
+		fmt.Println("`environment` is required.")
+	}
+	ldInstance = os.Getenv("LD_BASE_URI")
+	if ldEnvironment == "" {
+		fmt.Println("`baseUri` is required.")
+	}
+	owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
+	repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+
+	apiToken = os.Getenv("LD_ACCESS_TOKEN")
+	if apiToken == "" {
+		fmt.Println("LD_ACCESS_TOKEN is not set.")
+		os.Exit(1)
+	}
+
 }
 
 func remove(s []string, i int) []string {
