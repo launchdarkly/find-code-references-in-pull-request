@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -12,12 +11,12 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"text/template"
 
-	"github.com/InTheCloudDan/cr-flags/ignore"
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	ghc "github.com/launchdarkly/cr-flags/comments"
+	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -201,7 +200,8 @@ func main() {
 				flagAliases = append(flagAliases, alias)
 			}
 		}
-		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, config.ldEnvironment, config.ldInstance)
+		idx, _ := find(flags.Items, flagKey)
+		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
 		if len(addedComments) > 0 {
 			addedComments = append(addedComments, "---")
 		}
@@ -218,14 +218,15 @@ func main() {
 	var removedComments []string
 	for _, flagKey := range removedKeys {
 		aliases := flagsRemoved[flagKey]
-		removedComment, err := githubFlagComment(flags.Items, flagKey, aliases, config.ldEnvironment, config.ldInstance)
+		idx, _ := find(flags.Items, flagKey)
+		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], aliases, config.ldEnvironment, config.ldInstance)
 		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 	var commentStr []string
-	commentStr = append(commentStr, starter)
+	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsAdded) > 0 {
 		commentStr = append(commentStr, "** **Added/Modified** **")
 		commentStr = append(commentStr, addedComments...)
@@ -260,7 +261,7 @@ func main() {
 		if strings.Contains(existingCommentBody, "No flag references found in PR") {
 			return
 		}
-		createComment := githubNoFlagComment()
+		createComment := ghc.GithubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -369,59 +370,3 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	}
 	return -1, false
 }
-
-type Comment struct {
-	Flag        ldapi.FeatureFlag
-	Aliases     []string
-	ChangeType  string
-	Environment ldapi.FeatureFlagConfig
-	LDInstance  string
-}
-
-func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, environment string, instance string) (string, error) {
-	idx, _ := find(flags, flag)
-	commentTemplate := Comment{
-		Flag:        flags[idx],
-		Aliases:     aliases,
-		Environment: flags[idx].Environments[environment],
-		LDInstance:  instance,
-	}
-	var commentBody bytes.Buffer
-	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-{{- if .Flag.Description}}
-*{{trim .Flag.Description}}*
-{{- end}}
-{{- if .Flag.Tags}}
-Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
-
-Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
-Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
-Kind: **{{ .Flag.Kind }}**
-Temporary: **{{ .Flag.Temporary }}**
-{{- if .Aliases }}
-{{- if ne (len .Aliases) 0}}
-{{ len .Aliases }}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`" + `{{end}}
-{{- end}}
-{{- end}}
-`
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
-	err := tmpl.Execute(&commentBody, commentTemplate)
-	if err != nil {
-		return "", err
-	}
-	return commentBody.String(), nil
-}
-
-func githubNoFlagComment() *github.IssueComment {
-	commentStr := `LaunchDarkly Flag Details:
- **No flag references found in PR**`
-	comment := github.IssueComment{
-		Body: &commentStr,
-	}
-	return &comment
-}
-
-const starter = "LaunchDarkly Flag Details:"
