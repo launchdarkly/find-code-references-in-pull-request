@@ -254,14 +254,17 @@ func validateInput() *config {
 	config.ldProject = os.Getenv("LD_PROJ_KEY")
 	if config.ldProject == "" {
 		fmt.Println("`project` is required.")
+		os.Exit(1)
 	}
 	config.ldEnvironment = os.Getenv("LD_ENV_KEY")
 	if config.ldEnvironment == "" {
 		fmt.Println("`environment` is required.")
+		os.Exit(1)
 	}
 	config.ldInstance = os.Getenv("LD_BASE_URI")
 	if config.ldInstance == "" {
 		fmt.Println("`baseUri` is required.")
+		os.Exit(1)
 	}
 	config.owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
 	config.repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
