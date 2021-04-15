@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -12,12 +11,12 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"text/template"
 
-	"github.com/InTheCloudDan/cr-flags/ignore"
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	ghc "github.com/launchdarkly/cr-flags/comments"
+	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -25,42 +24,31 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func main() {
-	ldProject := os.Getenv("LD_PROJ_KEY")
-	if ldProject == "" {
-		fmt.Println("`project` is required.")
-	}
-	ldEnvironment := os.Getenv("LD_ENV_KEY")
-	if ldEnvironment == "" {
-		fmt.Println("`environment` is required.")
-	}
-	ldInstance := os.Getenv("LD_BASE_URI")
-	if ldEnvironment == "" {
-		fmt.Println("`baseUri` is required.")
-	}
-	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+type config struct {
+	ldProject     string
+	ldEnvironment string
+	ldInstance    string
+	owner         string
+	repo          []string
+	apiToken      string
+}
 
+func main() {
+	config := validateInput()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
-	apiToken := os.Getenv("LD_ACCESS_TOKEN")
-	if apiToken == "" {
-		fmt.Println("LD_ACCESS_TOKEN is not set.")
-		os.Exit(1)
-	}
-
 	// Query for flags
-	ldClient, err := newClient(apiToken, ldInstance, false)
+	ldClient, err := newClient(config.apiToken, config.ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
 	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
-		Env:     optional.NewInterface(ldEnvironment),
+		Env:     optional.NewInterface(config.ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
-	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, ldProject, &flagOpts)
+	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, config.ldProject, &flagOpts)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -73,7 +61,7 @@ func main() {
 
 	workspace := os.Getenv("GITHUB_WORKSPACE")
 	viper.Set("dir", workspace)
-	viper.Set("accessToken", apiToken)
+	viper.Set("accessToken", config.apiToken)
 
 	err = options.InitYAML()
 	opts, err := options.GetOptions()
@@ -99,7 +87,7 @@ func main() {
 	issuesService := client.Issues
 
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
+	raw, _, err := prService.GetRaw(ctx, config.owner, config.repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -183,7 +171,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	comments, _, err := issuesService.ListComments(ctx, owner, repo[1], *event.PullRequest.Number, nil)
+	comments, _, err := issuesService.ListComments(ctx, config.owner, config.repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -212,7 +200,8 @@ func main() {
 				flagAliases = append(flagAliases, alias)
 			}
 		}
-		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, ldEnvironment, ldInstance)
+		idx, _ := find(flags.Items, flagKey)
+		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
 		if len(addedComments) > 0 {
 			addedComments = append(addedComments, "---")
 		}
@@ -229,14 +218,15 @@ func main() {
 	var removedComments []string
 	for _, flagKey := range removedKeys {
 		aliases := flagsRemoved[flagKey]
-		removedComment, err := githubFlagComment(flags.Items, flagKey, aliases, ldEnvironment, ldInstance)
+		idx, _ := find(flags.Items, flagKey)
+		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], aliases, config.ldEnvironment, config.ldInstance)
 		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 	var commentStr []string
-	commentStr = append(commentStr, starter)
+	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsAdded) > 0 {
 		commentStr = append(commentStr, "** **Added/Modified** **")
 		commentStr = append(commentStr, addedComments...)
@@ -259,9 +249,9 @@ func main() {
 
 	if !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
 		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
+			_, _, err = issuesService.EditComment(ctx, config.owner, config.repo[1], existingComment, &comment)
 		} else {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+			_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, &comment)
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -271,12 +261,40 @@ func main() {
 		if strings.Contains(existingCommentBody, "No flag references found in PR") {
 			return
 		}
-		createComment := githubNoFlagComment()
-		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		createComment := ghc.GithubNoFlagComment()
+		_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
+	} else {
+		fmt.Println("No flags found.")
 	}
+}
+
+func validateInput() *config {
+	var config config
+	config.ldProject = os.Getenv("LD_PROJ_KEY")
+	if config.ldProject == "" {
+		fmt.Println("`project` is required.")
+	}
+	config.ldEnvironment = os.Getenv("LD_ENV_KEY")
+	if config.ldEnvironment == "" {
+		fmt.Println("`environment` is required.")
+	}
+	config.ldInstance = os.Getenv("LD_BASE_URI")
+	if config.ldInstance == "" {
+		fmt.Println("`baseUri` is required.")
+	}
+	config.owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
+	config.repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+
+	config.apiToken = os.Getenv("LD_ACCESS_TOKEN")
+	if config.apiToken == "" {
+		fmt.Println("LD_ACCESS_TOKEN is not set.")
+		os.Exit(1)
+	}
+
+	return &config
 }
 
 func remove(s []string, i int) []string {
@@ -352,59 +370,3 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	}
 	return -1, false
 }
-
-type Comment struct {
-	Flag        ldapi.FeatureFlag
-	Aliases     []string
-	ChangeType  string
-	Environment ldapi.FeatureFlagConfig
-	LDInstance  string
-}
-
-func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, environment string, instance string) (string, error) {
-	idx, _ := find(flags, flag)
-	commentTemplate := Comment{
-		Flag:        flags[idx],
-		Aliases:     aliases,
-		Environment: flags[idx].Environments[environment],
-		LDInstance:  instance,
-	}
-	var commentBody bytes.Buffer
-	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-{{- if .Flag.Description}}
-*{{trim .Flag.Description}}*
-{{- end}}
-{{- if .Flag.Tags}}
-Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
-
-Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
-Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
-Kind: **{{ .Flag.Kind }}**
-Temporary: **{{ .Flag.Temporary }}**
-{{- if .Aliases }}
-{{- if ne (len .Aliases) 0}}
-{{ len .Aliases }}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`" + `{{end}}
-{{- end}}
-{{- end}}
-`
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
-	err := tmpl.Execute(&commentBody, commentTemplate)
-	if err != nil {
-		return "", err
-	}
-	return commentBody.String(), nil
-}
-
-func githubNoFlagComment() *github.IssueComment {
-	commentStr := `LaunchDarkly Flag Details:
- **No flag references found in PR**`
-	comment := github.IssueComment{
-		Body: &commentStr,
-	}
-	return &comment
-}
-
-const starter = "LaunchDarkly Flag Details:"
