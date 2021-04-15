@@ -25,32 +25,31 @@ import (
 	"golang.org/x/oauth2"
 )
 
-var (
+type config struct {
 	ldProject     string
 	ldEnvironment string
 	ldInstance    string
 	owner         string
 	repo          []string
 	apiToken      string
-)
+}
 
 func main() {
-	validateInput()
+	config := validateInput()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
-
 	// Query for flags
-	ldClient, err := newClient(apiToken, ldInstance, false)
+	ldClient, err := newClient(config.apiToken, config.ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
 	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
-		Env:     optional.NewInterface(ldEnvironment),
+		Env:     optional.NewInterface(config.ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
-	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, ldProject, &flagOpts)
+	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, config.ldProject, &flagOpts)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -63,7 +62,7 @@ func main() {
 
 	workspace := os.Getenv("GITHUB_WORKSPACE")
 	viper.Set("dir", workspace)
-	viper.Set("accessToken", apiToken)
+	viper.Set("accessToken", config.apiToken)
 
 	err = options.InitYAML()
 	opts, err := options.GetOptions()
@@ -89,7 +88,7 @@ func main() {
 	issuesService := client.Issues
 
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
+	raw, _, err := prService.GetRaw(ctx, config.owner, config.repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -173,7 +172,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	comments, _, err := issuesService.ListComments(ctx, owner, repo[1], *event.PullRequest.Number, nil)
+	comments, _, err := issuesService.ListComments(ctx, config.owner, config.repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -202,7 +201,7 @@ func main() {
 				flagAliases = append(flagAliases, alias)
 			}
 		}
-		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, ldEnvironment, ldInstance)
+		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, config.ldEnvironment, config.ldInstance)
 		if len(addedComments) > 0 {
 			addedComments = append(addedComments, "---")
 		}
@@ -219,7 +218,7 @@ func main() {
 	var removedComments []string
 	for _, flagKey := range removedKeys {
 		aliases := flagsRemoved[flagKey]
-		removedComment, err := githubFlagComment(flags.Items, flagKey, aliases, ldEnvironment, ldInstance)
+		removedComment, err := githubFlagComment(flags.Items, flagKey, aliases, config.ldEnvironment, config.ldInstance)
 		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
@@ -249,9 +248,9 @@ func main() {
 
 	if !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
 		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
+			_, _, err = issuesService.EditComment(ctx, config.owner, config.repo[1], existingComment, &comment)
 		} else {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+			_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, &comment)
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -262,7 +261,7 @@ func main() {
 			return
 		}
 		createComment := githubNoFlagComment()
-		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -271,28 +270,30 @@ func main() {
 	}
 }
 
-func validateInput() {
-	ldProject = os.Getenv("LD_PROJ_KEY")
-	if ldProject == "" {
+func validateInput() *config {
+	var config config
+	config.ldProject = os.Getenv("LD_PROJ_KEY")
+	if config.ldProject == "" {
 		fmt.Println("`project` is required.")
 	}
-	ldEnvironment := os.Getenv("LD_ENV_KEY")
-	if ldEnvironment == "" {
+	config.ldEnvironment = os.Getenv("LD_ENV_KEY")
+	if config.ldEnvironment == "" {
 		fmt.Println("`environment` is required.")
 	}
-	ldInstance = os.Getenv("LD_BASE_URI")
-	if ldEnvironment == "" {
+	config.ldInstance = os.Getenv("LD_BASE_URI")
+	if config.ldInstance == "" {
 		fmt.Println("`baseUri` is required.")
 	}
-	owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+	config.owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
+	config.repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 
-	apiToken = os.Getenv("LD_ACCESS_TOKEN")
-	if apiToken == "" {
+	config.apiToken = os.Getenv("LD_ACCESS_TOKEN")
+	if config.apiToken == "" {
 		fmt.Println("LD_ACCESS_TOKEN is not set.")
 		os.Exit(1)
 	}
 
+	return &config
 }
 
 func remove(s []string, i int) []string {
