@@ -33,6 +33,11 @@ type config struct {
 	apiToken      string
 }
 
+type flagsRef struct {
+	flagsAdded   map[string][]string
+	flagsRemoved map[string][]string
+}
+
 func main() {
 	config := validateInput()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
@@ -89,40 +94,13 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, config.owner, config.repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
-	flagsAdded := make(map[string][]string)
-	flagsRemoved := make(map[string][]string)
-	allIgnores := ignore.NewIgnore(workspace)
+	//flagsAdded := make(map[string][]string)
+	//flagsRemoved := make(map[string][]string)
+	flagsRef := flagsRef{}
 
 	for _, parsedDiff := range multiFiles {
-		// If file is being renamed we don't want to check it for flags.
-		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
-		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
-		fullPathToA := workspace + "/" + parsedFileA[1]
-		fullPathToB := workspace + "/" + parsedFileB[1]
-		info, err := os.Stat(fullPathToB)
-		var isDir bool
-		var fileToParse string
-		// If there is no 'b' parse 'a', means file is deleted.
-		if info == nil {
-			isDir = false
-			fileToParse = fullPathToA
-		} else {
-			isDir = info.IsDir()
-			fileToParse = fullPathToB
-		}
-		if err != nil {
-			fmt.Println(err)
-		}
-		// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
-			if isDir {
-				continue
-			}
-			continue
-		}
-
-		// We don't want to run on renaming of files.
-		if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
+		getPath := checkDiff(parsedDiff, workspace)
+		if getPath.skip {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
@@ -131,16 +109,16 @@ func main() {
 				if strings.HasPrefix(row, "+") {
 					for _, flag := range flags.Items {
 						if strings.Contains(row, flag.Key) {
-							currentKeys := flagsAdded[flag.Key]
+							currentKeys := flagsRef.flagsAdded[flag.Key]
 							currentKeys = append(currentKeys, "")
-							flagsAdded[flag.Key] = currentKeys
+							flagsRef.flagsAdded[flag.Key] = currentKeys
 						}
 						if len(aliases[flag.Key]) > 0 {
 							for _, alias := range aliases[flag.Key] {
 								if strings.Contains(row, alias) {
-									currentKeys := flagsAdded[flag.Key]
+									currentKeys := flagsRef.flagsAdded[flag.Key]
 									currentKeys = append(currentKeys, alias)
-									flagsAdded[flag.Key] = currentKeys
+									flagsRef.flagsAdded[flag.Key] = currentKeys
 								}
 							}
 						}
@@ -148,16 +126,16 @@ func main() {
 				} else if strings.HasPrefix(row, "-") {
 					for _, flag := range flags.Items {
 						if strings.Contains(row, flag.Key) {
-							currentKeys := flagsRemoved[flag.Key]
+							currentKeys := flagsRef.flagsRemoved[flag.Key]
 							currentKeys = append(currentKeys, "")
-							flagsRemoved[flag.Key] = currentKeys
+							flagsRef.flagsRemoved[flag.Key] = currentKeys
 						}
 						if len(aliases[flag.Key]) > 0 {
 							for _, alias := range aliases[flag.Key] {
 								if strings.Contains(row, alias) {
-									currentKeys := flagsRemoved[flag.Key]
+									currentKeys := flagsRef.flagsRemoved[flag.Key]
 									currentKeys = append(currentKeys, alias)
-									flagsRemoved[flag.Key] = currentKeys
+									flagsRef.flagsRemoved[flag.Key] = currentKeys
 								}
 							}
 						}
@@ -183,17 +161,17 @@ func main() {
 			existingCommentBody = *comment.Body
 		}
 	}
-	addedKeys := make([]string, 0, len(flagsAdded))
-	for key := range flagsAdded {
+	addedKeys := make([]string, 0, len(flagsRef.flagsAdded))
+	for key := range flagsRef.flagsAdded {
 		addedKeys = append(addedKeys, key)
 	}
 	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
 	var addedComments []string
 	for _, flagKey := range addedKeys {
-		aliases := flagsAdded[flagKey]
+		aliases := flagsRef.flagsAdded[flagKey]
 		// If flag is in both added and removed then it is being modified
-		delete(flagsRemoved, flagKey)
+		delete(flagsRef.flagsRemoved, flagKey)
 		flagAliases := aliases[:0]
 		for _, alias := range aliases {
 			if !(len(strings.TrimSpace(alias)) == 0) {
@@ -210,14 +188,14 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-	removedKeys := make([]string, 0, len(flagsRemoved))
-	for key := range flagsRemoved {
+	removedKeys := make([]string, 0, len(flagsRef.flagsRemoved))
+	for key := range flagsRef.flagsRemoved {
 		removedKeys = append(removedKeys, key)
 	}
 	sort.Strings(removedKeys)
 	var removedComments []string
 	for _, flagKey := range removedKeys {
-		aliases := flagsRemoved[flagKey]
+		aliases := flagsRef.flagsRemoved[flagKey]
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], aliases, config.ldEnvironment, config.ldInstance)
 		removedComments = append(removedComments, removedComment)
@@ -227,11 +205,11 @@ func main() {
 	}
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
-	if len(flagsAdded) > 0 {
+	if len(flagsRef.flagsAdded) > 0 {
 		commentStr = append(commentStr, "** **Added/Modified** **")
 		commentStr = append(commentStr, addedComments...)
 	}
-	if len(flagsRemoved) > 0 {
+	if len(flagsRef.flagsRemoved) > 0 {
 		commentStr = append(commentStr, "** **Removed** **")
 		commentStr = append(commentStr, removedComments...)
 	}
@@ -247,7 +225,7 @@ func main() {
 		Body: &postedComments,
 	}
 
-	if !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
+	if !(len(flagsRef.flagsAdded) == 0 && len(flagsRef.flagsRemoved) == 0) {
 		if existingComment > 0 {
 			_, _, err = issuesService.EditComment(ctx, config.owner, config.repo[1], existingComment, &comment)
 		} else {
@@ -256,7 +234,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-	} else if len(flagsAdded) == 0 && len(flagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
+	} else if len(flagsRef.flagsAdded) == 0 && len(flagsRef.flagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
 		// Check if this is already the body, flags could have originally been included then removed in later commit
 		if strings.Contains(existingCommentBody, "No flag references found in PR") {
 			return
@@ -369,4 +347,45 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+type diffPaths struct {
+	fileToParse string
+	skip        bool
+}
+
+func checkDiff(parsedDiff *diff.FileDiff, workspace string) *diffPaths {
+	diffPaths := diffPaths{}
+	allIgnores := ignore.NewIgnore(workspace)
+
+	// If file is being renamed we don't want to check it for flags.
+	parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
+	parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
+	fullPathToA := workspace + "/" + parsedFileA[1]
+	fullPathToB := workspace + "/" + parsedFileB[1]
+	info, err := os.Stat(fullPathToB)
+	var isDir bool
+	var fileToParse string
+	// If there is no 'b' parse 'a', means file is deleted.
+	if info == nil {
+		isDir = false
+		diffPaths.fileToParse = fullPathToA
+	} else {
+		isDir = info.IsDir()
+		diffPaths.fileToParse = fullPathToB
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+	// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
+	if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
+		diffPaths.skip = true
+	}
+
+	// We don't want to run on renaming of files.
+	if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
+		diffPaths.skip = true
+	}
+
+	return &diffPaths
 }

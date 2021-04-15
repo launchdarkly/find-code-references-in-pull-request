@@ -12,5 +12,6 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1
 	github.com/spf13/viper v1.6.3
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/oauth2 v0.0.0-20210220000619-9bb904979d93
 )
