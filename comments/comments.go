@@ -2,6 +2,9 @@ package comments
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -41,8 +44,7 @@ Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
 {{- if ne (len .Aliases) 0}}
-{{ len .Aliases }}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`" + `{{end}}
+Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 {{- end}}
 `
@@ -61,4 +63,41 @@ func GithubNoFlagComment() *github.IssueComment {
 		Body: &commentStr,
 	}
 	return &comment
+}
+
+type FlagComments struct {
+	CommentsAdded   []string
+	CommentsRemoved []string
+}
+
+type FlagsRef struct {
+	FlagsAdded   map[string][]string
+	FlagsRemoved map[string][]string
+}
+
+func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingCommentBody string) string {
+	var commentStr []string
+	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
+	if len(flagsRef.FlagsAdded) > 0 {
+		commentStr = append(commentStr, "** **Added/Modified** **")
+		commentStr = append(commentStr, buildComment.CommentsAdded...)
+	}
+	if len(flagsRef.FlagsRemoved) > 0 {
+		// Add in divider if there are both removed flags and already added/modified flags
+		if len(buildComment.CommentsAdded) > 0 {
+			commentStr = append(commentStr, "---")
+		}
+		commentStr = append(commentStr, "** **Removed** **")
+		commentStr = append(commentStr, buildComment.CommentsRemoved...)
+	}
+	postedComments := strings.Join(commentStr, "\n")
+
+	hash := md5.Sum([]byte(postedComments))
+	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
+		fmt.Println("comment already exists")
+		return ""
+	}
+	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
+
+	return postedComments
 }

@@ -1,11 +1,9 @@
 on: [pull_request]
 
 jobs:
-  hello_world_job:
+  find_flags:
     runs-on: ubuntu-latest
     name: Test Find Flags
-    environment:
-      name: Test
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -15,6 +13,6 @@ jobs:
         with:
           projKey: support-service
           envKey: dano
-          accessToken: ${{ secrets.LAUNCHDARKLY_ACCESS_TOKEN }}
+          accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           baseUri: https://app.launchdarkly.com
