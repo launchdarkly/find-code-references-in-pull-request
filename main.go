@@ -94,9 +94,10 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, config.owner, config.repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
-	//flagsAdded := make(map[string][]string)
-	//flagsRemoved := make(map[string][]string)
-	flagsRef := flagsRef{}
+	flagsRef := flagsRef{
+		flagsAdded:   make(map[string][]string),
+		flagsRemoved: make(map[string][]string),
+	}
 
 	for _, parsedDiff := range multiFiles {
 		getPath := checkDiff(parsedDiff, workspace)
