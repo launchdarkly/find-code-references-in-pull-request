@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
@@ -45,7 +45,7 @@ func main() {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
 	// Query for flags
-	ldClient, err := newClient(config.apiToken, config.ldInstance, false)
+	ldClient, err := lc.NewClient(config.apiToken, config.ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -53,7 +53,7 @@ func main() {
 		Env:     optional.NewInterface(config.ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
-	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, config.ldProject, &flagOpts)
+	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.ldProject, &flagOpts)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -307,47 +307,6 @@ func parseEvent(path string) (*github.PullRequestEvent, error) {
 		return nil, err
 	}
 	return &evt, err
-}
-
-type Client struct {
-	apiKey  string
-	apiHost string
-	ld      *ldapi.APIClient
-	ctx     context.Context
-}
-
-const (
-	APIVersion = "20191212"
-)
-
-func newClient(token string, apiHost string, oauth bool) (*Client, error) {
-	if token == "" {
-		return nil, errors.New("token cannot be empty")
-	}
-
-	basePath := fmt.Sprintf("%s/api/v2", apiHost)
-
-	cfg := &ldapi.Configuration{
-		BasePath:      basePath,
-		DefaultHeader: make(map[string]string),
-		UserAgent:     fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
-	}
-
-	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
-
-	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKey, ldapi.APIKey{
-		Key: token,
-	})
-	if oauth {
-		ctx = context.WithValue(context.Background(), ldapi.ContextAccessToken, token)
-	}
-
-	return &Client{
-		apiKey:  token,
-		apiHost: apiHost,
-		ld:      ldapi.NewAPIClient(cfg),
-		ctx:     ctx,
-	}, nil
 }
 
 func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
