@@ -197,8 +197,14 @@ func main() {
 	var removedComments []string
 	for _, flagKey := range removedKeys {
 		aliases := flagsRef.flagsRemoved[flagKey]
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
 		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], aliases, config.ldEnvironment, config.ldInstance)
+		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
 		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
