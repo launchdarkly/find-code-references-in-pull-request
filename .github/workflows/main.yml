@@ -1,11 +1,9 @@
 on: [pull_request]
 
 jobs:
-  hello_world_job:
+  find_flags:
     runs-on: ubuntu-latest
     name: Test Find Flags
-    environment:
-      name: Test
     steps:
       - name: Checkout
         uses: actions/checkout@v2

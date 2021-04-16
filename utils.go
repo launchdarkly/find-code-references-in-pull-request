@@ -14,6 +14,7 @@ func remove(s []string, i int) []string {
 	return s[:len(s)-1]
 }
 
+// pulled from ld-find-code-refs github action
 func parseEvent(path string) (*github.PullRequestEvent, error) {
 	/* #nosec */
 	eventJsonFile, err := os.Open(path)

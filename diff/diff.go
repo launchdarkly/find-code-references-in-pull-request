@@ -1,4 +1,4 @@
-package main
+package diff
 
 import (
 	"fmt"
@@ -11,8 +11,13 @@ import (
 	"github.com/sourcegraph/go-diff/diff"
 )
 
-func checkDiff(parsedDiff *diff.FileDiff, workspace string) *diffPaths {
-	diffPaths := diffPaths{}
+type DiffPaths struct {
+	FileToParse string
+	Skip        bool
+}
+
+func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
+	diffPaths := DiffPaths{}
 	allIgnores := ignore.NewIgnore(workspace)
 
 	// If file is being renamed we don't want to check it for flags.
@@ -21,33 +26,35 @@ func checkDiff(parsedDiff *diff.FileDiff, workspace string) *diffPaths {
 	fullPathToA := workspace + "/" + parsedFileA[1]
 	fullPathToB := workspace + "/" + parsedFileB[1]
 	info, err := os.Stat(fullPathToB)
+	fmt.Println(info.IsDir())
 	var isDir bool
-	var fileToParse string
 	// If there is no 'b' parse 'a', means file is deleted.
 	if info == nil {
 		isDir = false
-		diffPaths.fileToParse = fullPathToA
+		diffPaths.FileToParse = fullPathToA
 	} else {
 		isDir = info.IsDir()
-		diffPaths.fileToParse = fullPathToB
+		diffPaths.FileToParse = fullPathToB
 	}
 	if err != nil {
 		fmt.Println(err)
 	}
 	// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
-	if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
-		diffPaths.skip = true
+	fmt.Println(diffPaths.FileToParse)
+	fmt.Println(allIgnores.Match(diffPaths.FileToParse, isDir))
+	if strings.HasPrefix(parsedFileB[1], ".") && strings.HasPrefix(parsedFileA[1], ".") || allIgnores.Match(diffPaths.FileToParse, isDir) {
+		diffPaths.Skip = true
 	}
-
+	fmt.Println(diffPaths.Skip)
 	// We don't want to run on renaming of files.
 	if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
-		diffPaths.skip = true
+		diffPaths.Skip = true
 	}
 
 	return &diffPaths
 }
 
-func processDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
+func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
 	diffRows := strings.Split(string(raw.Body), "\n")
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {

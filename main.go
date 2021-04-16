@@ -12,6 +12,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go"
 	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
+	ldiff "github.com/launchdarkly/cr-flags/diff"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -85,12 +86,12 @@ func main() {
 	}
 
 	for _, parsedDiff := range multiFiles {
-		getPath := checkDiff(parsedDiff, workspace)
-		if getPath.skip {
+		getPath := ldiff.CheckDiff(parsedDiff, workspace)
+		if getPath.Skip {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
-			processDiffs(raw, flagsRef, flags, aliases)
+			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases)
 		}
 
 	}
@@ -206,11 +207,6 @@ func validateInput() *config {
 	}
 
 	return &config
-}
-
-type diffPaths struct {
-	fileToParse string
-	skip        bool
 }
 
 func getFlags(config *config) (ldapi.FeatureFlags, error) {
