@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -14,7 +12,6 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go"
 	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
-	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -37,20 +34,18 @@ func main() {
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
+
 	// Query for flags
-	ldClient, err := lc.NewClient(config.apiToken, config.ldInstance, false)
-	if err != nil {
-		fmt.Println(err)
-	}
-	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
-		Env:     optional.NewInterface(config.ldEnvironment),
-		Summary: optional.NewBool(false),
-	}
-	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.ldProject, &flagOpts)
+	flags, err := getFlags(config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	if len(flags.Items) == 0 {
+		fmt.Println("No flags found.")
+		os.Exit(0)
+	}
+
 	flagKeys := make([]string, 0, len(flags.Items))
 	for _, flag := range append(flags.Items) {
 		flagKeys = append(flagKeys, flag.Key)
@@ -103,18 +98,10 @@ func main() {
 		fmt.Println(err)
 	}
 
-	comments, _, err := issuesService.ListComments(ctx, config.owner, config.repo[1], *event.PullRequest.Number, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
 	var existingComment int64
 	var existingCommentBody string
-	for _, comment := range comments {
-		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-			existingComment = int64(comment.GetID())
-			existingCommentBody = *comment.Body
-		}
-	}
+	existingComment, existingCommentBody = checkExistingComments(event, config, issuesService, ctx)
+
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
 		addedKeys = append(addedKeys, key)
@@ -221,117 +208,39 @@ func validateInput() *config {
 	return &config
 }
 
-func remove(s []string, i int) []string {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-func parseEvent(path string) (*github.PullRequestEvent, error) {
-	/* #nosec */
-	eventJsonFile, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	eventJsonBytes, err := ioutil.ReadAll(eventJsonFile)
-	if err != nil {
-		return nil, err
-	}
-	var evt github.PullRequestEvent
-	err = json.Unmarshal(eventJsonBytes, &evt)
-	if err != nil {
-		return nil, err
-	}
-	return &evt, err
-}
-
-func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
-	for i, item := range slice {
-		if item.Key == val {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
 type diffPaths struct {
 	fileToParse string
 	skip        bool
 }
 
-func checkDiff(parsedDiff *diff.FileDiff, workspace string) *diffPaths {
-	diffPaths := diffPaths{}
-	allIgnores := ignore.NewIgnore(workspace)
-
-	// If file is being renamed we don't want to check it for flags.
-	parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
-	parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
-	fullPathToA := workspace + "/" + parsedFileA[1]
-	fullPathToB := workspace + "/" + parsedFileB[1]
-	info, err := os.Stat(fullPathToB)
-	var isDir bool
-	var fileToParse string
-	// If there is no 'b' parse 'a', means file is deleted.
-	if info == nil {
-		isDir = false
-		diffPaths.fileToParse = fullPathToA
-	} else {
-		isDir = info.IsDir()
-		diffPaths.fileToParse = fullPathToB
-	}
+func getFlags(config *config) (ldapi.FeatureFlags, error) {
+	ldClient, err := lc.NewClient(config.apiToken, config.ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
-	// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
-	if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
-		diffPaths.skip = true
+	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
+		Env:     optional.NewInterface(config.ldEnvironment),
+		Summary: optional.NewBool(false),
+	}
+	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.ldProject, &flagOpts)
+	if err != nil {
+		return ldapi.FeatureFlags{}, err
 	}
 
-	// We don't want to run on renaming of files.
-	if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
-		diffPaths.skip = true
-	}
-
-	return &diffPaths
+	return flags, nil
 }
 
-func processDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
-	diffRows := strings.Split(string(raw.Body), "\n")
-	for _, row := range diffRows {
-		if strings.HasPrefix(row, "+") {
-			for _, flag := range flags.Items {
-				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRef.FlagsAdded[flag.Key]
-					currentKeys = append(currentKeys, "")
-					flagsRef.FlagsAdded[flag.Key] = currentKeys
-				}
-				if len(aliases[flag.Key]) > 0 {
-					for _, alias := range aliases[flag.Key] {
-						if strings.Contains(row, alias) {
-							currentKeys := flagsRef.FlagsAdded[flag.Key]
-							currentKeys = append(currentKeys, alias)
-							flagsRef.FlagsAdded[flag.Key] = currentKeys
-						}
-					}
-				}
-			}
-		} else if strings.HasPrefix(row, "-") {
-			for _, flag := range flags.Items {
-				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRef.FlagsRemoved[flag.Key]
-					currentKeys = append(currentKeys, "")
-					flagsRef.FlagsRemoved[flag.Key] = currentKeys
-				}
-				if len(aliases[flag.Key]) > 0 {
-					for _, alias := range aliases[flag.Key] {
-						if strings.Contains(row, alias) {
-							currentKeys := flagsRef.FlagsRemoved[flag.Key]
-							currentKeys = append(currentKeys, alias)
-							flagsRef.FlagsRemoved[flag.Key] = currentKeys
-						}
-					}
-				}
-			}
+func checkExistingComments(event *github.PullRequestEvent, config *config, issuesService *github.IssuesService, ctx context.Context) (int64, string) {
+	comments, _, err := issuesService.ListComments(ctx, config.owner, config.repo[1], *event.PullRequest.Number, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, comment := range comments {
+		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
+			return int64(comment.GetID()), *comment.Body
 		}
 	}
+
+	return int64(0), ""
 }
