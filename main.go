@@ -181,9 +181,6 @@ func main() {
 		}
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		if len(addedComments) > 0 {
-			addedComments = append(addedComments, "---")
-		}
 		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -217,6 +214,10 @@ func main() {
 		commentStr = append(commentStr, addedComments...)
 	}
 	if len(flagsRef.flagsRemoved) > 0 {
+		// Add in divider if there are both removed flags and already added/modified flags
+		if len(addedComments) > 0 {
+			addedComments = append(addedComments, "---")
+		}
 		commentStr = append(commentStr, "** **Removed** **")
 		commentStr = append(commentStr, removedComments...)
 	}
