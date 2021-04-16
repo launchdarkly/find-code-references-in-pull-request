@@ -251,17 +251,17 @@ func main() {
 
 func validateInput() *config {
 	var config config
-	config.ldProject = os.Getenv("LD_PROJ_KEY")
+	config.ldProject = os.Getenv("INPUT_PROJKEY")
 	if config.ldProject == "" {
 		fmt.Println("`project` is required.")
 		os.Exit(1)
 	}
-	config.ldEnvironment = os.Getenv("LD_ENV_KEY")
+	config.ldEnvironment = os.Getenv("INPUT_ENVKEY")
 	if config.ldEnvironment == "" {
 		fmt.Println("`environment` is required.")
 		os.Exit(1)
 	}
-	config.ldInstance = os.Getenv("LD_BASE_URI")
+	config.ldInstance = os.Getenv("INPUT_BASEURI")
 	if config.ldInstance == "" {
 		fmt.Println("`baseUri` is required.")
 		os.Exit(1)
@@ -269,9 +269,9 @@ func validateInput() *config {
 	config.owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
 	config.repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 
-	config.apiToken = os.Getenv("LD_ACCESS_TOKEN")
+	config.apiToken = os.Getenv("INPUT_ACCESSTOKEN")
 	if config.apiToken == "" {
-		fmt.Println("LD_ACCESS_TOKEN is not set.")
+		fmt.Println("`accessToken` is required.")
 		os.Exit(1)
 	}
 
