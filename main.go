@@ -38,6 +38,11 @@ type flagsRef struct {
 	flagsRemoved map[string][]string
 }
 
+type ghComments struct {
+	commentsAdded   []string
+	commentsRemoved []string
+}
+
 func main() {
 	config := validateInput()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
@@ -105,44 +110,7 @@ func main() {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
-			diffRows := strings.Split(string(raw.Body), "\n")
-			for _, row := range diffRows {
-				if strings.HasPrefix(row, "+") {
-					for _, flag := range flags.Items {
-						if strings.Contains(row, flag.Key) {
-							currentKeys := flagsRef.flagsAdded[flag.Key]
-							currentKeys = append(currentKeys, "")
-							flagsRef.flagsAdded[flag.Key] = currentKeys
-						}
-						if len(aliases[flag.Key]) > 0 {
-							for _, alias := range aliases[flag.Key] {
-								if strings.Contains(row, alias) {
-									currentKeys := flagsRef.flagsAdded[flag.Key]
-									currentKeys = append(currentKeys, alias)
-									flagsRef.flagsAdded[flag.Key] = currentKeys
-								}
-							}
-						}
-					}
-				} else if strings.HasPrefix(row, "-") {
-					for _, flag := range flags.Items {
-						if strings.Contains(row, flag.Key) {
-							currentKeys := flagsRef.flagsRemoved[flag.Key]
-							currentKeys = append(currentKeys, "")
-							flagsRef.flagsRemoved[flag.Key] = currentKeys
-						}
-						if len(aliases[flag.Key]) > 0 {
-							for _, alias := range aliases[flag.Key] {
-								if strings.Contains(row, alias) {
-									currentKeys := flagsRef.flagsRemoved[flag.Key]
-									currentKeys = append(currentKeys, alias)
-									flagsRef.flagsRemoved[flag.Key] = currentKeys
-								}
-							}
-						}
-					}
-				}
-			}
+			processDiffs(raw, flagsRef, flags, aliases)
 		}
 
 	}
@@ -168,11 +136,12 @@ func main() {
 	}
 	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
-	var addedComments []string
+	buildComment := ghComments{}
 	for _, flagKey := range addedKeys {
-		aliases := flagsRef.flagsAdded[flagKey]
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRef.flagsRemoved, flagKey)
+		aliases := flagsRef.flagsAdded[flagKey]
+
 		flagAliases := aliases[:0]
 		for _, alias := range aliases {
 			if !(len(strings.TrimSpace(alias)) == 0) {
@@ -181,7 +150,7 @@ func main() {
 		}
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		addedComments = append(addedComments, createComment)
+		buildComment.commentsAdded = append(buildComment.commentsAdded, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -191,7 +160,6 @@ func main() {
 		removedKeys = append(removedKeys, key)
 	}
 	sort.Strings(removedKeys)
-	var removedComments []string
 	for _, flagKey := range removedKeys {
 		aliases := flagsRef.flagsRemoved[flagKey]
 		flagAliases := aliases[:0]
@@ -202,33 +170,15 @@ func main() {
 		}
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		removedComments = append(removedComments, removedComment)
+		buildComment.commentsRemoved = append(buildComment.commentsRemoved, removedComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
-	if len(flagsRef.flagsAdded) > 0 {
-		commentStr = append(commentStr, "** **Added/Modified** **")
-		commentStr = append(commentStr, addedComments...)
-	}
-	if len(flagsRef.flagsRemoved) > 0 {
-		// Add in divider if there are both removed flags and already added/modified flags
-		if len(addedComments) > 0 {
-			addedComments = append(addedComments, "---")
-		}
-		commentStr = append(commentStr, "** **Removed** **")
-		commentStr = append(commentStr, removedComments...)
-	}
-	postedComments := strings.Join(commentStr, "\n")
-
-	hash := md5.Sum([]byte(postedComments))
-	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
-		fmt.Println("comment already exists")
+	postedComments := buildFlagComment(buildComment, flagsRef, existingCommentBody)
+	if postedComments == "" {
 		return
 	}
-	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
 	comment := github.IssueComment{
 		Body: &postedComments,
 	}
@@ -358,4 +308,72 @@ func checkDiff(parsedDiff *diff.FileDiff, workspace string) *diffPaths {
 	}
 
 	return &diffPaths
+}
+
+func processDiffs(raw *diff.Hunk, flagsRef flagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
+	diffRows := strings.Split(string(raw.Body), "\n")
+	for _, row := range diffRows {
+		if strings.HasPrefix(row, "+") {
+			for _, flag := range flags.Items {
+				if strings.Contains(row, flag.Key) {
+					currentKeys := flagsRef.flagsAdded[flag.Key]
+					currentKeys = append(currentKeys, "")
+					flagsRef.flagsAdded[flag.Key] = currentKeys
+				}
+				if len(aliases[flag.Key]) > 0 {
+					for _, alias := range aliases[flag.Key] {
+						if strings.Contains(row, alias) {
+							currentKeys := flagsRef.flagsAdded[flag.Key]
+							currentKeys = append(currentKeys, alias)
+							flagsRef.flagsAdded[flag.Key] = currentKeys
+						}
+					}
+				}
+			}
+		} else if strings.HasPrefix(row, "-") {
+			for _, flag := range flags.Items {
+				if strings.Contains(row, flag.Key) {
+					currentKeys := flagsRef.flagsRemoved[flag.Key]
+					currentKeys = append(currentKeys, "")
+					flagsRef.flagsRemoved[flag.Key] = currentKeys
+				}
+				if len(aliases[flag.Key]) > 0 {
+					for _, alias := range aliases[flag.Key] {
+						if strings.Contains(row, alias) {
+							currentKeys := flagsRef.flagsRemoved[flag.Key]
+							currentKeys = append(currentKeys, alias)
+							flagsRef.flagsRemoved[flag.Key] = currentKeys
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func buildFlagComment(buildComment ghComments, flagsRef flagsRef, existingCommentBody string) string {
+	var commentStr []string
+	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
+	if len(flagsRef.flagsAdded) > 0 {
+		commentStr = append(commentStr, "** **Added/Modified** **")
+		commentStr = append(commentStr, buildComment.commentsAdded...)
+	}
+	if len(flagsRef.flagsRemoved) > 0 {
+		// Add in divider if there are both removed flags and already added/modified flags
+		if len(buildComment.commentsAdded) > 0 {
+			buildComment.commentsAdded = append(buildComment.commentsAdded, "---")
+		}
+		commentStr = append(commentStr, "** **Removed** **")
+		commentStr = append(commentStr, buildComment.commentsRemoved...)
+	}
+	postedComments := strings.Join(commentStr, "\n")
+
+	hash := md5.Sum([]byte(postedComments))
+	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
+		fmt.Println("comment already exists")
+		return ""
+	}
+	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
+
+	return postedComments
 }
