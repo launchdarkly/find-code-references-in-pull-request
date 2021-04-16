@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -33,16 +31,6 @@ type config struct {
 	apiToken      string
 }
 
-type flagsRef struct {
-	flagsAdded   map[string][]string
-	flagsRemoved map[string][]string
-}
-
-type ghComments struct {
-	commentsAdded   []string
-	commentsRemoved []string
-}
-
 func main() {
 	config := validateInput()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
@@ -64,7 +52,6 @@ func main() {
 		os.Exit(1)
 	}
 	flagKeys := make([]string, 0, len(flags.Items))
-
 	for _, flag := range append(flags.Items) {
 		flagKeys = append(flagKeys, flag.Key)
 	}
@@ -75,9 +62,6 @@ func main() {
 
 	err = options.InitYAML()
 	opts, err := options.GetOptions()
-	if err != nil {
-		fmt.Println(err)
-	}
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -99,9 +83,10 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, config.owner, config.repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
-	flagsRef := flagsRef{
-		flagsAdded:   make(map[string][]string),
-		flagsRemoved: make(map[string][]string),
+
+	flagsRef := ghc.FlagsRef{
+		FlagsAdded:   make(map[string][]string),
+		FlagsRemoved: make(map[string][]string),
 	}
 
 	for _, parsedDiff := range multiFiles {
@@ -130,17 +115,17 @@ func main() {
 			existingCommentBody = *comment.Body
 		}
 	}
-	addedKeys := make([]string, 0, len(flagsRef.flagsAdded))
-	for key := range flagsRef.flagsAdded {
+	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
+	for key := range flagsRef.FlagsAdded {
 		addedKeys = append(addedKeys, key)
 	}
 	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
-	buildComment := ghComments{}
+	buildComment := ghc.FlagComments{}
 	for _, flagKey := range addedKeys {
 		// If flag is in both added and removed then it is being modified
-		delete(flagsRef.flagsRemoved, flagKey)
-		aliases := flagsRef.flagsAdded[flagKey]
+		delete(flagsRef.FlagsRemoved, flagKey)
+		aliases := flagsRef.FlagsAdded[flagKey]
 
 		flagAliases := aliases[:0]
 		for _, alias := range aliases {
@@ -150,18 +135,18 @@ func main() {
 		}
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		buildComment.commentsAdded = append(buildComment.commentsAdded, createComment)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	removedKeys := make([]string, 0, len(flagsRef.flagsRemoved))
-	for key := range flagsRef.flagsRemoved {
+	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
+	for key := range flagsRef.FlagsRemoved {
 		removedKeys = append(removedKeys, key)
 	}
 	sort.Strings(removedKeys)
 	for _, flagKey := range removedKeys {
-		aliases := flagsRef.flagsRemoved[flagKey]
+		aliases := flagsRef.FlagsRemoved[flagKey]
 		flagAliases := aliases[:0]
 		for _, alias := range aliases {
 			if !(len(strings.TrimSpace(alias)) == 0) {
@@ -170,12 +155,12 @@ func main() {
 		}
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		buildComment.commentsRemoved = append(buildComment.commentsRemoved, removedComment)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	postedComments := buildFlagComment(buildComment, flagsRef, existingCommentBody)
+	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingCommentBody)
 	if postedComments == "" {
 		return
 	}
@@ -183,7 +168,7 @@ func main() {
 		Body: &postedComments,
 	}
 
-	if !(len(flagsRef.flagsAdded) == 0 && len(flagsRef.flagsRemoved) == 0) {
+	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
 		if existingComment > 0 {
 			_, _, err = issuesService.EditComment(ctx, config.owner, config.repo[1], existingComment, &comment)
 		} else {
@@ -192,7 +177,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-	} else if len(flagsRef.flagsAdded) == 0 && len(flagsRef.flagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
+	} else if len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
 		// Check if this is already the body, flags could have originally been included then removed in later commit
 		if strings.Contains(existingCommentBody, "No flag references found in PR") {
 			return
@@ -310,22 +295,22 @@ func checkDiff(parsedDiff *diff.FileDiff, workspace string) *diffPaths {
 	return &diffPaths
 }
 
-func processDiffs(raw *diff.Hunk, flagsRef flagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
+func processDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
 	diffRows := strings.Split(string(raw.Body), "\n")
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRef.flagsAdded[flag.Key]
+					currentKeys := flagsRef.FlagsAdded[flag.Key]
 					currentKeys = append(currentKeys, "")
-					flagsRef.flagsAdded[flag.Key] = currentKeys
+					flagsRef.FlagsAdded[flag.Key] = currentKeys
 				}
 				if len(aliases[flag.Key]) > 0 {
 					for _, alias := range aliases[flag.Key] {
 						if strings.Contains(row, alias) {
-							currentKeys := flagsRef.flagsAdded[flag.Key]
+							currentKeys := flagsRef.FlagsAdded[flag.Key]
 							currentKeys = append(currentKeys, alias)
-							flagsRef.flagsAdded[flag.Key] = currentKeys
+							flagsRef.FlagsAdded[flag.Key] = currentKeys
 						}
 					}
 				}
@@ -333,47 +318,20 @@ func processDiffs(raw *diff.Hunk, flagsRef flagsRef, flags ldapi.FeatureFlags, a
 		} else if strings.HasPrefix(row, "-") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRef.flagsRemoved[flag.Key]
+					currentKeys := flagsRef.FlagsRemoved[flag.Key]
 					currentKeys = append(currentKeys, "")
-					flagsRef.flagsRemoved[flag.Key] = currentKeys
+					flagsRef.FlagsRemoved[flag.Key] = currentKeys
 				}
 				if len(aliases[flag.Key]) > 0 {
 					for _, alias := range aliases[flag.Key] {
 						if strings.Contains(row, alias) {
-							currentKeys := flagsRef.flagsRemoved[flag.Key]
+							currentKeys := flagsRef.FlagsRemoved[flag.Key]
 							currentKeys = append(currentKeys, alias)
-							flagsRef.flagsRemoved[flag.Key] = currentKeys
+							flagsRef.FlagsRemoved[flag.Key] = currentKeys
 						}
 					}
 				}
 			}
 		}
 	}
-}
-
-func buildFlagComment(buildComment ghComments, flagsRef flagsRef, existingCommentBody string) string {
-	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
-	if len(flagsRef.flagsAdded) > 0 {
-		commentStr = append(commentStr, "** **Added/Modified** **")
-		commentStr = append(commentStr, buildComment.commentsAdded...)
-	}
-	if len(flagsRef.flagsRemoved) > 0 {
-		// Add in divider if there are both removed flags and already added/modified flags
-		if len(buildComment.commentsAdded) > 0 {
-			buildComment.commentsAdded = append(buildComment.commentsAdded, "---")
-		}
-		commentStr = append(commentStr, "** **Removed** **")
-		commentStr = append(commentStr, buildComment.commentsRemoved...)
-	}
-	postedComments := strings.Join(commentStr, "\n")
-
-	hash := md5.Sum([]byte(postedComments))
-	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
-		fmt.Println("comment already exists")
-		return ""
-	}
-	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
-
-	return postedComments
 }
