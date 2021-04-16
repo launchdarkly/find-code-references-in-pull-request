@@ -44,7 +44,7 @@ Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
 {{- if ne (len .Aliases) 0}}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`" + `{{end}}
+Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 {{- end}}
 `
