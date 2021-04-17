@@ -79,16 +79,15 @@ func main() {
 		for _, raw := range parsedDiff.Hunks {
 			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases)
 		}
-
 	}
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	existingComment, existingCommentBody := checkExistingComments(event, config, issuesService, ctx)
+	existingComment := checkExistingComments(event, config, issuesService, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 
-	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingCommentBody)
+	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
 	if postedComments == "" {
 		return
 	}
@@ -96,28 +95,8 @@ func main() {
 		Body: &postedComments,
 	}
 
-	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
-		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, config.Owner, config.Repo[1], existingComment, &comment)
-		} else {
-			_, _, err = issuesService.CreateComment(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, &comment)
-		}
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else if len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
-		// Check if this is already the body, flags could have originally been included then removed in later commit
-		if strings.Contains(existingCommentBody, "No flag references found in PR") {
-			return
-		}
-		createComment := ghc.GithubNoFlagComment()
-		_, _, err = issuesService.CreateComment(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, createComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else {
-		fmt.Println("No flags found.")
-	}
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, issuesService, comment)
+
 }
 
 func validateInput() *lcr.Config {
@@ -170,7 +149,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	return flags, flagKeys, nil
 }
 
-func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, issuesService *github.IssuesService, ctx context.Context) (int64, string) {
+func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, issuesService *github.IssuesService, ctx context.Context) *github.IssueComment {
 	comments, _, err := issuesService.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -178,9 +157,44 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, i
 
 	for _, comment := range comments {
 		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-			return int64(comment.GetID()), *comment.Body
+			return comment
 		}
 	}
 
-	return int64(0), ""
+	return nil
+}
+
+func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, issuesService *github.IssuesService, comment github.IssueComment) {
+	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
+		var existingCommentId int64
+		if existingComment != nil {
+			existingCommentId = int64(existingComment.GetID())
+		} else {
+			existingCommentId = 0
+		}
+		if existingCommentId > 0 {
+			_, _, err := issuesService.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
+	} else if len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
+		// Check if this is already the body, flags could have originally been included then removed in later commit
+		if existingComment != nil && strings.Contains(*existingComment.Body, "No flag references found in PR") {
+			return
+		}
+		createComment := ghc.GithubNoFlagComment()
+		_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("No flags found.")
+	}
 }

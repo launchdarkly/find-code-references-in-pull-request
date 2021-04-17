@@ -77,7 +77,7 @@ type FlagsRef struct {
 	FlagsRemoved map[string][]string
 }
 
-func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingCommentBody string) string {
+func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
@@ -95,7 +95,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	postedComments := strings.Join(commentStr, "\n")
 
 	hash := md5.Sum([]byte(postedComments))
-	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
+	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
 		fmt.Println("comment already exists")
 		return ""
 	}
