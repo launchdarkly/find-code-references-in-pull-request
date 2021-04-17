@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"sort"
 	"strings"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	lcr "github.com/launchdarkly/cr-flags/config"
 )
 
 type Comment struct {
@@ -100,4 +102,64 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
 
 	return postedComments
+}
+
+func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
+	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
+	for key := range flagsRef.FlagsAdded {
+		addedKeys = append(addedKeys, key)
+	}
+	// sort keys so hashing can work for checking if comment already exists
+	sort.Strings(addedKeys)
+	buildComment := FlagComments{}
+
+	for _, flagKey := range addedKeys {
+		// If flag is in both added and removed then it is being modified
+		delete(flagsRef.FlagsRemoved, flagKey)
+		aliases := flagsRef.FlagsAdded[flagKey]
+
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
+		idx, _ := find(flags.Items, flagKey)
+		createComment, err := GithubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
+	for key := range flagsRef.FlagsRemoved {
+		removedKeys = append(removedKeys, key)
+	}
+	sort.Strings(removedKeys)
+	for _, flagKey := range removedKeys {
+		aliases := flagsRef.FlagsRemoved[flagKey]
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
+		idx, _ := find(flags.Items, flagKey)
+		removedComment, err := GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	return buildComment
+}
+
+func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
+	for i, item := range slice {
+		if item.Key == val {
+			return i, true
+		}
+	}
+	return -1, false
 }
