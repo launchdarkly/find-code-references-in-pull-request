@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// Query for flags
-	flags, err := getFlags(config)
+	flags, flagKeys, err := getFlags(config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -45,11 +45,6 @@ func main() {
 	if len(flags.Items) == 0 {
 		fmt.Println("No flags found.")
 		os.Exit(0)
-	}
-
-	flagKeys := make([]string, 0, len(flags.Items))
-	for _, flag := range append(flags.Items) {
-		flagKeys = append(flagKeys, flag.Key)
 	}
 
 	workspace := os.Getenv("GITHUB_WORKSPACE")
@@ -99,55 +94,9 @@ func main() {
 		fmt.Println(err)
 	}
 
-	var existingComment int64
-	var existingCommentBody string
-	existingComment, existingCommentBody = checkExistingComments(event, config, issuesService, ctx)
+	existingComment, existingCommentBody := checkExistingComments(event, config, issuesService, ctx)
+	buildComment := processFlags(flagsRef, flags, config)
 
-	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
-	for key := range flagsRef.FlagsAdded {
-		addedKeys = append(addedKeys, key)
-	}
-	// sort keys so hashing can work for checking if comment already exists
-	sort.Strings(addedKeys)
-	buildComment := ghc.FlagComments{}
-	for _, flagKey := range addedKeys {
-		// If flag is in both added and removed then it is being modified
-		delete(flagsRef.FlagsRemoved, flagKey)
-		aliases := flagsRef.FlagsAdded[flagKey]
-
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
-		idx, _ := find(flags.Items, flagKey)
-		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for key := range flagsRef.FlagsRemoved {
-		removedKeys = append(removedKeys, key)
-	}
-	sort.Strings(removedKeys)
-	for _, flagKey := range removedKeys {
-		aliases := flagsRef.FlagsRemoved[flagKey]
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
-		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingCommentBody)
 	if postedComments == "" {
 		return
@@ -209,7 +158,7 @@ func validateInput() *config {
 	return &config
 }
 
-func getFlags(config *config) (ldapi.FeatureFlags, error) {
+func getFlags(config *config) (ldapi.FeatureFlags, []string, error) {
 	ldClient, err := lc.NewClient(config.apiToken, config.ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
@@ -220,10 +169,14 @@ func getFlags(config *config) (ldapi.FeatureFlags, error) {
 	}
 	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.ldProject, &flagOpts)
 	if err != nil {
-		return ldapi.FeatureFlags{}, err
+		return ldapi.FeatureFlags{}, []string{}, err
 	}
 
-	return flags, nil
+	flagKeys := make([]string, 0, len(flags.Items))
+	for _, flag := range append(flags.Items) {
+		flagKeys = append(flagKeys, flag.Key)
+	}
+	return flags, flagKeys, nil
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *config, issuesService *github.IssuesService, ctx context.Context) (int64, string) {
@@ -239,4 +192,55 @@ func checkExistingComments(event *github.PullRequestEvent, config *config, issue
 	}
 
 	return int64(0), ""
+}
+
+func processFlags(flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, config *config) ghc.FlagComments {
+	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
+	for key := range flagsRef.FlagsAdded {
+		addedKeys = append(addedKeys, key)
+	}
+	// sort keys so hashing can work for checking if comment already exists
+	sort.Strings(addedKeys)
+	buildComment := ghc.FlagComments{}
+
+	for _, flagKey := range addedKeys {
+		// If flag is in both added and removed then it is being modified
+		delete(flagsRef.FlagsRemoved, flagKey)
+		aliases := flagsRef.FlagsAdded[flagKey]
+
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
+		idx, _ := find(flags.Items, flagKey)
+		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
+	for key := range flagsRef.FlagsRemoved {
+		removedKeys = append(removedKeys, key)
+	}
+	sort.Strings(removedKeys)
+	for _, flagKey := range removedKeys {
+		aliases := flagsRef.FlagsRemoved[flagKey]
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
+		idx, _ := find(flags.Items, flagKey)
+		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	return buildComment
 }
