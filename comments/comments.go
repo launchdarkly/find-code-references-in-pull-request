@@ -145,7 +145,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 			}
 		}
 		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
+		removedComment, err := GithubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			fmt.Println(err)
