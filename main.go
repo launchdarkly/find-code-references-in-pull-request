@@ -17,54 +17,33 @@ import (
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
 )
 
 func main() {
-	config := validateInput()
+	ctx := context.Background()
+	config, err := lcr.ValidateInputandParse(ctx)
+	failExit(err)
+
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
+		os.Exit(1)
 	}
 
 	// Query for flags
 	flags, flagKeys, err := getFlags(config)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	failExit(err)
+
 	if len(flags.Items) == 0 {
 		fmt.Println("No flags found.")
 		os.Exit(0)
 	}
 
-	workspace := os.Getenv("GITHUB_WORKSPACE")
-	viper.Set("dir", workspace)
-	viper.Set("accessToken", config.ApiToken)
+	aliases, err := getAliases(config, flagKeys)
+	failExit(err)
 
-	err = options.InitYAML()
-	opts, err := options.GetOptions()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, workspace)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("failed to create flag key aliases")
-	}
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-	prService := client.PullRequests
-	issuesService := client.Issues
-
-	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := prService.GetRaw(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, rawOpts)
-	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
+	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
+	failExit(err)
 
 	flagsRef := ghc.FlagsRef{
 		FlagsAdded:   make(map[string][]string),
@@ -72,7 +51,7 @@ func main() {
 	}
 
 	for _, parsedDiff := range multiFiles {
-		getPath := ldiff.CheckDiff(parsedDiff, workspace)
+		getPath := ldiff.CheckDiff(parsedDiff, config.Workspace)
 		if getPath.Skip {
 			continue
 		}
@@ -84,9 +63,8 @@ func main() {
 		fmt.Println(err)
 	}
 
-	existingComment := checkExistingComments(event, config, issuesService, ctx)
+	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
 	if postedComments == "" {
 		return
@@ -95,43 +73,13 @@ func main() {
 		Body: &postedComments,
 	}
 
-	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, issuesService, comment)
-
-}
-
-func validateInput() *lcr.Config {
-	var config lcr.Config
-	config.LdProject = os.Getenv("INPUT_PROJKEY")
-	if config.LdProject == "" {
-		fmt.Println("`project` is required.")
-		os.Exit(1)
-	}
-	config.LdEnvironment = os.Getenv("INPUT_ENVKEY")
-	if config.LdEnvironment == "" {
-		fmt.Println("`environment` is required.")
-		os.Exit(1)
-	}
-	config.LdInstance = os.Getenv("INPUT_BASEURI")
-	if config.LdInstance == "" {
-		fmt.Println("`baseUri` is required.")
-		os.Exit(1)
-	}
-	config.Owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
-	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-
-	config.ApiToken = os.Getenv("INPUT_ACCESSTOKEN")
-	if config.ApiToken == "" {
-		fmt.Println("`accessToken` is required.")
-		os.Exit(1)
-	}
-
-	return &config
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	if err != nil {
-		fmt.Println(err)
+		return ldapi.FeatureFlags{}, []string{}, err
 	}
 	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
 		Env:     optional.NewInterface(config.LdEnvironment),
@@ -149,8 +97,8 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	return flags, flagKeys, nil
 }
 
-func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, issuesService *github.IssuesService, ctx context.Context) *github.IssueComment {
-	comments, _, err := issuesService.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
+func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
+	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -164,21 +112,21 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, i
 	return nil
 }
 
-func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, issuesService *github.IssuesService, comment github.IssueComment) {
+func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) {
 	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
 		var existingCommentId int64
 		if existingComment != nil {
-			existingCommentId = int64(existingComment.GetID())
+			existingCommentId = existingComment.GetID()
 		} else {
 			existingCommentId = 0
 		}
 		if existingCommentId > 0 {
-			_, _, err := issuesService.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
+			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
 			if err != nil {
 				fmt.Println(err)
 			}
 		} else {
-			_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
+			_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -190,11 +138,45 @@ func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.
 			return
 		}
 		createComment := ghc.GithubNoFlagComment()
-		_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
+		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	} else {
 		fmt.Println("No flags found.")
+	}
+}
+
+func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
+	rawOpts := github.RawOptions{Type: github.Diff}
+	raw, _, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo[1], prNumber, rawOpts)
+	if err != nil {
+		return nil, err
+	}
+	return diff.ParseMultiFileDiff([]byte(raw))
+}
+
+func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, error) {
+	// Needed for ld-find-code-refs to work as a library
+	viper.Set("dir", config.Workspace)
+	viper.Set("accessToken", config.ApiToken)
+
+	err := options.InitYAML()
+	if err != nil {
+		fmt.Println(err)
+	}
+	opts, err := options.GetOptions()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
+
+}
+
+func failExit(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
