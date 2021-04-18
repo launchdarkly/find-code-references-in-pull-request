@@ -2,7 +2,7 @@ package config
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"os"
 	"strings"
 
@@ -21,36 +21,33 @@ type Config struct {
 	GHClient      *github.Client
 }
 
-func ValidateInputandParse(ctx context.Context) *Config {
+func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	var config Config
 	config.LdProject = os.Getenv("INPUT_PROJKEY")
 	if config.LdProject == "" {
-		fmt.Println("`project` is required.")
-		os.Exit(1)
+		return nil, errors.New("`project` is required.")
+
 	}
 	config.LdEnvironment = os.Getenv("INPUT_ENVKEY")
 	if config.LdEnvironment == "" {
-		fmt.Println("`environment` is required.")
-		os.Exit(1)
+		return nil, errors.New("`environment` is required.")
 	}
 	config.LdInstance = os.Getenv("INPUT_BASEURI")
 	if config.LdInstance == "" {
-		fmt.Println("`baseUri` is required.")
-		os.Exit(1)
+		return nil, errors.New("`baseUri` is required.")
 	}
 	config.Owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
 	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 
 	config.ApiToken = os.Getenv("INPUT_ACCESSTOKEN")
 	if config.ApiToken == "" {
-		fmt.Println("`accessToken` is required.")
-		os.Exit(1)
+		return nil, errors.New("`accessToken` is required.")
 	}
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
 
 	config.GHClient = getGithubClient(ctx)
-	return &config
+	return &config, nil
 }
 
 func getGithubClient(ctx context.Context) *github.Client {

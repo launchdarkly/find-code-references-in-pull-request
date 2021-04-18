@@ -21,7 +21,11 @@ import (
 
 func main() {
 	ctx := context.Background()
-	config := lcr.ValidateInputandParse(ctx)
+	config, err := lcr.ValidateInputandParse(ctx)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
