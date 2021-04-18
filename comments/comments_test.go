@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/launchdarkly/cr-flags/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,6 +71,34 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 	}
 }
 
+type testProcessor struct {
+	Flags    ldapi.FeatureFlags
+	FlagsRef FlagsRef
+	Config   config.Config
+}
+
+func newProcessFlagAccEnv() *testProcessor {
+	flag := createFlag("example-flag")
+	flags := ldapi.FeatureFlags{}
+	flags.Items = append(flags.Items, flag)
+	flagsAdded := make(map[string][]string)
+	flagsRemoved := make(map[string][]string)
+	flagsRef := FlagsRef{
+		FlagsAdded:   flagsAdded,
+		FlagsRemoved: flagsRemoved,
+	}
+
+	config := config.Config{
+		LdEnvironment: "production",
+		LdInstance:    "https://example.com/",
+	}
+	return &testProcessor{
+		Flags:    flags,
+		FlagsRef: flagsRef,
+		Config:   config,
+	}
+}
+
 func TestGithubFlagComment(t *testing.T) {
 	acceptanceTestEnv := newTestAccEnv()
 	t.Run("Basic flag", acceptanceTestEnv.noAliasesNoTags)
@@ -78,6 +107,10 @@ func TestGithubFlagComment(t *testing.T) {
 	t.Run("Flag with aliases and tags", acceptanceTestEnv.AliasesAndTags)
 }
 
+func TestProcessFlags(t *testing.T) {
+	processor := newProcessFlagAccEnv()
+	t.Run("Basic Test", processor.Basic)
+}
 func TestGithubNoFlagComment(t *testing.T) {
 	comment := GithubNoFlagComment()
 	assert.Equal(t, "LaunchDarkly Flag Details:\n **No flag references found in PR**", *comment.Body, "they should be equal")
@@ -148,4 +181,13 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n---\n** **Removed** **\ncomment1\ncomment2\n comment hash: 2ab0148ecf63637c38a87d2f89eb2276", comment)
+}
+
+func (e *testProcessor) Basic(t *testing.T) {
+	e.FlagsRef.FlagsAdded["example-flag"] = []string{""}
+	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
+	expected := FlagComments{
+		CommentsAdded: []string{"\n**[Sample Flag](https://example.com/test)** `example-flag`\n\nDefault variation: `true`\nOff variation: `true`\nKind: **boolean**\nTemporary: **false**\n"},
+	}
+	assert.Equal(t, expected, processor)
 }
