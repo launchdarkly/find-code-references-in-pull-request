@@ -38,6 +38,7 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Needed for ld-find-code-refs to work as a library
 	viper.Set("dir", config.Workspace)
 	viper.Set("accessToken", config.ApiToken)
 
@@ -53,16 +54,10 @@ func main() {
 		fmt.Println("failed to create flag key aliases")
 	}
 	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-	prService := client.PullRequests
-	issuesService := client.Issues
+	client := getGithubClient(ctx)
 
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := prService.GetRaw(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, rawOpts)
+	raw, _, err := client.PullRequests.GetRaw(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 
 	flagsRef := ghc.FlagsRef{
@@ -83,7 +78,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	existingComment := checkExistingComments(event, config, issuesService, ctx)
+	existingComment := checkExistingComments(event, config, client.Issues, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
@@ -94,7 +89,7 @@ func main() {
 		Body: &postedComments,
 	}
 
-	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, issuesService, comment)
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, client.Issues, comment)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
@@ -166,4 +161,12 @@ func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.
 	} else {
 		fmt.Println("No flags found.")
 	}
+}
+
+func getGithubClient(ctx context.Context) *github.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	return github.NewClient(tc)
 }
