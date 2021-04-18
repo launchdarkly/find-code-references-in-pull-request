@@ -12,7 +12,7 @@ jobs:
         id: find_flags
         with:
           projKey: support-service
-          envKey: dano
+          envKey: dano,production
           accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           baseUri: https://app.launchdarkly.com

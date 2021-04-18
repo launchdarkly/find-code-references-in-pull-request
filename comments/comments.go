@@ -18,21 +18,21 @@ type Comment struct {
 	Flag        ldapi.FeatureFlag
 	Aliases     []string
 	ChangeType  string
-	Environment ldapi.FeatureFlagConfig
+	Environment map[string]ldapi.FeatureFlagConfig
 	LDInstance  string
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment string, instance string) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment []string, instance string) (string, error) {
 
 	commentTemplate := Comment{
 		Flag:        flag,
 		Aliases:     aliases,
-		Environment: flag.Environments[environment],
+		Environment: flag.Environments,
 		LDInstance:  instance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.0.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
 *{{trim .Flag.Description}}*
 {{- end}}
@@ -40,8 +40,10 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment str
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 
-Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
-Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
+{{range $env := .Environment}}
+{{ $env.Key }}
+Default variation: ` + "`" + `{{(index .Flag.Variations $env.Fallthrough_.Variation).Value}}` + "`" + `
+Off variation: ` + "`" + `{{(index .Flag.Variations $env.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
