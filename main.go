@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	config := validateInput()
+	config := lcr.ValidateInputandParse()
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -38,8 +38,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	workspace := os.Getenv("GITHUB_WORKSPACE")
-	viper.Set("dir", workspace)
+	viper.Set("dir", config.Workspace)
 	viper.Set("accessToken", config.ApiToken)
 
 	err = options.InitYAML()
@@ -48,7 +47,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, workspace)
+	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("failed to create flag key aliases")
@@ -72,7 +71,7 @@ func main() {
 	}
 
 	for _, parsedDiff := range multiFiles {
-		getPath := ldiff.CheckDiff(parsedDiff, workspace)
+		getPath := ldiff.CheckDiff(parsedDiff, config.Workspace)
 		if getPath.Skip {
 			continue
 		}
@@ -96,36 +95,6 @@ func main() {
 	}
 
 	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, issuesService, comment)
-
-}
-
-func validateInput() *lcr.Config {
-	var config lcr.Config
-	config.LdProject = os.Getenv("INPUT_PROJKEY")
-	if config.LdProject == "" {
-		fmt.Println("`project` is required.")
-		os.Exit(1)
-	}
-	config.LdEnvironment = os.Getenv("INPUT_ENVKEY")
-	if config.LdEnvironment == "" {
-		fmt.Println("`environment` is required.")
-		os.Exit(1)
-	}
-	config.LdInstance = os.Getenv("INPUT_BASEURI")
-	if config.LdInstance == "" {
-		fmt.Println("`baseUri` is required.")
-		os.Exit(1)
-	}
-	config.Owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
-	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-
-	config.ApiToken = os.Getenv("INPUT_ACCESSTOKEN")
-	if config.ApiToken == "" {
-		fmt.Println("`accessToken` is required.")
-		os.Exit(1)
-	}
-
-	return &config
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
