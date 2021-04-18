@@ -26,7 +26,6 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	fullPathToA := workspace + "/" + parsedFileA[1]
 	fullPathToB := workspace + "/" + parsedFileB[1]
 	info, err := os.Stat(fullPathToB)
-	fmt.Println(info.IsDir())
 	var isDir bool
 	// If there is no 'b' parse 'a', means file is deleted.
 	if info == nil {
@@ -40,12 +39,9 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 		fmt.Println(err)
 	}
 	// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
-	fmt.Println(diffPaths.FileToParse)
-	fmt.Println(allIgnores.Match(diffPaths.FileToParse, isDir))
 	if strings.HasPrefix(parsedFileB[1], ".") && strings.HasPrefix(parsedFileA[1], ".") || allIgnores.Match(diffPaths.FileToParse, isDir) {
 		diffPaths.Skip = true
 	}
-	fmt.Println(diffPaths.Skip)
 	// We don't want to run on renaming of files.
 	if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
 		diffPaths.Skip = true

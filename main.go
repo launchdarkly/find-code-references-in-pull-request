@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/antihax/optional"
@@ -12,6 +11,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go"
 	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
+	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
 	"github.com/launchdarkly/ld-find-code-refs/options"
@@ -19,15 +19,6 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
-
-type config struct {
-	ldProject     string
-	ldEnvironment string
-	ldInstance    string
-	owner         string
-	repo          []string
-	apiToken      string
-}
 
 func main() {
 	config := validateInput()
@@ -37,7 +28,7 @@ func main() {
 	}
 
 	// Query for flags
-	flags, err := getFlags(config)
+	flags, flagKeys, err := getFlags(config)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -47,14 +38,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	flagKeys := make([]string, 0, len(flags.Items))
-	for _, flag := range append(flags.Items) {
-		flagKeys = append(flagKeys, flag.Key)
-	}
-
 	workspace := os.Getenv("GITHUB_WORKSPACE")
 	viper.Set("dir", workspace)
-	viper.Set("accessToken", config.apiToken)
+	viper.Set("accessToken", config.ApiToken)
 
 	err = options.InitYAML()
 	opts, err := options.GetOptions()
@@ -77,7 +63,7 @@ func main() {
 	issuesService := client.Issues
 
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := prService.GetRaw(ctx, config.owner, config.repo[1], *event.PullRequest.Number, rawOpts)
+	raw, _, err := prService.GetRaw(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, rawOpts)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 
 	flagsRef := ghc.FlagsRef{
@@ -93,62 +79,15 @@ func main() {
 		for _, raw := range parsedDiff.Hunks {
 			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases)
 		}
-
 	}
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	var existingComment int64
-	var existingCommentBody string
-	existingComment, existingCommentBody = checkExistingComments(event, config, issuesService, ctx)
+	existingComment := checkExistingComments(event, config, issuesService, ctx)
+	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 
-	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
-	for key := range flagsRef.FlagsAdded {
-		addedKeys = append(addedKeys, key)
-	}
-	// sort keys so hashing can work for checking if comment already exists
-	sort.Strings(addedKeys)
-	buildComment := ghc.FlagComments{}
-	for _, flagKey := range addedKeys {
-		// If flag is in both added and removed then it is being modified
-		delete(flagsRef.FlagsRemoved, flagKey)
-		aliases := flagsRef.FlagsAdded[flagKey]
-
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
-		idx, _ := find(flags.Items, flagKey)
-		createComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for key := range flagsRef.FlagsRemoved {
-		removedKeys = append(removedKeys, key)
-	}
-	sort.Strings(removedKeys)
-	for _, flagKey := range removedKeys {
-		aliases := flagsRef.FlagsRemoved[flagKey]
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
-		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := ghc.GithubFlagComment(flags.Items[idx], flagAliases, config.ldEnvironment, config.ldInstance)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingCommentBody)
+	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
 	if postedComments == "" {
 		return
 	}
@@ -156,52 +95,32 @@ func main() {
 		Body: &postedComments,
 	}
 
-	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
-		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, config.owner, config.repo[1], existingComment, &comment)
-		} else {
-			_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, &comment)
-		}
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else if len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
-		// Check if this is already the body, flags could have originally been included then removed in later commit
-		if strings.Contains(existingCommentBody, "No flag references found in PR") {
-			return
-		}
-		createComment := ghc.GithubNoFlagComment()
-		_, _, err = issuesService.CreateComment(ctx, config.owner, config.repo[1], *event.PullRequest.Number, createComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else {
-		fmt.Println("No flags found.")
-	}
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, issuesService, comment)
+
 }
 
-func validateInput() *config {
-	var config config
-	config.ldProject = os.Getenv("INPUT_PROJKEY")
-	if config.ldProject == "" {
+func validateInput() *lcr.Config {
+	var config lcr.Config
+	config.LdProject = os.Getenv("INPUT_PROJKEY")
+	if config.LdProject == "" {
 		fmt.Println("`project` is required.")
 		os.Exit(1)
 	}
-	config.ldEnvironment = os.Getenv("INPUT_ENVKEY")
-	if config.ldEnvironment == "" {
+	config.LdEnvironment = os.Getenv("INPUT_ENVKEY")
+	if config.LdEnvironment == "" {
 		fmt.Println("`environment` is required.")
 		os.Exit(1)
 	}
-	config.ldInstance = os.Getenv("INPUT_BASEURI")
-	if config.ldInstance == "" {
+	config.LdInstance = os.Getenv("INPUT_BASEURI")
+	if config.LdInstance == "" {
 		fmt.Println("`baseUri` is required.")
 		os.Exit(1)
 	}
-	config.owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
-	config.repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+	config.Owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
+	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 
-	config.apiToken = os.Getenv("INPUT_ACCESSTOKEN")
-	if config.apiToken == "" {
+	config.ApiToken = os.Getenv("INPUT_ACCESSTOKEN")
+	if config.ApiToken == "" {
 		fmt.Println("`accessToken` is required.")
 		os.Exit(1)
 	}
@@ -209,34 +128,73 @@ func validateInput() *config {
 	return &config
 }
 
-func getFlags(config *config) (ldapi.FeatureFlags, error) {
-	ldClient, err := lc.NewClient(config.apiToken, config.ldInstance, false)
+func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
+	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
 	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
-		Env:     optional.NewInterface(config.ldEnvironment),
+		Env:     optional.NewInterface(config.LdEnvironment),
 		Summary: optional.NewBool(false),
 	}
-	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.ldProject, &flagOpts)
+	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.LdProject, &flagOpts)
 	if err != nil {
-		return ldapi.FeatureFlags{}, err
+		return ldapi.FeatureFlags{}, []string{}, err
 	}
 
-	return flags, nil
+	flagKeys := make([]string, 0, len(flags.Items))
+	for _, flag := range append(flags.Items) {
+		flagKeys = append(flagKeys, flag.Key)
+	}
+	return flags, flagKeys, nil
 }
 
-func checkExistingComments(event *github.PullRequestEvent, config *config, issuesService *github.IssuesService, ctx context.Context) (int64, string) {
-	comments, _, err := issuesService.ListComments(ctx, config.owner, config.repo[1], *event.PullRequest.Number, nil)
+func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, issuesService *github.IssuesService, ctx context.Context) *github.IssueComment {
+	comments, _, err := issuesService.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	for _, comment := range comments {
 		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-			return int64(comment.GetID()), *comment.Body
+			return comment
 		}
 	}
 
-	return int64(0), ""
+	return nil
+}
+
+func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, issuesService *github.IssuesService, comment github.IssueComment) {
+	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
+		var existingCommentId int64
+		if existingComment != nil {
+			existingCommentId = int64(existingComment.GetID())
+		} else {
+			existingCommentId = 0
+		}
+		if existingCommentId > 0 {
+			_, _, err := issuesService.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
+	} else if len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
+		// Check if this is already the body, flags could have originally been included then removed in later commit
+		if existingComment != nil && strings.Contains(*existingComment.Body, "No flag references found in PR") {
+			return
+		}
+		createComment := ghc.GithubNoFlagComment()
+		_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("No flags found.")
+	}
 }

@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"sort"
 	"strings"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	lcr "github.com/launchdarkly/cr-flags/config"
 )
 
 type Comment struct {
@@ -20,7 +22,7 @@ type Comment struct {
 	LDInstance  string
 }
 
-func GithubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment string, instance string) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment string, instance string) (string, error) {
 
 	commentTemplate := Comment{
 		Flag:        flag,
@@ -75,7 +77,7 @@ type FlagsRef struct {
 	FlagsRemoved map[string][]string
 }
 
-func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingCommentBody string) string {
+func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
@@ -93,11 +95,71 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	postedComments := strings.Join(commentStr, "\n")
 
 	hash := md5.Sum([]byte(postedComments))
-	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
+	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
 		fmt.Println("comment already exists")
 		return ""
 	}
 	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
 
 	return postedComments
+}
+
+func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
+	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
+	for key := range flagsRef.FlagsAdded {
+		addedKeys = append(addedKeys, key)
+	}
+	// sort keys so hashing can work for checking if comment already exists
+	sort.Strings(addedKeys)
+	buildComment := FlagComments{}
+
+	for _, flagKey := range addedKeys {
+		// If flag is in both added and removed then it is being modified
+		delete(flagsRef.FlagsRemoved, flagKey)
+		aliases := flagsRef.FlagsAdded[flagKey]
+
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
+		idx, _ := find(flags.Items, flagKey)
+		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
+	for key := range flagsRef.FlagsRemoved {
+		removedKeys = append(removedKeys, key)
+	}
+	sort.Strings(removedKeys)
+	for _, flagKey := range removedKeys {
+		aliases := flagsRef.FlagsRemoved[flagKey]
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
+		}
+		idx, _ := find(flags.Items, flagKey)
+		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	return buildComment
+}
+
+func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
+	for i, item := range slice {
+		if item.Key == val {
+			return i, true
+		}
+	}
+	return -1, false
 }

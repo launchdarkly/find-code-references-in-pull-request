@@ -94,7 +94,7 @@ func TestBuildFlagComment(t *testing.T) {
 }
 
 func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
-	comment, err := GithubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -102,7 +102,7 @@ func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
-	comment, err := GithubFlagComment(e.Flag, []string{"exampleFlag"}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag"}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -111,7 +111,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 
 func (e *testFlagEnv) Tag(t *testing.T) {
 	e.Flag.Tags = []string{"myTag"}
-	comment, err := GithubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -120,7 +120,7 @@ func (e *testFlagEnv) Tag(t *testing.T) {
 
 func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 	e.Flag.Tags = []string{"myTag", "otherTag", "finalTag"}
-	comment, err := GithubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -130,14 +130,14 @@ func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 	e.FlagsRef.FlagsAdded["example-flag"] = []string{}
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
-	comment := BuildFlagComment(e.Comments, e.FlagsRef, "")
+	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n comment hash: f66709e4eb57c204ca233601b6620203", comment)
 }
 
 func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.FlagsRef.FlagsRemoved["example-flag"] = []string{}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
-	comment := BuildFlagComment(e.Comments, e.FlagsRef, "")
+	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Removed** **\ncomment1\ncomment2\n comment hash: 293c9cd1d0c3b75c193fa614c0ac6bff", comment)
 }
 
@@ -146,6 +146,6 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.FlagsRef.FlagsRemoved["example-flag"] = []string{}
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
-	comment := BuildFlagComment(e.Comments, e.FlagsRef, "")
+	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n---\n** **Removed** **\ncomment1\ncomment2\n comment hash: 2ab0148ecf63637c38a87d2f89eb2276", comment)
 }
