@@ -22,10 +22,8 @@ import (
 func main() {
 	ctx := context.Background()
 	config, err := lcr.ValidateInputandParse(ctx)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	failExit(err)
+
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -34,32 +32,18 @@ func main() {
 
 	// Query for flags
 	flags, flagKeys, err := getFlags(config)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	failExit(err)
+
 	if len(flags.Items) == 0 {
 		fmt.Println("No flags found.")
 		os.Exit(0)
 	}
 
-	// Needed for ld-find-code-refs to work as a library
-	viper.Set("dir", config.Workspace)
-	viper.Set("accessToken", config.ApiToken)
-
-	err = options.InitYAML()
-	opts, err := options.GetOptions()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
-	if err != nil {
-		fmt.Printf("failed to create flag key aliases: %s", err)
-	}
-	//client := getGithubClient(ctx)
+	aliases, err := getAliases(config, flagKeys)
+	failExit(err)
 
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
+	failExit(err)
 
 	flagsRef := ghc.FlagsRef{
 		FlagsAdded:   make(map[string][]string),
@@ -171,4 +155,29 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 		return nil, err
 	}
 	return diff.ParseMultiFileDiff([]byte(raw))
+}
+
+func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, error) {
+	// Needed for ld-find-code-refs to work as a library
+	viper.Set("dir", config.Workspace)
+	viper.Set("accessToken", config.ApiToken)
+
+	err := options.InitYAML()
+	if err != nil {
+		fmt.Println(err)
+	}
+	opts, err := options.GetOptions()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
+
+}
+
+func failExit(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
