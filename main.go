@@ -65,7 +65,6 @@ func main() {
 
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	fmt.Println(buildComment)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
 	if postedComments == "" {
 		return
