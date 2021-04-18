@@ -82,7 +82,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 		return ldapi.FeatureFlags{}, []string{}, err
 	}
 	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
-		Env:     optional.NewInterface(config.LdEnvironment),
+		Env:     optional.NewInterface(os.Getenv("INPUT_ENVKEY")),
 		Summary: optional.NewBool(false),
 	}
 	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.LdProject, &flagOpts)
