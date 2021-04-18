@@ -94,7 +94,7 @@ func TestBuildFlagComment(t *testing.T) {
 }
 
 func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
-	comment, err := GithubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -102,7 +102,7 @@ func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
-	comment, err := GithubFlagComment(e.Flag, []string{"exampleFlag"}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag"}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -111,7 +111,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 
 func (e *testFlagEnv) Tag(t *testing.T) {
 	e.Flag.Tags = []string{"myTag"}
-	comment, err := GithubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -120,7 +120,7 @@ func (e *testFlagEnv) Tag(t *testing.T) {
 
 func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 	e.Flag.Tags = []string{"myTag", "otherTag", "finalTag"}
-	comment, err := GithubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, "production", "https://example.com/")
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
