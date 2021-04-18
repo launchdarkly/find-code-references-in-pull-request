@@ -1,9 +1,13 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 type Config struct {
@@ -14,9 +18,10 @@ type Config struct {
 	Repo          []string
 	ApiToken      string
 	Workspace     string
+	GHClient      *github.Client
 }
 
-func ValidateInputandParse() *Config {
+func ValidateInputandParse(ctx context.Context) *Config {
 	var config Config
 	config.LdProject = os.Getenv("INPUT_PROJKEY")
 	if config.LdProject == "" {
@@ -44,5 +49,14 @@ func ValidateInputandParse() *Config {
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
 
+	config.GHClient = getGithubClient(ctx)
 	return &config
+}
+
+func getGithubClient(ctx context.Context) *github.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	return github.NewClient(tc)
 }

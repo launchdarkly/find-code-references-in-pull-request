@@ -17,14 +17,15 @@ import (
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
 )
 
 func main() {
-	config := lcr.ValidateInputandParse()
+	ctx := context.Background()
+	config := lcr.ValidateInputandParse(ctx)
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
+		os.Exit(1)
 	}
 
 	// Query for flags
@@ -50,15 +51,11 @@ func main() {
 
 	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("failed to create flag key aliases")
+		fmt.Printf("failed to create flag key aliases: %s", err)
 	}
-	ctx := context.Background()
-	client := getGithubClient(ctx)
+	//client := getGithubClient(ctx)
 
-	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := client.PullRequests.GetRaw(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, rawOpts)
-	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
+	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 
 	flagsRef := ghc.FlagsRef{
 		FlagsAdded:   make(map[string][]string),
@@ -78,7 +75,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	existingComment := checkExistingComments(event, config, client.Issues, ctx)
+	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
@@ -89,13 +86,13 @@ func main() {
 		Body: &postedComments,
 	}
 
-	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, client.Issues, comment)
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	if err != nil {
-		fmt.Println(err)
+		return ldapi.FeatureFlags{}, []string{}, err
 	}
 	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
 		Env:     optional.NewInterface(config.LdEnvironment),
@@ -113,8 +110,8 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	return flags, flagKeys, nil
 }
 
-func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, issuesService *github.IssuesService, ctx context.Context) *github.IssueComment {
-	comments, _, err := issuesService.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
+func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
+	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -128,21 +125,21 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, i
 	return nil
 }
 
-func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, issuesService *github.IssuesService, comment github.IssueComment) {
+func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) {
 	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
 		var existingCommentId int64
 		if existingComment != nil {
-			existingCommentId = int64(existingComment.GetID())
+			existingCommentId = existingComment.GetID()
 		} else {
 			existingCommentId = 0
 		}
 		if existingCommentId > 0 {
-			_, _, err := issuesService.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
+			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
 			if err != nil {
 				fmt.Println(err)
 			}
 		} else {
-			_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
+			_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -154,7 +151,7 @@ func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.
 			return
 		}
 		createComment := ghc.GithubNoFlagComment()
-		_, _, err := issuesService.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
+		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -163,10 +160,11 @@ func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.
 	}
 }
 
-func getGithubClient(ctx context.Context) *github.Client {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	return github.NewClient(tc)
+func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
+	rawOpts := github.RawOptions{Type: github.Diff}
+	raw, _, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo[1], prNumber, rawOpts)
+	if err != nil {
+		return nil, err
+	}
+	return diff.ParseMultiFileDiff([]byte(raw))
 }
