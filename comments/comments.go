@@ -46,7 +46,6 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{range $key, $env := .Environment }}
 {{ $key }}
-Default variation: ` + "`" + `{{(index $.Flag.Variations .Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
 {{- end }}
