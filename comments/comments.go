@@ -46,7 +46,8 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{range $key, $env := .Environments }}
 {{ $key }}
-Default variation: ` + "`" + `{{ (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
+{{ kindOf .Fallthrough_.Variation }}
+Default variation: ` + "`" + `{{ toJson (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
 {{ end }}
