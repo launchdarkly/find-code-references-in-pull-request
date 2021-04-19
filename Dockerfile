@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:1.15.11-alpine3.13
 LABEL com.github.actions.name="LaunchDarkly Find Flags"
 LABEL com.github.actions.description="Flags"
 LABEL homepage="https://www.launchdarkly.com"
