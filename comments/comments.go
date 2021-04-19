@@ -54,6 +54,8 @@ Default variation: ` + "`" + `{{ (index $.Flag.Variations .Fallthrough_.Variatio
 {{ else if .Fallthrough_.Rollout }}
 Default variation: ` + "`" + `{{.Fallthrough_.Rollout}}` + "`" + `
 {{ end }}
+{{ else }}
+Default variation: ` + "`Default in Code will be used`" + `
 {{ end }}
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
