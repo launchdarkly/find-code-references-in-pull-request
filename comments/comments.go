@@ -27,13 +27,10 @@ type Comment struct {
 }
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
-	primaryEnv := flag.Environments[config.LdEnvironment[0]]
-	fmt.Println(primaryEnv.Site.Href)
-
 	commentTemplate := Comment{
 		Flag:         flag,
 		Aliases:      aliases,
-		Primary:      primaryEnv,
+		Primary:      flag.Environments[config.LdEnvironment[0]],
 		Environments: flag.Environments,
 		LDInstance:   config.LdInstance,
 	}
@@ -49,7 +46,7 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{range $key, $env := .Environments }}
 {{ $key }}
-Default variation: ` + "`" + `{{ (index $.Flag.Variations $.Primary.Fallthrough_.Variation).Value }}` + "`" + `
+Default variation: ` + "`" + `{{ (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
 {{ end }}
