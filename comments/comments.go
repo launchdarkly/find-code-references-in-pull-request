@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
 )
 
@@ -18,21 +19,24 @@ type Comment struct {
 	Flag        ldapi.FeatureFlag
 	Aliases     []string
 	ChangeType  string
+	Primary     string
 	Environment map[string]ldapi.FeatureFlagConfig
 	LDInstance  string
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment []string, instance string) (string, error) {
-
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
+	primaryEnv := config.LdEnvironment[0]
 	commentTemplate := Comment{
 		Flag:        flag,
 		Aliases:     aliases,
+		Primary:     primaryEnv,
 		Environment: flag.Environments,
-		LDInstance:  instance,
+		LDInstance:  config.LdInstance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.0.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+{{$primaryEnv := .Primary}}
+**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.$primaryEnv.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
 *{{trim .Flag.Description}}*
 {{- end}}
@@ -128,7 +132,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 			}
 		}
 		idx, _ := find(flags.Items, flagKey)
-		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -148,7 +152,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 			}
 		}
 		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			fmt.Println(err)
