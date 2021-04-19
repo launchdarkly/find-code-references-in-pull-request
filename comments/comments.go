@@ -63,6 +63,7 @@ Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 	if err != nil {
 		return "", err
 	}
+	fmt.Println(commentBody.String())
 	return commentBody.String(), nil
 }
 
