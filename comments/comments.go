@@ -43,7 +43,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 
-{{range $env := .Environment}}
+{{range $key, $env := .Environment}}
 {{ $env.Key }}
 Default variation: ` + "`" + `{{(index .Flag.Variations $env.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Flag.Variations $env.OffVariation).Value}}` + "`" + `
