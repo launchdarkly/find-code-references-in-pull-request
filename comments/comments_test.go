@@ -11,15 +11,20 @@ import (
 func ptr(v interface{}) *interface{} { return &v }
 
 type testFlagEnv struct {
-	Flag ldapi.FeatureFlag
+	Flag   ldapi.FeatureFlag
+	Config config.Config
 }
 
 func newTestAccEnv() *testFlagEnv {
 
 	flag := createFlag("example-flag")
-
+	config := config.Config{
+		LdEnvironment: []string{"production"},
+		LdInstance:    "https://example.com/",
+	}
 	return &testFlagEnv{
-		Flag: flag,
+		Flag:   flag,
+		Config: config,
 	}
 }
 
@@ -89,7 +94,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	}
 
 	config := config.Config{
-		LdEnvironment: "production",
+		LdEnvironment: []string{"production"},
 		LdInstance:    "https://example.com/",
 	}
 	return &testProcessor{
@@ -127,7 +132,8 @@ func TestBuildFlagComment(t *testing.T) {
 }
 
 func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
+
+	comment, err := githubFlagComment(e.Flag, []string{}, &e.Config)
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -135,7 +141,7 @@ func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag"}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag"}, &e.Config)
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -144,7 +150,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 
 func (e *testFlagEnv) Tag(t *testing.T) {
 	e.Flag.Tags = []string{"myTag"}
-	comment, err := githubFlagComment(e.Flag, []string{}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{}, &e.Config)
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
@@ -153,7 +159,7 @@ func (e *testFlagEnv) Tag(t *testing.T) {
 
 func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 	e.Flag.Tags = []string{"myTag", "otherTag", "finalTag"}
-	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, "production", "https://example.com/")
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, &e.Config)
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}

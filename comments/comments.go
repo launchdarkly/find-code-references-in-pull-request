@@ -46,10 +46,14 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{range $key, $env := .Flag.Environments }}
 {{ $key }}
+{{ if .Fallthrough_.Variation }}
 Default variation: ` + "`" + `{{(index $.Flag.Variations .Fallthrough_.Variation).Value}}` + "`" + `
+{{ else }}
+Default variation: ` + "`" + `{{.Fallthrough_.Rollout}}` + "`" + `
+{{ end }}
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
-{{- end }}
+{{ end }}
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
