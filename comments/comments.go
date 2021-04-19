@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
-	"reflect"
 	"sort"
 	"strings"
 
@@ -73,17 +72,6 @@ Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 		return "", err
 	}
 	return commentBody.String(), nil
-}
-
-func avail(name string, data interface{}) bool {
-	v := reflect.ValueOf(data)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	if v.Kind() != reflect.Struct {
-		return false
-	}
-	return v.FieldByName(name).IsValid()
 }
 
 func GithubNoFlagComment() *github.IssueComment {
