@@ -85,7 +85,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 			envString = envString + "&"
 		}
 	}
-	url := config.LdInstance + "/api/v2/flags/" + config.LdProject + "?" + envString
+	url := config.LdInstance + "/api/v2/flags/" + config.LdProject + "?" + envString + "&summary=0"
 	fmt.Println(url)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
