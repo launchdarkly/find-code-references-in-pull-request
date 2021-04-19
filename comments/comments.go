@@ -50,7 +50,7 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 {{ $key }}
 {{ if kindIs "ptr" .Fallthrough_ }}
 {{ if kindIs "int32" .Fallthrough_.Variation }}
-Default variation: ` + "`" + `{{ (index $.Flag.Variations .Primary.Fallthrough_.Variation).Value }}` + "`" + `
+Default variation: ` + "`" + `{{ (index $.Flag.Variations $.Primary.Fallthrough_.Variation).Value }}` + "`" + `
 {{ else if .Fallthrough_.Rollout }}
 Default variation: ` + "`" + `{{.Fallthrough_.Rollout}}` + "`" + `
 {{ end }}
