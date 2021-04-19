@@ -6,8 +6,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/Masterminds/sprig/v3"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
@@ -46,10 +49,12 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{range $key, $env := .Flag.Environments }}
 {{ $key }}
-{{ if .Fallthrough_.Variation }}
-Default variation: ` + "`" + `{{(index $.Flag.Variations .Fallthrough_.Variation).Value}}` + "`" + `
-{{ else }}
+{{ if .Fallthrough_ }}
+{{ if kindIs "int32" .Fallthrough_.Variation }}
+Default variation: ` + "`" + `{{ (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
+{{ else if .Fallthrough_.Rollout }}
 Default variation: ` + "`" + `{{.Fallthrough_.Rollout}}` + "`" + `
+{{ end }}
 {{ end }}
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
@@ -62,12 +67,23 @@ Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 {{- end}}
 {{- end}}
 `
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return "", err
 	}
 	return commentBody.String(), nil
+}
+
+func avail(name string, data interface{}) bool {
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return false
+	}
+	return v.FieldByName(name).IsValid()
 }
 
 func GithubNoFlagComment() *github.IssueComment {

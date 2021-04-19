@@ -3,6 +3,7 @@ module github.com/launchdarkly/cr-flags
 go 1.15
 
 require (
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/antihax/optional v1.0.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
