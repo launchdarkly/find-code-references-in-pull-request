@@ -18,12 +18,12 @@ import (
 )
 
 type Comment struct {
-	Flag        ldapi.FeatureFlag
-	Aliases     []string
-	ChangeType  string
-	Primary     ldapi.FeatureFlagConfig
-	Environment map[string]ldapi.FeatureFlagConfig
-	LDInstance  string
+	Flag         ldapi.FeatureFlag
+	Aliases      []string
+	ChangeType   string
+	Primary      ldapi.FeatureFlagConfig
+	Environments map[string]ldapi.FeatureFlagConfig
+	LDInstance   string
 }
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
@@ -31,11 +31,11 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	fmt.Println(primaryEnv.Site.Href)
 
 	commentTemplate := Comment{
-		Flag:        flag,
-		Aliases:     aliases,
-		Primary:     primaryEnv,
-		Environment: flag.Environments,
-		LDInstance:  config.LdInstance,
+		Flag:         flag,
+		Aliases:      aliases,
+		Primary:      primaryEnv,
+		Environments: flag.Environments,
+		LDInstance:   config.LdInstance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
@@ -46,8 +46,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 {{- if .Flag.Tags}}
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
-{{$.Primary.Fallthrough_.Variation}}
-
+Default variation: ` + "`" + `{{(index .Flag.Variations .Primary.Fallthrough_.Variation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
