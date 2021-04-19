@@ -86,6 +86,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 		}
 	}
 	url := config.LdInstance + "/api/v2/flags/" + config.LdProject + "?" + envString
+	fmt.Println(url)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
@@ -101,7 +102,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	// }
 	//flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.LdProject, &flagOpts)
 	flags := ldapi.FeatureFlags{}
-	err = json.NewDecoder(resp.Body).Decode(flags)
+	err = json.NewDecoder(resp.Body).Decode(&flags)
 	if err != nil {
 		return ldapi.FeatureFlags{}, []string{}, err
 	}
