@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
-	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
-	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
@@ -77,15 +77,31 @@ func main() {
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
-	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+	//ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+	var envString string
+	for idx, env := range config.LdEnvironment {
+		envString = envString + fmt.Sprintf("env=%s", env)
+		if idx != (len(config.LdEnvironment) - 1) {
+			envString = envString + "&"
+		}
+	}
+	url := config.LdInstance + "/api/v2/flags/" + config.LdProject + "?" + envString
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+
+	req.Header.Add("Authorization", config.ApiToken)
 	if err != nil {
 		return ldapi.FeatureFlags{}, []string{}, err
 	}
-	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
-		Env:     optional.NewInterface(os.Getenv("INPUT_ENVKEY")),
-		Summary: optional.NewBool(false),
-	}
-	flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.LdProject, &flagOpts)
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+	// flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
+	// 	Env:     optional.NewInterface(os.Getenv("INPUT_ENVKEY")),
+	// 	Summary: optional.NewBool(false),
+	// }
+	//flags, _, err := ldClient.Ld.FeatureFlagsApi.GetFeatureFlags(ldClient.Ctx, config.LdProject, &flagOpts)
+	flags := ldapi.FeatureFlags{}
+	err = json.NewDecoder(resp.Body).Decode(flags)
 	if err != nil {
 		return ldapi.FeatureFlags{}, []string{}, err
 	}
