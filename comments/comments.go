@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"sort"
@@ -20,17 +21,19 @@ type Comment struct {
 	Aliases     []string
 	ChangeType  string
 	Primary     ldapi.FeatureFlagConfig
-	Environment map[string]ldapi.FeatureFlagConfig
+	Environment map[string]string
 	LDInstance  string
 }
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
 	primaryEnv := flag.Environments[config.LdEnvironment[0]]
+	env, err := json.Marshal(flag.Environments)
+
 	commentTemplate := Comment{
 		Flag:        flag,
 		Aliases:     aliases,
 		Primary:     primaryEnv,
-		Environment: flag.Environments,
+		Environment: env,
 		LDInstance:  config.LdInstance,
 	}
 	var commentBody bytes.Buffer
