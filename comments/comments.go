@@ -48,15 +48,7 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{range $key, $env := .Flag.Environments }}
 {{ $key }}
-{{ if kindIs "ptr" .Fallthrough_ }}
-{{ if kindIs "int32" .Fallthrough_.Variation }}
 Default variation: ` + "`" + `{{ (index $.Flag.Variations $.Primary.Fallthrough_.Variation).Value }}` + "`" + `
-{{ else if .Fallthrough_.Rollout }}
-Default variation: ` + "`" + `{{.Fallthrough_.Rollout}}` + "`" + `
-{{ end }}
-{{ else }}
-Default variation: ` + "`Default in Code will be used`" + `
-{{ end }}
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
 
 {{ end }}
