@@ -12,7 +12,7 @@ jobs:
         id: find_flags
         with:
           projKey: demo-dan-042021-2
-          envKey: dano
+          envKey: development
           accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           baseUri: https://app.launchdarkly.com
