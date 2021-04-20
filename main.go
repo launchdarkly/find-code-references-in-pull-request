@@ -78,14 +78,16 @@ func main() {
 	//postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
 	customProp := strings.Join(config.Repo, "/")
-	customPropMap := make(map[string]string)
-	customPropMap[customProp] = strconv.Itoa(*event.PullRequest.Number)
 	fmt.Println("patching")
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+	customProperty := ldapi.CustomProperty{
+		Name:  customProp,
+		Value: []string{strconv.Itoa(*event.PullRequest.Number)},
+	}
 	patch := ldapi.PatchOperation{
 		Op:    "add",
-		Path:  fmt.Sprintf("/customProperties/%s", customProp),
-		Value: ptr(customProp),
+		Path:  "/customProperties/",
+		Value: ptr(customProperty),
 	}
 	patchComment := ldapi.PatchComment{
 		Patch:   []ldapi.PatchOperation{patch},
