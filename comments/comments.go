@@ -60,10 +60,9 @@ Environment: **{{ $key }}**
 {{- range .Fallthrough_.Rollout.Variations }}
 | |` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 {{- end }}
-{{"\n"}}
 {{- end }}
 {{- else }}
-| Default | ` + "`" + `{{  toPrettyJson (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`| |" + `
+| Default | ` + "`" + `{{ (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`| |" + `
 {{- end }}
 {{- if kindIs "int32" .OffVariation }}
 | Off | ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "` | |" + `
