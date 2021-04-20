@@ -77,6 +77,7 @@ Environment: **{{ $key }}**
 Off variation: No off variation set.
 {{- end }}
 {{ end }}
+* [ ] test checkmark
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
