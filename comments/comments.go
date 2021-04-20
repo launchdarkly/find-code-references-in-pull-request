@@ -51,7 +51,7 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 {{ end}}
 
 {{- range $key, $env := .Environments }}
-**{{ $key }}**
+Environment: **{{ $key }}**
 {{ if not (isNil .Fallthrough_.Rollout) }}
 Default variation:
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
