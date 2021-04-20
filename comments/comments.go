@@ -56,7 +56,7 @@ Temporary: **{{ .Flag.Temporary }}**
 Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 {{- end}}
-
+{{ "\n" }}
 {{- range $key, $env := .Environments }}
 Environment: **{{ $key }}**
 | Type | Variation | Weight(if Rollout) |
