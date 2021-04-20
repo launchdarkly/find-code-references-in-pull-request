@@ -66,14 +66,14 @@ Environment: **{{ $key }}**
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
 | Default | Rollout | |
 {{- range .Fallthrough_.Rollout.Variations }}
-| |` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 {{- end }}
 {{- end }}
 {{- else }}
 | Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
 {{- end }}
 {{- if kindIs "int32" .OffVariation }}
-| Off | ` + "`" + `{{trunc 50 (toRawJson(index $.Flag.Variations .OffVariation).Value)}` + "` | |" + `
+| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
 {{- else }}
 Off variation: No off variation set.
 {{- end }}
