@@ -53,12 +53,12 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 {{- range $key, $env := .Environments }}
 Environment: **{{ $key }}**
 {{ if not (isNil .Fallthrough_.Rollout) }}
-Default variation:
+Default variation: Rollout
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
-{{ range .Fallthrough_.Rollout.Variations }}
 | Variation | Weight |
+{{ range .Fallthrough_.Rollout.Variations }}
 | --- | --- |
-|` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | " + ` Weight:` + "`" + `{{  divf .Weight 1000 }}%` + "`|" + `
+|` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 {{- end }}
 &nbsp;
 {{- end }}
