@@ -110,6 +110,7 @@ func TestGithubFlagComment(t *testing.T) {
 	t.Run("Flag with alias", acceptanceTestEnv.Alias)
 	t.Run("Flag with tag", acceptanceTestEnv.Tag)
 	t.Run("Flag with aliases and tags", acceptanceTestEnv.AliasesAndTags)
+	t.Run("Flag Rollout", acceptanceTestEnv.RolloutFlag)
 }
 
 func TestProcessFlags(t *testing.T) {
@@ -159,6 +160,34 @@ func (e *testFlagEnv) Tag(t *testing.T) {
 
 func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 	e.Flag.Tags = []string{"myTag", "otherTag", "finalTag"}
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, &e.Config)
+	if err != nil {
+		t.Fatalf("err:%v", err)
+	}
+	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`, `otherTag`, `finalTag`\n\nDefault variation: `true`\nOff variation: `true`\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`, `example_flag`, `ExampleFlag`\n", comment, "they should be equal")
+}
+
+func (e *testFlagEnv) RolloutFlag(t *testing.T) {
+	trueRollout := ldapi.WeightedVariation{
+		Variation: 0,
+		Weight:    12345,
+	}
+	falseRollout := ldapi.WeightedVariation{
+		Variation: 1,
+		Weight:    87655,
+	}
+	rollout := ldapi.Rollout{
+		Variations: []ldapi.WeightedVariation{trueRollout, falseRollout},
+	}
+	environment := ldapi.FeatureFlagConfig{
+		Site: &ldapi.Site{
+			Href: "test",
+		},
+		Fallthrough_: &ldapi.ModelFallthrough{
+			Rollout: &rollout,
+		},
+	}
+	e.Flag.Environments["production"] = environment
 	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, &e.Config)
 	if err != nil {
 		t.Fatalf("err:%v", err)

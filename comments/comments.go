@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -26,6 +27,11 @@ type Comment struct {
 	LDInstance   string
 }
 
+func isNil(a interface{}) bool {
+	defer func() { recover() }()
+	return a == nil || reflect.ValueOf(a).IsNil()
+}
+
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
 	commentTemplate := Comment{
 		Flag:         flag,
@@ -44,12 +50,25 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 
-{{range $key, $env := .Environments }}
+{{- range $key, $env := .Environments }}
 {{ $key }}
+{{- if not (isNil .Fallthrough_.Rollout) }}
+Default variation:
+{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
+{{- range .Fallthrough_.Rollout.Variations }}
+Variation:` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "`" + `
+Weight:` + "`" + `{{  divf .Weight 1000 }}%` + "`" + `
+{{- end }}
+{{- end }}
+{{- else }}
 Default variation: ` + "`" + `{{  (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
+{{- end }}
+{{- if kindIs "int32" .OffVariation }}
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
-
-{{ end }}
+{{- else }}
+Off variation: No off variation set.
+{{- end }}
+{{- end }}
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
@@ -58,12 +77,11 @@ Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 {{- end}}
 {{- end}}
 `
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(commentBody.String())
 	return commentBody.String(), nil
 }
 
