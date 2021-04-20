@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -78,7 +79,8 @@ func main() {
 
 	customProp := strings.Join(config.Repo, "/")
 	customPropMap := make(map[string]string)
-	customPropMap[customProp] = string(*event.PullRequest.Number)
+	customPropMap[customProp] = strconv.Itoa(*event.PullRequest.Number)
+	fmt.Println("patching")
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	patch := ldapi.PatchOperation{
 		Op:    "replace",
@@ -89,12 +91,14 @@ func main() {
 		Patch:   []ldapi.PatchOperation{patch},
 		Comment: "PR Commentor",
 	}
-	updatedFlag, _, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ctx, config.LdProject, "chatbox", patchComment)
+	updatedFlag, resp, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ctx, config.LdProject, "chatbox", patchComment)
 	fmt.Println(updatedFlag)
+	fmt.Println(resp)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	fmt.Println("patched")
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
