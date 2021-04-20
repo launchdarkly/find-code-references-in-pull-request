@@ -52,21 +52,21 @@ Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 
 {{- range $key, $env := .Environments }}
 Environment: **{{ $key }}**
+| Type | Variation | Weight(if Rollout) |
+| --- | --- | --- |
 {{ if not (isNil .Fallthrough_.Rollout) }}
-Default variation: Rollout
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
-| Variation | Weight |
-| --- | --- |
+| Default | Rollout | |
 {{- range .Fallthrough_.Rollout.Variations }}
-|` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+| |` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 {{- end }}
 {{"\n"}}
 {{- end }}
 {{- else }}
-Default variation: ` + "`" + `{{  toPrettyJson (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
+| Default | ` + "`" + `{{  toPrettyJson (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`| |" + `
 {{- end }}
 {{- if kindIs "int32" .OffVariation }}
-Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
+| Off | ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "` | |" + `
 {{- else }}
 Off variation: No off variation set.
 {{- end }}
