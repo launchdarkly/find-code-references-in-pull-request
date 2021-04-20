@@ -83,8 +83,8 @@ func main() {
 	fmt.Println("patching")
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	patch := ldapi.PatchOperation{
-		Op:    "replace",
-		Path:  "/customProperties",
+		Op:    "add",
+		Path:  fmt.Sprintf("/customProperties/%s", customProp),
 		Value: ptr(customProp),
 	}
 	patchComment := ldapi.PatchComment{
