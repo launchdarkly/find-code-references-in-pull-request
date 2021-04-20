@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
@@ -74,10 +75,29 @@ func main() {
 	}
 
 	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+
+	customProp := strings.Join(config.Repo, "/")
+	customPropMap := make(map[string]string)
+	customPropMap[customProp] = string(*event.PullRequest.Number)
+	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+	patch := ldapi.PatchOperation{
+		Op:    "replace",
+		Path:  "/customProperties",
+		Value: ptr(customProp),
+	}
+	patchComment := ldapi.PatchComment{
+		Patch:   []ldapi.PatchOperation{patch},
+		Comment: "PR Commentor",
+	}
+	updatedFlag, _, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ctx, config.LdProject, "chatbox", patchComment)
+	fmt.Println(updatedFlag)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
-	//ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	var envString string
 	for idx, env := range config.LdEnvironment {
 		envString = envString + fmt.Sprintf("env=%s", env)
@@ -197,3 +217,5 @@ func failExit(err error) {
 		os.Exit(1)
 	}
 }
+
+func ptr(v interface{}) *interface{} { return &v }
