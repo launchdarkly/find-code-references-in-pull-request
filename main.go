@@ -65,17 +65,17 @@ func main() {
 		fmt.Println(err)
 	}
 
-	existingComment := checkExistingComments(event, config, ctx)
-	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	if postedComments == "" {
-		return
-	}
-	comment := github.IssueComment{
-		Body: &postedComments,
-	}
+	// existingComment := checkExistingComments(event, config, ctx)
+	// buildComment := ghc.ProcessFlags(flagsRef, flags, config)
+	// postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+	// if postedComments == "" {
+	// 	return
+	// }
+	//comment := github.IssueComment{
+	// 	Body: &postedComments,
+	// }
 
-	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	//postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
 	customProp := strings.Join(config.Repo, "/")
 	customPropMap := make(map[string]string)
