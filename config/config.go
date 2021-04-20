@@ -12,7 +12,7 @@ import (
 
 type Config struct {
 	LdProject     string
-	LdEnvironment string
+	LdEnvironment []string
 	LdInstance    string
 	Owner         string
 	Repo          []string
@@ -28,8 +28,8 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		return nil, errors.New("`project` is required.")
 
 	}
-	config.LdEnvironment = os.Getenv("INPUT_ENVKEY")
-	if config.LdEnvironment == "" {
+	config.LdEnvironment = strings.Split(os.Getenv("INPUT_ENVKEY"), ",")
+	if len(config.LdEnvironment) == 0 {
 		return nil, errors.New("`environment` is required.")
 	}
 	config.LdInstance = os.Getenv("INPUT_BASEURI")

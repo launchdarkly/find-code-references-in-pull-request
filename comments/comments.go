@@ -5,43 +5,51 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"html/template"
+	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/Masterminds/sprig/v3"
+
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
 )
 
 type Comment struct {
-	Flag        ldapi.FeatureFlag
-	Aliases     []string
-	ChangeType  string
-	Environment ldapi.FeatureFlagConfig
-	LDInstance  string
+	Flag         ldapi.FeatureFlag
+	Aliases      []string
+	ChangeType   string
+	Primary      ldapi.FeatureFlagConfig
+	Environments map[string]ldapi.FeatureFlagConfig
+	LDInstance   string
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, environment string, instance string) (string, error) {
+func isNil(a interface{}) bool {
+	defer func() { recover() }()
+	return a == nil || reflect.ValueOf(a).IsNil()
+}
 
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
 	commentTemplate := Comment{
-		Flag:        flag,
-		Aliases:     aliases,
-		Environment: flag.Environments[environment],
-		LDInstance:  instance,
+		Flag:         flag,
+		Aliases:      aliases,
+		Primary:      flag.Environments[config.LdEnvironment[0]],
+		Environments: flag.Environments,
+		LDInstance:   config.LdInstance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
 *{{trim .Flag.Description}}*
 {{- end}}
 {{- if .Flag.Tags}}
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
-
-Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
-Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
+{{ end}}
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
@@ -49,13 +57,34 @@ Temporary: **{{ .Flag.Temporary }}**
 Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 {{- end}}
+{{ "\n" }}
+{{- range $key, $env := .Environments }}
+Environment: **{{ $key }}**
+| Type | Variation | Weight(if Rollout) |
+| --- | --- | --- |
+{{- if not (isNil .Fallthrough_.Rollout) }}
+{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
+| Default | Rollout | |
+{{- range .Fallthrough_.Rollout.Variations }}
+| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+{{- end }}
+{{- end }}
+{{- else }}
+| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
+{{- end }}
+{{- if kindIs "int32" .OffVariation }}
+| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
+{{- else }}
+Off variation: No off variation set.
+{{- end }}
+{{ end }}
 `
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return "", err
 	}
-	return commentBody.String(), nil
+	return html.UnescapeString(commentBody.String()), nil
 }
 
 func GithubNoFlagComment() *github.IssueComment {
@@ -125,7 +154,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 			}
 		}
 		idx, _ := find(flags.Items, flagKey)
-		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -145,7 +174,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 			}
 		}
 		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config.LdEnvironment, config.LdInstance)
+		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			fmt.Println(err)
