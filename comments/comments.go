@@ -63,7 +63,7 @@ Default variation: Rollout
 {{"\n"}}
 {{- end }}
 {{- else }}
-Default variation: ` + "`" + `{{  (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
+Default variation: ` + "`" + `{{  toPrettyJson (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
 {{- end }}
 {{- if kindIs "int32" .OffVariation }}
 Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "`" + `
