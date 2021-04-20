@@ -56,7 +56,7 @@ Environment: **{{ $key }}**
 Default variation: Rollout
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
 | Variation | Weight |
-{{ range .Fallthrough_.Rollout.Variations }}
+{{- range .Fallthrough_.Rollout.Variations }}
 | --- | --- |
 |` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 {{- end }}
