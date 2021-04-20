@@ -49,6 +49,13 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 {{- if .Flag.Tags}}
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{ end}}
+Kind: **{{ .Flag.Kind }}**
+Temporary: **{{ .Flag.Temporary }}**
+{{- if .Aliases }}
+{{- if ne (len .Aliases) 0}}
+Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+{{- end}}
+{{- end}}
 
 {{- range $key, $env := .Environments }}
 Environment: **{{ $key }}**
@@ -70,13 +77,6 @@ Environment: **{{ $key }}**
 Off variation: No off variation set.
 {{- end }}
 {{ end }}
-Kind: **{{ .Flag.Kind }}**
-Temporary: **{{ .Flag.Temporary }}**
-{{- if .Aliases }}
-{{- if ne (len .Aliases) 0}}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
-{{- end}}
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
