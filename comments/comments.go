@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"html/template"
 	"reflect"
 	"sort"
@@ -69,7 +70,7 @@ Environment: **{{ $key }}**
 {{- end }}
 {{- end }}
 {{- else }}
-| Default | ` + "`" + `{{ (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`| |" + `
+| Default | ` + "`" + `{{ trunc 20 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
 {{- end }}
 {{- if kindIs "int32" .OffVariation }}
 | Off | ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "` | |" + `
@@ -83,7 +84,7 @@ Off variation: No off variation set.
 	if err != nil {
 		return "", err
 	}
-	return commentBody.String(), nil
+	return html.UnescapeString(commentBody.String()), nil
 }
 
 func GithubNoFlagComment() *github.IssueComment {
