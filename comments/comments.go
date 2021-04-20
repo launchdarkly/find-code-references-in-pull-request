@@ -70,10 +70,10 @@ Environment: **{{ $key }}**
 {{- end }}
 {{- end }}
 {{- else }}
-| Default | ` + "`" + `{{ trunc 20 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
+| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
 {{- end }}
 {{- if kindIs "int32" .OffVariation }}
-| Off | ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "` | |" + `
+| Off | ` + "`" + `{{trunc 50 (toRawJson(index $.Flag.Variations .OffVariation).Value)}` + "` | |" + `
 {{- else }}
 Off variation: No off variation set.
 {{- end }}
