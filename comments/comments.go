@@ -48,16 +48,15 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 {{- end}}
 {{- if .Flag.Tags}}
 Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
+{{ end}}
 
 {{- range $key, $env := .Environments }}
-{{ $key }}
-{{- if not (isNil .Fallthrough_.Rollout) }}
+**{{ $key }}**
+{{ if not (isNil .Fallthrough_.Rollout) }}
 Default variation:
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
-{{- range .Fallthrough_.Rollout.Variations }}
-Variation:` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "`" + `
-Weight:` + "`" + `{{  divf .Weight 1000 }}%` + "`" + `
+{{ range .Fallthrough_.Rollout.Variations }}
+* Variation:` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "`" + ` Weight:` + "`" + `{{  divf .Weight 1000 }}%` + "`" + `
 {{- end }}
 {{- end }}
 {{- else }}
@@ -68,7 +67,7 @@ Off variation: ` + "`" + `{{(index $.Flag.Variations .OffVariation).Value}}` + "
 {{- else }}
 Off variation: No off variation set.
 {{- end }}
-{{- end }}
+{{ end }}
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
