@@ -60,7 +60,7 @@ Default variation: Rollout
 | --- | --- |
 |` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 {{- end }}
-&nbsp;
+{{"\n"}}
 {{- end }}
 {{- else }}
 Default variation: ` + "`" + `{{  (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
