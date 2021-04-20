@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Hello world action step
+      - name: Find LaunchDarkly Feature Flags
         uses: ./ # Uses an action in the root directory
         id: find_flags
         with:

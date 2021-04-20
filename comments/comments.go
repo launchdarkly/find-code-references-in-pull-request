@@ -56,8 +56,9 @@ Environment: **{{ $key }}**
 Default variation:
 {{- if not (isNil .Fallthrough_.Rollout.Variations)}}
 {{ range .Fallthrough_.Rollout.Variations }}
-* Variation:` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "`" + ` Weight:` + "`" + `{{  divf .Weight 1000 }}%` + "`" + `
+* Variation:` + "`" + `{{  (index $.Flag.Variations .Variation).Value }}` + "`" + ` Weight:` + "`" + `{{  divf .Weight 1000 }}%    ` + "`" + `
 {{- end }}
+&nbsp;
 {{- end }}
 {{- else }}
 Default variation: ` + "`" + `{{  (index $.Flag.Variations .Fallthrough_.Variation).Value }}` + "`" + `
