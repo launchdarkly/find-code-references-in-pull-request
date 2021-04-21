@@ -73,16 +73,16 @@ func main() {
 	}
 
 	existingComment := checkExistingComments(event, config, ctx)
-	// buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	// postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	// if postedComments == "" {
-	// 	return
-	// }
-	// comment := github.IssueComment{
-	// 	Body: &postedComments,
-	// }
+	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
+	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+	if postedComments == "" {
+		return
+	}
+	comment := github.IssueComment{
+		Body: &postedComments,
+	}
 
-	// postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
@@ -91,12 +91,9 @@ func main() {
 		lines := strings.Split(*existingComment.Body, "\n")
 		for _, line := range lines {
 			if strings.Contains(line, "<!-- flags:") {
-				fmt.Println(line)
 				flagLine := strings.SplitN(line, ":", 2)
-				fmt.Println(flagLine)
 				existingFlagKeys = append(existingFlagKeys, strings.FieldsFunc(flagLine[1], split)...)
 				existingFlagKeys = existingFlagKeys[:len(existingFlagKeys)-1]
-				fmt.Println(existingFlagKeys)
 			}
 		}
 		customProp := "ldcrc:" + strings.Join(config.Repo, "/")
@@ -151,8 +148,6 @@ func main() {
 			}
 
 		}
-		fmt.Println("check keys")
-		fmt.Println(existingFlagKeys)
 		for _, orphanKey := range existingFlagKeys {
 			for i, v := range currentCustomProp.Value {
 				if v == strconv.Itoa(*event.PullRequest.Number) {
