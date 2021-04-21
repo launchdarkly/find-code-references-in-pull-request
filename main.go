@@ -88,7 +88,7 @@ func main() {
 	customPatch[customProp] = customProperty
 	patch := ldapi.PatchOperation{
 		Op:    "add",
-		Path:  "/customProperties/",
+		Path:  "/customProperties",
 		Value: ptr(customPatch),
 	}
 	patchComment := ldapi.PatchComment{
