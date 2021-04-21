@@ -128,20 +128,25 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		fmt.Println("comment already exists")
 		return ""
 	}
+	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
+	var flagKeys []string
+	for v := range allFlagKeys {
+		flagKeys = append(flagKeys, v)
+	}
+	postedComments = postedComments + fmt.Sprintf("\n <!-- flags:%s -->", strings.Join(flagKeys, ","))
 	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
-
+	fmt.Println(postedComments)
 	return postedComments
 }
 
 func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
+	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
 		addedKeys = append(addedKeys, key)
 	}
 	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
-	buildComment := FlagComments{}
-
 	for _, flagKey := range addedKeys {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRef.FlagsRemoved, flagKey)
@@ -191,4 +196,12 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+func mergeKeys(a map[string][]string, b map[string][]string) map[string][]string {
+	allKeys := a
+	for k, v := range b {
+		allKeys[k] = v
+	}
+	return allKeys
 }

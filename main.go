@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
@@ -19,6 +22,10 @@ import (
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
+)
+
+const (
+	MAX_429_RETRIES = 10
 )
 
 func main() {
@@ -65,17 +72,17 @@ func main() {
 		fmt.Println(err)
 	}
 
-	// existingComment := checkExistingComments(event, config, ctx)
-	// buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	// postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	// if postedComments == "" {
-	// 	return
-	// }
-	//comment := github.IssueComment{
-	// 	Body: &postedComments,
-	// }
+	existingComment := checkExistingComments(event, config, ctx)
+	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
+	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+	if postedComments == "" {
+		return
+	}
+	comment := github.IssueComment{
+		Body: &postedComments,
+	}
 
-	//postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
@@ -101,7 +108,7 @@ FlagRefLoop:
 		customPatch[customProp] = customProperty
 		patch := ldapi.PatchOperation{
 			Op:    "add",
-			Path:  "/customProperties",
+			Path:  fmt.Sprintf("/customProperties/%s", customProp),
 			Value: ptr(customPatch),
 		}
 		ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
@@ -112,8 +119,9 @@ FlagRefLoop:
 			Patch:   []ldapi.PatchOperation{patch},
 			Comment: "PR Commentor",
 		}
-		_, resp, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
-		fmt.Println(resp)
+		_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
+			return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
+		})
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -249,4 +257,47 @@ func mergeKeys(a map[string][]string, b map[string][]string) {
 	for k, v := range b {
 		a[k] = v
 	}
+}
+
+func handleRateLimit(apiCall func() (interface{}, *http.Response, error)) (interface{}, *http.Response, error) {
+	obj, res, err := apiCall()
+	for retryCount := 0; res != nil && res.StatusCode == http.StatusTooManyRequests && retryCount < MAX_429_RETRIES; retryCount++ {
+		log.Println("[DEBUG] received a 429 Too Many Requests error. retrying")
+		resetStr := res.Header.Get("X-RateLimit-Reset")
+		resetInt, parseErr := strconv.ParseInt(resetStr, 10, 64)
+		if parseErr != nil {
+			log.Println("[DEBUG] could not parse X-RateLimit-Reset header. Sleeping for a random interval.")
+			randomRetrySleep()
+		} else {
+			resetTime := time.Unix(0, resetInt*int64(time.Millisecond))
+			sleepDuration := time.Until(resetTime)
+
+			// We have observed situations where LD-s retry header results in a negative sleep duration. In this case,
+			// multiply the duration by -1 and add a random 200-500ms
+			if sleepDuration <= 0 {
+				log.Printf("[DEBUG] received a negative rate limit retry duration of %s. Sleeping for an additional 200-500ms", sleepDuration)
+				sleepDuration = -1*sleepDuration + getRandomSleepDuration()
+			}
+			log.Println("[DEBUG] sleeping", sleepDuration)
+			time.Sleep(sleepDuration)
+		}
+		obj, res, err = apiCall()
+	}
+	return obj, res, err
+
+}
+
+var randomRetrySleepSeeded = false
+
+// Sleep for a random interval between 200ms and 500ms
+func getRandomSleepDuration() time.Duration {
+	if !randomRetrySleepSeeded {
+		rand.Seed(time.Now().UnixNano())
+	}
+	n := rand.Intn(300) + 200
+	return time.Duration(n) * time.Millisecond
+}
+
+func randomRetrySleep() {
+	time.Sleep(getRandomSleepDuration())
 }
