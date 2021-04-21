@@ -150,6 +150,13 @@ func main() {
 
 		}
 		for _, orphanKey := range existingFlagKeys {
+			for i := range flags.Items {
+				if flags.Items[i].Key == orphanKey {
+					existingProps := flags.Items[i].CustomProperties
+					currentCustomProp = existingProps[customProp]
+					break
+				}
+			}
 			fmt.Println(currentCustomProp.Value)
 			var newProps []string
 			for i, v := range currentCustomProp.Value {
