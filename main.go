@@ -150,15 +150,18 @@ func main() {
 
 		}
 		for _, orphanKey := range existingFlagKeys {
+			fmt.Println(currentCustomProp.Value)
+			var newProps []string
 			for i, v := range currentCustomProp.Value {
 				if v == strconv.Itoa(*event.PullRequest.Number) {
-					currentCustomProp.Value = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
+					newProps = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
 					break
 				}
 			}
+			fmt.Println(newProps)
 			customProperty := ldapi.CustomProperty{
 				Name:  customProp,
-				Value: currentCustomProp.Value,
+				Value: newProps,
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
