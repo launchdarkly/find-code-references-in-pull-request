@@ -87,7 +87,7 @@ func main() {
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	var existingFlagKeys []string
-	if existingComment != nil && strings.Contains(*existingComment.Body, "<!-- flags") {
+	if existingComment != nil && config.ReferencePRonFlag && strings.Contains(*existingComment.Body, "<!-- flags") {
 		lines := strings.Split(*existingComment.Body, "\n")
 		for _, line := range lines {
 			if strings.Contains(line, "<!-- flags:") {
@@ -149,21 +149,30 @@ func main() {
 
 		}
 		for _, orphanKey := range existingFlagKeys {
+			for i := range flags.Items {
+				if flags.Items[i].Key == orphanKey {
+					existingProps := flags.Items[i].CustomProperties
+					currentCustomProp = existingProps[customProp]
+					break
+				}
+			}
+
+			var newProps []string
 			for i, v := range currentCustomProp.Value {
 				if v == strconv.Itoa(*event.PullRequest.Number) {
-					currentCustomProp.Value = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
+					newProps = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
 					break
 				}
 			}
 			customProperty := ldapi.CustomProperty{
 				Name:  customProp,
-				Value: currentCustomProp.Value,
+				Value: newProps,
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
 			patch := ldapi.PatchOperation{
 				Op:    "replace",
-				Path:  fmt.Sprintf("/customProperties/%s", customProp),
+				Path:  "/customProperties",
 				Value: ptr(customPatch),
 			}
 			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
