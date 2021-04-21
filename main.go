@@ -80,10 +80,17 @@ func main() {
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	customProp := strings.Join(config.Repo, "/")
+FlagRefLoop:
 	for k := range flagsRef.FlagsAdded {
 		for i := range flags.Items {
 			if flags.Items[i].Key == k {
-				fmt.Println(flags.Items[i].CustomProperties)
+				existingProps := flags.Items[i].CustomProperties
+				for _, v := range existingProps[customProp].Value {
+					if v == strconv.Itoa(*event.PullRequest.Number) {
+						fmt.Println("prop exists")
+						continue FlagRefLoop
+					}
+				}
 			}
 		}
 		customProperty := ldapi.CustomProperty{
