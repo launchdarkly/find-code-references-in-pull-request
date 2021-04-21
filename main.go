@@ -119,10 +119,11 @@ func main() {
 					}
 				}
 			}
-			patchingCustomProp := append(currentCustomProp.Value, strconv.Itoa(*event.PullRequest.Number))
+			currentCustomProp.Value = append(currentCustomProp.Value, strconv.Itoa(*event.PullRequest.Number))
+			fmt.Println(currentCustomProp.Value)
 			customProperty := ldapi.CustomProperty{
 				Name:  customProp,
-				Value: patchingCustomProp,
+				Value: currentCustomProp.Value,
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
