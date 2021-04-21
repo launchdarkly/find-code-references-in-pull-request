@@ -79,7 +79,7 @@ func main() {
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
-	customProp := strings.Join(config.Repo, "/")
+	customProp := "ldcrc:" + strings.Join(config.Repo, "/")
 FlagRefLoop:
 	for k := range flagsRef.FlagsAdded {
 		for i := range flags.Items {
