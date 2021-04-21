@@ -91,7 +91,9 @@ func main() {
 		lines := strings.Split(*existingComment.Body, "\n")
 		for _, line := range lines {
 			if strings.Contains("<!-- flags:", line) {
+				fmt.Println(line)
 				flagLine := strings.SplitN(line, ":", 2)
+				fmt.Println(flagLine)
 				existingFlagKeys = strings.Split(flagLine[1], ",")
 			}
 		}
