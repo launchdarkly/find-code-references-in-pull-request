@@ -100,8 +100,11 @@ func main() {
 			}
 		}
 		customProp := "ldcrc:" + strings.Join(config.Repo, "/")
+		var currentCustomProp ldapi.CustomProperty
+
 	FlagRefLoop:
 		for k := range flagsRef.FlagsAdded {
+			// Remove flags from existing flags. We only want non-existant ones to be left
 			for i, v := range existingFlagKeys {
 				if v == k {
 					existingFlagKeys = append(existingFlagKeys[:i], existingFlagKeys[i+1:]...)
@@ -111,22 +114,23 @@ func main() {
 			for i := range flags.Items {
 				if flags.Items[i].Key == k {
 					existingProps := flags.Items[i].CustomProperties
+					currentCustomProp = existingProps[customProp]
 					for _, v := range existingProps[customProp].Value {
 						if v == strconv.Itoa(*event.PullRequest.Number) {
-							fmt.Println("prop exists")
 							continue FlagRefLoop
 						}
 					}
 				}
 			}
+			patchingCustomProp := append(currentCustomProp.Value, strconv.Itoa(*event.PullRequest.Number))
 			customProperty := ldapi.CustomProperty{
 				Name:  customProp,
-				Value: []string{strconv.Itoa(*event.PullRequest.Number)},
+				Value: patchingCustomProp,
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
 			patch := ldapi.PatchOperation{
-				Op:    "add",
+				Op:    "replace",
 				Path:  fmt.Sprintf("/customProperties/%s", customProp),
 				Value: ptr(customPatch),
 			}
@@ -150,14 +154,20 @@ func main() {
 		fmt.Println("check keys")
 		fmt.Println(existingFlagKeys)
 		for _, orphanKey := range existingFlagKeys {
+			for i, v := range currentCustomProp.Value {
+				if v == strconv.Itoa(*event.PullRequest.Number) {
+					currentCustomProp.Value = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
+					break
+				}
+			}
 			customProperty := ldapi.CustomProperty{
 				Name:  customProp,
-				Value: []string{strconv.Itoa(*event.PullRequest.Number)},
+				Value: currentCustomProp.Value,
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
 			patch := ldapi.PatchOperation{
-				Op:    "remove",
+				Op:    "replace",
 				Path:  fmt.Sprintf("/customProperties/%s", customProp),
 				Value: ptr(customPatch),
 			}
