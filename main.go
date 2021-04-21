@@ -145,33 +145,35 @@ func main() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			fmt.Println("check keys")
-			fmt.Println(existingFlagKeys)
-			for _, orphanKey := range existingFlagKeys {
-				customProperty := ldapi.CustomProperty{
-					Name:  customProp,
-					Value: []string{strconv.Itoa(*event.PullRequest.Number)},
-				}
-				customPatch := make(map[string]ldapi.CustomProperty)
-				customPatch[customProp] = customProperty
-				patch := ldapi.PatchOperation{
-					Op:    "remove",
-					Path:  fmt.Sprintf("/customProperties/%s", customProp),
-					Value: ptr(customPatch),
-				}
-				ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
-				if err != nil {
-					fmt.Println(err)
-				}
-				patchComment := ldapi.PatchComment{
-					Patch:   []ldapi.PatchOperation{patch},
-					Comment: "PR Commentor",
-				}
-				_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
-					return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey, patchComment)
-				})
-			}
+
 		}
+		fmt.Println("check keys")
+		fmt.Println(existingFlagKeys)
+		for _, orphanKey := range existingFlagKeys {
+			customProperty := ldapi.CustomProperty{
+				Name:  customProp,
+				Value: []string{strconv.Itoa(*event.PullRequest.Number)},
+			}
+			customPatch := make(map[string]ldapi.CustomProperty)
+			customPatch[customProp] = customProperty
+			patch := ldapi.PatchOperation{
+				Op:    "remove",
+				Path:  fmt.Sprintf("/customProperties/%s", customProp),
+				Value: ptr(customPatch),
+			}
+			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+			if err != nil {
+				fmt.Println(err)
+			}
+			patchComment := ldapi.PatchComment{
+				Patch:   []ldapi.PatchOperation{patch},
+				Comment: "PR Commentor",
+			}
+			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
+				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey, patchComment)
+			})
+		}
+
 	}
 }
 
