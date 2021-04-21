@@ -84,10 +84,12 @@ func main() {
 		Name:  customProp,
 		Value: []string{strconv.Itoa(*event.PullRequest.Number)},
 	}
+	customPatch := make(map[string]ldapi.CustomProperty)
+	customPatch[customProp] = customProperty
 	patch := ldapi.PatchOperation{
 		Op:    "add",
 		Path:  "/customProperties/",
-		Value: ptr(customProperty),
+		Value: ptr(customPatch),
 	}
 	patchComment := ldapi.PatchComment{
 		Patch:   []ldapi.PatchOperation{patch},
