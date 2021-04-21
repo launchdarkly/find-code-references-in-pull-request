@@ -93,7 +93,7 @@ func main() {
 		Patch:   []ldapi.PatchOperation{patch},
 		Comment: "PR Commentor",
 	}
-	updatedFlag, resp, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ctx, config.LdProject, "chatbox", patchComment)
+	updatedFlag, resp, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, "chatbox", patchComment)
 	fmt.Println(updatedFlag)
 	fmt.Println(resp)
 	if err != nil {
