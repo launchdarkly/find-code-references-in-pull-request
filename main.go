@@ -90,7 +90,7 @@ func main() {
 	if existingComment != nil && strings.Contains(*existingComment.Body, "<!-- flags") {
 		lines := strings.Split(*existingComment.Body, "\n")
 		for _, line := range lines {
-			if strings.Contains("<!-- flags:", line) {
+			if strings.Contains(line, "<!-- flags:") {
 				fmt.Println(line)
 				flagLine := strings.SplitN(line, ":", 2)
 				fmt.Println(flagLine)
