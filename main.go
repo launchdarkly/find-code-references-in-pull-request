@@ -94,7 +94,7 @@ func main() {
 				fmt.Println(line)
 				flagLine := strings.SplitN(line, ":", 2)
 				fmt.Println(flagLine)
-				existingFlagKeys = strings.Split(flagLine[1], ",")
+				existingFlagKeys = strings.FieldsFunc(flagLine[1], split)
 			}
 		}
 		customProp := "ldcrc:" + strings.Join(config.Repo, "/")
@@ -337,4 +337,8 @@ func getRandomSleepDuration() time.Duration {
 
 func randomRetrySleep() {
 	time.Sleep(getRandomSleepDuration())
+}
+
+func split(r rune) bool {
+	return r == ',' || r == ' '
 }
