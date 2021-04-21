@@ -81,6 +81,11 @@ func main() {
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	customProp := strings.Join(config.Repo, "/")
 	for k := range flagsRef.FlagsAdded {
+		for i := range flags.Items {
+			if flags.Items[i].Key == k {
+				fmt.Println(flags.Items[i].CustomProperties)
+			}
+		}
 		customProperty := ldapi.CustomProperty{
 			Name:  customProp,
 			Value: []string{strconv.Itoa(*event.PullRequest.Number)},
