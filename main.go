@@ -73,16 +73,16 @@ func main() {
 	}
 
 	existingComment := checkExistingComments(event, config, ctx)
-	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	if postedComments == "" {
-		return
-	}
-	comment := github.IssueComment{
-		Body: &postedComments,
-	}
+	// buildComment := ghc.ProcessFlags(flagsRef, flags, config)
+	// postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+	// if postedComments == "" {
+	// 	return
+	// }
+	// comment := github.IssueComment{
+	// 	Body: &postedComments,
+	// }
 
-	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	// postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
