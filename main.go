@@ -129,7 +129,7 @@ func main() {
 			customPatch[customProp] = customProperty
 			patch := ldapi.PatchOperation{
 				Op:    "replace",
-				Path:  fmt.Sprintf("/customProperties/%s", customProp),
+				Path:  fmt.Sprintf("/customProperties"),
 				Value: ptr(customPatch),
 			}
 			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
