@@ -145,6 +145,8 @@ func main() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			fmt.Println("check keys")
+			fmt.Println(existingFlagKeys)
 			for _, orphanKey := range existingFlagKeys {
 				customProperty := ldapi.CustomProperty{
 					Name:  customProp,
