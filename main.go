@@ -94,7 +94,9 @@ func main() {
 				fmt.Println(line)
 				flagLine := strings.SplitN(line, ":", 2)
 				fmt.Println(flagLine)
-				existingFlagKeys = strings.FieldsFunc(flagLine[1], split)
+				existingFlagKeys = append(existingFlagKeys, strings.FieldsFunc(flagLine[1], split)...)
+				existingFlagKeys = existingFlagKeys[:len(existingFlagKeys)-1]
+				fmt.Println(existingFlagKeys)
 			}
 		}
 		customProp := "ldcrc:" + strings.Join(config.Repo, "/")
