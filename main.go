@@ -77,32 +77,37 @@ func main() {
 
 	//postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
+	// All keys are added to flagsRef.Added for simpler looping of custom props
+	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	customProp := strings.Join(config.Repo, "/")
-	fmt.Println("patching")
-	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
-	customProperty := ldapi.CustomProperty{
-		Name:  customProp,
-		Value: []string{strconv.Itoa(*event.PullRequest.Number)},
+	for k := range flagsRef.FlagsAdded {
+		customProperty := ldapi.CustomProperty{
+			Name:  customProp,
+			Value: []string{strconv.Itoa(*event.PullRequest.Number)},
+		}
+		customPatch := make(map[string]ldapi.CustomProperty)
+		customPatch[customProp] = customProperty
+		patch := ldapi.PatchOperation{
+			Op:    "add",
+			Path:  "/customProperties",
+			Value: ptr(customPatch),
+		}
+		ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+		if err != nil {
+			fmt.Println(err)
+		}
+		patchComment := ldapi.PatchComment{
+			Patch:   []ldapi.PatchOperation{patch},
+			Comment: "PR Commentor",
+		}
+		_, resp, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
+		fmt.Println(resp)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println("patched")
 	}
-	customPatch := make(map[string]ldapi.CustomProperty)
-	customPatch[customProp] = customProperty
-	patch := ldapi.PatchOperation{
-		Op:    "add",
-		Path:  "/customProperties",
-		Value: ptr(customPatch),
-	}
-	patchComment := ldapi.PatchComment{
-		Patch:   []ldapi.PatchOperation{patch},
-		Comment: "PR Commentor",
-	}
-	updatedFlag, resp, err := ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, "chatbox", patchComment)
-	fmt.Println(updatedFlag)
-	fmt.Println(resp)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println("patched")
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
@@ -227,3 +232,9 @@ func failExit(err error) {
 }
 
 func ptr(v interface{}) *interface{} { return &v }
+
+func mergeKeys(a map[string][]string, b map[string][]string) {
+	for k, v := range b {
+		a[k] = v
+	}
+}
