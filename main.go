@@ -16,6 +16,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go"
 	lc "github.com/launchdarkly/cr-flags/client"
 	ghc "github.com/launchdarkly/cr-flags/comments"
+	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
@@ -86,109 +87,7 @@ func main() {
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
-	var existingFlagKeys []string
-	if existingComment != nil && config.ReferencePRonFlag && strings.Contains(*existingComment.Body, "<!-- flags") {
-		lines := strings.Split(*existingComment.Body, "\n")
-		for _, line := range lines {
-			if strings.Contains(line, "<!-- flags:") {
-				flagLine := strings.SplitN(line, ":", 2)
-				existingFlagKeys = append(existingFlagKeys, strings.FieldsFunc(flagLine[1], split)...)
-				existingFlagKeys = existingFlagKeys[:len(existingFlagKeys)-1]
-			}
-		}
-		customProp := "ldcrc:" + strings.Join(config.Repo, "/")
-		var currentCustomProp ldapi.CustomProperty
-
-	FlagRefLoop:
-		for k := range flagsRef.FlagsAdded {
-			// Remove flags from existing flags. We only want non-existant ones to be left
-			for i, v := range existingFlagKeys {
-				if v == k {
-					existingFlagKeys = append(existingFlagKeys[:i], existingFlagKeys[i+1:]...)
-					break
-				}
-			}
-			for i := range flags.Items {
-				if flags.Items[i].Key == k {
-					existingProps := flags.Items[i].CustomProperties
-					currentCustomProp = existingProps[customProp]
-					for _, v := range existingProps[customProp].Value {
-						if v == strconv.Itoa(*event.PullRequest.Number) {
-							continue FlagRefLoop
-						}
-					}
-				}
-			}
-			patchingCustomProp := append(currentCustomProp.Value, strconv.Itoa(*event.PullRequest.Number))
-			customProperty := ldapi.CustomProperty{
-				Name:  customProp,
-				Value: patchingCustomProp,
-			}
-			customPatch := make(map[string]ldapi.CustomProperty)
-			customPatch[customProp] = customProperty
-			patch := ldapi.PatchOperation{
-				Op:    "replace",
-				Path:  fmt.Sprintf("/customProperties/%s", customProp),
-				Value: ptr(customPatch),
-			}
-			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
-			if err != nil {
-				fmt.Println(err)
-			}
-			patchComment := ldapi.PatchComment{
-				Patch:   []ldapi.PatchOperation{patch},
-				Comment: "PR Commentor",
-			}
-			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
-				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
-			})
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-		}
-		for _, orphanKey := range existingFlagKeys {
-			for i := range flags.Items {
-				if flags.Items[i].Key == orphanKey {
-					existingProps := flags.Items[i].CustomProperties
-					currentCustomProp = existingProps[customProp]
-					break
-				}
-			}
-
-			var newProps []string
-			for i, v := range currentCustomProp.Value {
-				if v == strconv.Itoa(*event.PullRequest.Number) {
-					newProps = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
-					break
-				}
-			}
-			customProperty := ldapi.CustomProperty{
-				Name:  customProp,
-				Value: newProps,
-			}
-			customPatch := make(map[string]ldapi.CustomProperty)
-			customPatch[customProp] = customProperty
-			patch := ldapi.PatchOperation{
-				Op:    "replace",
-				Path:  "/customProperties",
-				Value: ptr(customPatch),
-			}
-			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
-			if err != nil {
-				fmt.Println(err)
-			}
-			patchComment := ldapi.PatchComment{
-				Patch:   []ldapi.PatchOperation{patch},
-				Comment: "PR Commentor",
-			}
-			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
-				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey, patchComment)
-			})
-		}
-
-	}
+	processCustomProps(flags, existingComment, config, flagsRef, event)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
@@ -361,4 +260,111 @@ func randomRetrySleep() {
 
 func split(r rune) bool {
 	return r == ',' || r == ' '
+}
+
+func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueComment, config *config.Config, flagsRef ghc.FlagsRef, event *github.PullRequestEvent) {
+	var existingFlagKeys []string
+	if existingComment != nil && config.ReferencePRonFlag && strings.Contains(*existingComment.Body, "<!-- flags") {
+		lines := strings.Split(*existingComment.Body, "\n")
+		for _, line := range lines {
+			if strings.Contains(line, "<!-- flags:") {
+				flagLine := strings.SplitN(line, ":", 2)
+				existingFlagKeys = append(existingFlagKeys, strings.FieldsFunc(flagLine[1], split)...)
+				existingFlagKeys = existingFlagKeys[:len(existingFlagKeys)-1]
+			}
+		}
+		customProp := "ldcrc:" + strings.Join(config.Repo, "/")
+		var currentCustomProp ldapi.CustomProperty
+
+	FlagRefLoop:
+		for k := range flagsRef.FlagsAdded {
+			// Remove flags from existing flags. We only want non-existant ones to be left
+			for i, v := range existingFlagKeys {
+				if v == k {
+					existingFlagKeys = append(existingFlagKeys[:i], existingFlagKeys[i+1:]...)
+					break
+				}
+			}
+			for i := range flags.Items {
+				if flags.Items[i].Key == k {
+					existingProps := flags.Items[i].CustomProperties
+					currentCustomProp = existingProps[customProp]
+					for _, v := range existingProps[customProp].Value {
+						if v == strconv.Itoa(*event.PullRequest.Number) {
+							continue FlagRefLoop
+						}
+					}
+				}
+			}
+			patchingCustomProp := append(currentCustomProp.Value, strconv.Itoa(*event.PullRequest.Number))
+			customProperty := ldapi.CustomProperty{
+				Name:  customProp,
+				Value: patchingCustomProp,
+			}
+			customPatch := make(map[string]ldapi.CustomProperty)
+			customPatch[customProp] = customProperty
+			patch := ldapi.PatchOperation{
+				Op:    "replace",
+				Path:  fmt.Sprintf("/customProperties/%s", customProp),
+				Value: ptr(customPatch),
+			}
+			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+			if err != nil {
+				fmt.Println(err)
+			}
+			patchComment := ldapi.PatchComment{
+				Patch:   []ldapi.PatchOperation{patch},
+				Comment: "PR Commentor",
+			}
+			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
+				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
+			})
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+		for _, orphanKey := range existingFlagKeys {
+			for i := range flags.Items {
+				if flags.Items[i].Key == orphanKey {
+					existingProps := flags.Items[i].CustomProperties
+					currentCustomProp = existingProps[customProp]
+					break
+				}
+			}
+			var newProps []string
+			for i, v := range currentCustomProp.Value {
+				if v == strconv.Itoa(*event.PullRequest.Number) {
+					newProps = append(currentCustomProp.Value[:i], currentCustomProp.Value[i+1:]...)
+					break
+				}
+			}
+			customProperty := ldapi.CustomProperty{
+				Name:  customProp,
+				Value: newProps,
+			}
+			customPatch := make(map[string]ldapi.CustomProperty)
+			customPatch[customProp] = customProperty
+			patch := ldapi.PatchOperation{
+				Op:    "replace",
+				Path:  "/customProperties",
+				Value: ptr(customPatch),
+			}
+			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+			if err != nil {
+				fmt.Println(err)
+			}
+			patchComment := ldapi.PatchComment{
+				Patch:   []ldapi.PatchOperation{patch},
+				Comment: "PR Commentor",
+			}
+			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
+				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey, patchComment)
+			})
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+	}
 }
