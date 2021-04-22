@@ -30,6 +30,7 @@ func newTestAccEnv() *testFlagEnv {
 
 func createFlag(key string) ldapi.FeatureFlag {
 	environment := ldapi.FeatureFlagConfig{
+		EnvironmentName: "Production",
 		Site: &ldapi.Site{
 			Href: "test",
 		},

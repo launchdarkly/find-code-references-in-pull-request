@@ -59,7 +59,7 @@ Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`"
 {{- end}}
 {{ "\n" }}
 {{- range $key, $env := .Environments }}
-Environment: **{{ $key }}**
+Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
 | Type | Variation | Weight(if Rollout) |
 | --- | --- | --- |
 {{- if not (isNil .Fallthrough_.Rollout) }}
