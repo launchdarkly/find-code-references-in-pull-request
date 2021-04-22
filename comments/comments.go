@@ -138,7 +138,6 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	}
 
 	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
-	fmt.Println(postedComments)
 	return postedComments
 }
 
