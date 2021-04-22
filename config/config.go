@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -11,14 +12,15 @@ import (
 )
 
 type Config struct {
-	LdProject     string
-	LdEnvironment []string
-	LdInstance    string
-	Owner         string
-	Repo          []string
-	ApiToken      string
-	Workspace     string
-	GHClient      *github.Client
+	LdProject         string
+	LdEnvironment     []string
+	LdInstance        string
+	Owner             string
+	Repo              []string
+	ApiToken          string
+	Workspace         string
+	GHClient          *github.Client
+	ReferencePRonFlag bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -45,7 +47,11 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	}
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
-
+	ReferencePRonFlag, err := strconv.ParseBool(os.Getenv("INPUT_REFERENCEPRONFLAG"))
+	if err != nil {
+		return nil, err
+	}
+	config.ReferencePRonFlag = ReferencePRonFlag
 	config.GHClient = getGithubClient(ctx)
 	return &config, nil
 }
