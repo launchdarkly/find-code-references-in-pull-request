@@ -61,9 +61,16 @@ func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlag
 					flagsRef.FlagsAdded[flag.Key] = currentKeys
 				}
 				if len(aliases[flag.Key]) > 0 {
+				CheckAliasAdded:
 					for _, alias := range aliases[flag.Key] {
 						if strings.Contains(row, alias) {
 							currentKeys := flagsRef.FlagsAdded[flag.Key]
+							for i, _ := range currentKeys {
+								if alias == currentKeys[i] {
+									// If key already exists we do not want to add it
+									continue CheckAliasAdded
+								}
+							}
 							currentKeys = append(currentKeys, alias)
 							flagsRef.FlagsAdded[flag.Key] = currentKeys
 						}
@@ -78,9 +85,16 @@ func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlag
 					flagsRef.FlagsRemoved[flag.Key] = currentKeys
 				}
 				if len(aliases[flag.Key]) > 0 {
+				CheckAliasRemoved:
 					for _, alias := range aliases[flag.Key] {
 						if strings.Contains(row, alias) {
 							currentKeys := flagsRef.FlagsRemoved[flag.Key]
+							for i, _ := range currentKeys {
+								// If key already exists we do not want to add it
+								if alias == currentKeys[i] {
+									continue CheckAliasRemoved
+								}
+							}
 							currentKeys = append(currentKeys, alias)
 							flagsRef.FlagsRemoved[flag.Key] = currentKeys
 						}

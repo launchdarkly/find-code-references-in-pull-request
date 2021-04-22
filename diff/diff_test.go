@@ -178,6 +178,7 @@ func TestProcessDiffs(t *testing.T) {
 +this is for testing
 +here is a flag
 +exampleFlag
++exampleFlag
 +`,
 		},
 	}
