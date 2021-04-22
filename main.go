@@ -87,7 +87,9 @@ func main() {
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
-	processCustomProps(flags, existingComment, config, flagsRef, event)
+	if config.ReferencePRonFlag {
+		processCustomProps(flags, existingComment, config, flagsRef, event)
+	}
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
@@ -264,7 +266,7 @@ func split(r rune) bool {
 
 func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueComment, config *config.Config, flagsRef ghc.FlagsRef, event *github.PullRequestEvent) {
 	var existingFlagKeys []string
-	if existingComment != nil && config.ReferencePRonFlag && strings.Contains(*existingComment.Body, "<!-- flags") {
+	if existingComment != nil && strings.Contains(*existingComment.Body, "<!-- flags") {
 		lines := strings.Split(*existingComment.Body, "\n")
 		for _, line := range lines {
 			if strings.Contains(line, "<!-- flags:") {
