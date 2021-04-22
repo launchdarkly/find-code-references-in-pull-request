@@ -33,6 +33,9 @@ func main() {
 	ctx := context.Background()
 	config, err := lcr.ValidateInputandParse(ctx)
 	fmt.Println(config.ReferencePRonFlag)
+	if !config.ReferencePRonFlag {
+		fmt.Println("verify")
+	}
 	failExit(err)
 
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
