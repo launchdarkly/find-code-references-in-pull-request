@@ -16,4 +16,3 @@ jobs:
           accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           baseUri: https://app.launchdarkly.com
-          referencePRonFlag: true

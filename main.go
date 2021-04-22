@@ -32,6 +32,7 @@ const (
 func main() {
 	ctx := context.Background()
 	config, err := lcr.ValidateInputandParse(ctx)
+	fmt.Println(config.ReferencePRonFlag)
 	failExit(err)
 
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
