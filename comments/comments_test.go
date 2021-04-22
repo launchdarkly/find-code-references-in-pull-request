@@ -199,14 +199,14 @@ func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 	e.FlagsRef.FlagsAdded["example-flag"] = []string{}
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
-	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n comment hash: f66709e4eb57c204ca233601b6620203", comment)
+	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n <!-- flags:example-flag -->\n comment hash: 9cb1c3634a34890f4d68da5e76c5e077", comment)
 }
 
 func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.FlagsRef.FlagsRemoved["example-flag"] = []string{}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
-	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Removed** **\ncomment1\ncomment2\n comment hash: 293c9cd1d0c3b75c193fa614c0ac6bff", comment)
+	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Removed** **\ncomment1\ncomment2\n <!-- flags:example-flag -->\n comment hash: 433547b56a627f7867f327df688d424a", comment)
 }
 
 func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
@@ -215,7 +215,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
-	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n---\n** **Removed** **\ncomment1\ncomment2\n comment hash: 2ab0148ecf63637c38a87d2f89eb2276", comment)
+	assert.Equal(t, "LaunchDarkly Flag Details:\n** **Added/Modified** **\ncomment1\ncomment2\n---\n** **Removed** **\ncomment1\ncomment2\n <!-- flags:example-flag -->\n comment hash: 0efefd950024b3d46ebf96dac1627fd4", comment)
 }
 
 func (e *testProcessor) Basic(t *testing.T) {
