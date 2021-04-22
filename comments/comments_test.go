@@ -139,7 +139,7 @@ func (e *testFlagEnv) noAliasesNoTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
-	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nKind: **boolean**\nTemporary: **false**\n\n\nEnvironment: **production**\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
+	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nKind: **boolean**\nTemporary: **false**\n\n\nEnvironment: **Production** `production`\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
@@ -147,7 +147,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
-	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`\n\n\nEnvironment: **production**\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
+	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`\n\n\nEnvironment: **Production** `production`\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
 }
 
 func (e *testFlagEnv) Tag(t *testing.T) {
@@ -156,7 +156,7 @@ func (e *testFlagEnv) Tag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
-	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`\n\nKind: **boolean**\nTemporary: **false**\n\n\nEnvironment: **production**\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
+	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`\n\nKind: **boolean**\nTemporary: **false**\n\n\nEnvironment: **Production** `production`\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
 }
 
 func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
@@ -165,7 +165,7 @@ func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
-	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`, `otherTag`, `finalTag`\n\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`, `example_flag`, `ExampleFlag`\n\n\nEnvironment: **production**\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
+	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`, `otherTag`, `finalTag`\n\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`, `example_flag`, `ExampleFlag`\n\n\nEnvironment: **Production** `production`\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n", comment, "they should be equal")
 }
 
 func (e *testFlagEnv) RolloutFlag(t *testing.T) {
@@ -193,7 +193,7 @@ func (e *testFlagEnv) RolloutFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err:%v", err)
 	}
-	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`, `otherTag`, `finalTag`\n\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`, `example_flag`, `ExampleFlag`\n\n\nEnvironment: **production**\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | Rollout | |\n| |`true` | `12.345%`|\n| |`false` | `87.655%`|\n| Off | `true` | |\n\n", comment, "they should be equal")
+	assert.Equal(t, "\n**[Sample Flag](https://example.com/test)** `example-flag`\nTags: `myTag`, `otherTag`, `finalTag`\n\nKind: **boolean**\nTemporary: **false**\nAliases: `exampleFlag`, `example_flag`, `ExampleFlag`\n\n\nEnvironment: `production`\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | Rollout | |\n| |`true` | `12.345%`|\n| |`false` | `87.655%`|\n| Off | `true` | |\n\n", comment, "they should be equal")
 }
 
 func (e *testCommentBuilder) AddedOnly(t *testing.T) {
@@ -223,7 +223,7 @@ func (e *testProcessor) Basic(t *testing.T) {
 	e.FlagsRef.FlagsAdded["example-flag"] = []string{""}
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
-		CommentsAdded: []string{"\n**[Sample Flag](https://example.com/test)** `example-flag`\nKind: **boolean**\nTemporary: **false**\n\n\nEnvironment: **production**\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n"},
+		CommentsAdded: []string{"\n**[Sample Flag](https://example.com/test)** `example-flag`\nKind: **boolean**\nTemporary: **false**\n\n\nEnvironment: **Production** `production`\n| Type | Variation | Weight(if Rollout) |\n| --- | --- | --- |\n| Default | `true`| |\n| Off | `true` | |\n\n"},
 	}
 	assert.Equal(t, expected, processor)
 }
