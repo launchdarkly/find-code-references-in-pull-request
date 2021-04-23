@@ -21,6 +21,7 @@ type Config struct {
 	Workspace         string
 	GHClient          *github.Client
 	ReferencePRonFlag bool
+	MaxFlags          int
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -52,6 +53,12 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		return nil, err
 	}
 	config.ReferencePRonFlag = ReferencePRonFlag
+
+	MaxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAXFLAGS"), 10, 32)
+	if err != nil {
+		return nil, err
+	}
+	config.MaxFlags = int(MaxFlags)
 	config.GHClient = getGithubClient(ctx)
 	return &config, nil
 }

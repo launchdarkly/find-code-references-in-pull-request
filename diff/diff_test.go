@@ -194,7 +194,7 @@ func TestProcessDiffs(t *testing.T) {
 				StartPosition: 1,
 				Body:          []byte(tc.sampleBody),
 			}
-			ProcessDiffs(hunk, processor.FlagsRef, processor.Flags, tc.aliases)
+			ProcessDiffs(hunk, processor.FlagsRef, processor.Flags, tc.aliases, 5)
 			assert.Equal(t, tc.expected, processor.FlagsRef, "")
 		})
 	}

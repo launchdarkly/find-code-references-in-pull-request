@@ -33,9 +33,6 @@ func main() {
 	ctx := context.Background()
 	config, err := lcr.ValidateInputandParse(ctx)
 	fmt.Println(config.ReferencePRonFlag)
-	if !config.ReferencePRonFlag {
-		fmt.Println("verify")
-	}
 	failExit(err)
 
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
@@ -70,7 +67,7 @@ func main() {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases)
+			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases, config.MaxFlags)
 		}
 	}
 	if err != nil {
