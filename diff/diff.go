@@ -50,9 +50,13 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string) {
+func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string, maxFlags int) {
 	diffRows := strings.Split(string(raw.Body), "\n")
 	for _, row := range diffRows {
+
+		if (len(flagsRef.FlagsAdded) + len(flagsRef.FlagsRemoved)) >= maxFlags {
+			break
+		}
 		if strings.HasPrefix(row, "+") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
