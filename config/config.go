@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -49,8 +48,8 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	}
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
+
 	ReferencePRonFlag, err := strconv.ParseBool(os.Getenv("INPUT_REFERENCEPRONFLAG"))
-	fmt.Println(ReferencePRonFlag)
 	if err != nil {
 		return nil, err
 	}
