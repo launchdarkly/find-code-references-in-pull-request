@@ -38,3 +38,7 @@ inputs:
     description: 'Use LaunchDarkly Custom Properties to associate the repo name and flag.'
     required: true
     default: 'false'
+  maxFlags:
+    description: 'Maximum number of flags to find per PR.'
+    required: true
+    default: '5'
