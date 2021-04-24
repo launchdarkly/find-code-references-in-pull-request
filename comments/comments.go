@@ -87,7 +87,7 @@ Off variation: No off variation set.
 	var commentStr []string
 	commentStr = append(commentStr, fmt.Sprintf("<details><summary>%s</summary>", flag.Name))
 	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
-	commentStr = append(commentStr, "/details>")
+	commentStr = append(commentStr, "</details>")
 
 	return commentStr, nil
 }
