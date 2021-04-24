@@ -119,8 +119,9 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		if len(buildComment.CommentsAdded) > 0 {
 			commentStr = append(commentStr, "---")
 		}
-		commentStr = append(commentStr, "** **Removed** **")
+		commentStr = append(commentStr, "<details><summary>Flags Removed</summary>")
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
+		commentStr = append(commentStr, "</details>")
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
