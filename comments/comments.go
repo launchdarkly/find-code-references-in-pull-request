@@ -44,7 +44,6 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	var commentBody bytes.Buffer
 	tmplSetup := `
 <details><summary>{{.Flag.Name}}</summary>
-
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
 *{{trim .Flag.Description}}*
@@ -113,9 +112,9 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, "<details><summary>Flags: Added/Modified</summary>")
+		commentStr = append(commentStr, "Added/Modified")
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
-		commentStr = append(commentStr, "</details>")
+		//commentStr = append(commentStr, "</details>")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		// Add in divider if there are both removed flags and already added/modified flags
