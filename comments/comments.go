@@ -43,41 +43,41 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-{{- if .Flag.Description}}
-*{{trim .Flag.Description}}*
-{{- end}}
-{{- if .Flag.Tags}}
-Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{ end}}
-Kind: **{{ .Flag.Kind }}**
-Temporary: **{{ .Flag.Temporary }}**
-{{- if .Aliases }}
-{{- if ne (len .Aliases) 0}}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
-{{- end}}
-{{ "\n" }}
-{{- range $key, $env := .Environments }}
-Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
-| Type | Variation | Weight(if Rollout) |
-| --- | --- | --- |
-{{- if not (isNil .Fallthrough_.Rollout) }}
-{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
-| Default | Rollout | |
-{{- range .Fallthrough_.Rollout.Variations }}
-| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
-{{- end }}
-{{- end }}
-{{- else }}
-| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
-{{- end }}
-{{- if kindIs "int32" .OffVariation }}
-| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
-{{- else }}
-Off variation: No off variation set.
-{{- end }}
-{{ end }}
+	**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+	{{- if .Flag.Description}}
+	*{{trim .Flag.Description}}*
+	{{- end}}
+	{{- if .Flag.Tags}}
+	Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+	{{ end}}
+	Kind: **{{ .Flag.Kind }}**
+	Temporary: **{{ .Flag.Temporary }}**
+	{{- if .Aliases }}
+	{{- if ne (len .Aliases) 0}}
+	Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+	{{- end}}
+	{{- end}}
+	{{ "\n" }}
+	{{- range $key, $env := .Environments }}
+	Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
+	| Type | Variation | Weight(if Rollout) |
+	| --- | --- | --- |
+	{{- if not (isNil .Fallthrough_.Rollout) }}
+	{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
+	| Default | Rollout | |
+	{{- range .Fallthrough_.Rollout.Variations }}
+	| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+	{{- end }}
+	{{- end }}
+	{{- else }}
+	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
+	{{- end }}
+	{{- if kindIs "int32" .OffVariation }}
+	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
+	{{- else }}
+	Off variation: No off variation set.
+	{{- end }}
+	{{ end }}
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
