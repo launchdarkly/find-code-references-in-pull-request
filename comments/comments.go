@@ -43,6 +43,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
+<details><summary>{{.Flag.Name}}</summary>
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
 *{{trim .Flag.Description}}*
@@ -78,6 +79,7 @@ Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "
 Off variation: No off variation set.
 {{- end }}
 {{ end }}
+</details>
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
