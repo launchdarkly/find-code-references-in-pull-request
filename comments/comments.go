@@ -110,7 +110,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, "<details><summary>Flags Added/Modified</summary>")
+		commentStr = append(commentStr, "<details><summary>Flags: Added/Modified</summary>")
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		commentStr = append(commentStr, "</details>")
 	}
@@ -119,7 +119,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		if len(buildComment.CommentsAdded) > 0 {
 			commentStr = append(commentStr, "---")
 		}
-		commentStr = append(commentStr, "<details><summary>Flags Removed</summary>")
+		commentStr = append(commentStr, "<details><summary>Flags: Removed</summary>")
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 		commentStr = append(commentStr, "</details>")
 	}
