@@ -110,8 +110,9 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, "** **Added/Modified** **")
+		commentStr = append(commentStr, "<details><summary>** **Added/Modified** **</summary>")
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
+		commentStr = append(commentStr, "</details>")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		// Add in divider if there are both removed flags and already added/modified flags
