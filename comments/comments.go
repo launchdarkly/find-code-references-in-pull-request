@@ -44,6 +44,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	var commentBody bytes.Buffer
 	tmplSetup := `
 <details><summary>{{.Flag.Name}}</summary>
+
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
 *{{trim .Flag.Description}}*
