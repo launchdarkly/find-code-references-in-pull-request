@@ -33,7 +33,7 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) ([]string, error) {
 	commentTemplate := Comment{
 		Flag:         flag,
 		Aliases:      aliases,
@@ -82,9 +82,14 @@ Off variation: No off variation set.
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
-	return html.UnescapeString(commentBody.String()), nil
+	var commentStr []string
+	commentStr = append(commentStr, fmt.Sprintf("<details><summary>%s/summary>", flag.Name))
+	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
+	commentStr = append(commentStr, "/details>")
+
+	return commentStr, nil
 }
 
 func GithubNoFlagComment() *github.IssueComment {
@@ -165,7 +170,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		}
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment...)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -185,7 +190,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		}
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment...)
 		if err != nil {
 			fmt.Println(err)
 		}
