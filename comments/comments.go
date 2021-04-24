@@ -85,7 +85,8 @@ Off variation: No off variation set.
 		return []string{}, err
 	}
 	var commentStr []string
-	commentStr = append(commentStr, fmt.Sprintf("* <details><summary> %s</summary>", flag.Name))
+	commentStr = append(commentStr, "\n\n")
+	commentStr = append(commentStr, fmt.Sprintf("- <details><summary> %s</summary>", flag.Name))
 	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
 	commentStr = append(commentStr, "</details>")
 
