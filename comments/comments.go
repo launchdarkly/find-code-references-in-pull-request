@@ -42,6 +42,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 		LDInstance:   config.LdInstance,
 	}
 	var commentBody bytes.Buffer
+	// All whitespace for template is required to be there or it will not render properly nested.
 	tmplSetup := `
 	**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 	{{- if .Flag.Description}}
@@ -116,7 +117,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, "<details><summary>Flags: Added/Modified</summary>")
+		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Added/Modified (%d)</summary>", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		commentStr = append(commentStr, "</details>")
 	}
@@ -125,7 +126,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		if len(buildComment.CommentsAdded) > 0 {
 			commentStr = append(commentStr, "---")
 		}
-		commentStr = append(commentStr, "<details><summary>Flags: Removed</summary>")
+		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Removed (%d)</summary>", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 		commentStr = append(commentStr, "</details>")
 	}
