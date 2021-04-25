@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -142,12 +143,11 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 
 	hash := md5.Sum([]byte(postedComments))
 	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
-		fmt.Println("comment already exists")
+		log.Println("comment already exists")
 		return ""
 	}
 
 	postedComments = postedComments + "\n <!-- comment hash: " + hex.EncodeToString(hash[:]) + " -->"
-	fmt.Println(len(postedComments))
 	return postedComments
 }
 
@@ -174,7 +174,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment...)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
@@ -194,7 +194,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment...)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 

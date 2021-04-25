@@ -36,7 +36,7 @@ func main() {
 
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
-		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
+		log.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 		os.Exit(1)
 	}
 
@@ -45,7 +45,7 @@ func main() {
 	failExit(err)
 
 	if len(flags.Items) == 0 {
-		fmt.Println("No flags found.")
+		log.Println("No flags found.")
 		os.Exit(0)
 	}
 
@@ -70,7 +70,7 @@ func main() {
 		}
 	}
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	existingComment := checkExistingComments(event, config, ctx)
@@ -127,7 +127,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
 	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	for _, comment := range comments {
@@ -150,12 +150,12 @@ func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.
 		if existingCommentId > 0 {
 			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 		} else {
 			_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 		}
 
@@ -167,10 +167,10 @@ func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.
 		createComment := ghc.GithubNoFlagComment()
 		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	} else {
-		fmt.Println("No flags found.")
+		log.Println("No flags found.")
 	}
 }
 
@@ -190,11 +190,11 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 
 	err := options.InitYAML()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	opts, err := options.GetOptions()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
@@ -203,7 +203,7 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 
 func failExit(err error) {
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 }
@@ -311,7 +311,7 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 			}
 			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 			patchComment := ldapi.PatchComment{
 				Patch:   []ldapi.PatchOperation{patch},
@@ -321,7 +321,7 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
 			})
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				os.Exit(1)
 			}
 		}
@@ -353,7 +353,7 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 			}
 			ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 			patchComment := ldapi.PatchComment{
 				Patch:   []ldapi.PatchOperation{patch},
@@ -363,7 +363,7 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey, patchComment)
 			})
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				os.Exit(1)
 			}
 		}
