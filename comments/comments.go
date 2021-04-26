@@ -88,7 +88,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentStr []string
 	commentStr = append(commentStr, "\n\n")
-	commentStr = append(commentStr, fmt.Sprintf("- <details><summary> %s</summary>", flag.Name))
+	commentStr = append(commentStr, fmt.Sprintf("    <details><summary> %s</summary>", flag.Name))
 	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
 	commentStr = append(commentStr, "	</details>")
 
