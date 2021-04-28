@@ -116,15 +116,15 @@ type FlagsRef struct {
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details, these flags have been found in the diffs:\n\n")
+	commentStr = append(commentStr, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("Flags: Added/Modified (%d)", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("Flag references: Added/Modified (%d)", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		//commentStr = append(commentStr, "</details>")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		// Add in divider if there are both removed flags and already added/modified flags
-		commentStr = append(commentStr, fmt.Sprintf("Flags: Removed (%d)", len(flagsRef.FlagsRemoved)))
+		commentStr = append(commentStr, fmt.Sprintf("Flag references: Removed (%d)", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 		//commentStr = append(commentStr, "</details>")
 	}
