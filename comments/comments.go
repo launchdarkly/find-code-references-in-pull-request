@@ -124,7 +124,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		// Add in divider if there are both removed flags and already added/modified flags
-		commentStr = append(commentStr, fmt.Sprintf("Flags: Removed (%d)", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("Flags: Removed (%d)", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 		//commentStr = append(commentStr, "</details>")
 	}
