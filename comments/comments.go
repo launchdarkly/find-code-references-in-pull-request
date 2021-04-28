@@ -116,21 +116,17 @@ type FlagsRef struct {
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details:\n")
-	commentStr = append(commentStr, "> flags referenced below have been found in the diffs of the Pull Request")
+	commentStr = append(commentStr, "LaunchDarkly Flag Details, these flags have been mentioned in the diffs:\n\n")
 	if len(flagsRef.FlagsAdded) > 0 {
 		commentStr = append(commentStr, fmt.Sprintf("Flags: Added/Modified (%d)", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
-		commentStr = append(commentStr, "</details>")
+		//commentStr = append(commentStr, "</details>")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		// Add in divider if there are both removed flags and already added/modified flags
-		if len(buildComment.CommentsAdded) > 0 {
-			commentStr = append(commentStr, "---")
-		}
-		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Removed (%d)</summary>", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("Flags: Removed (%d)", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
-		commentStr = append(commentStr, "</details>")
+		//commentStr = append(commentStr, "</details>")
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
