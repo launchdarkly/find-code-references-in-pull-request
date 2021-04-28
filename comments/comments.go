@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -33,7 +34,7 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) ([]string, error) {
 	commentTemplate := Comment{
 		Flag:         flag,
 		Aliases:      aliases,
@@ -42,49 +43,56 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 		LDInstance:   config.LdInstance,
 	}
 	var commentBody bytes.Buffer
+	// All whitespace for template is required to be there or it will not render properly nested.
 	tmplSetup := `
-**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-{{- if .Flag.Description}}
-*{{trim .Flag.Description}}*
-{{- end}}
-{{- if .Flag.Tags}}
-Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{ end}}
-Kind: **{{ .Flag.Kind }}**
-Temporary: **{{ .Flag.Temporary }}**
-{{- if .Aliases }}
-{{- if ne (len .Aliases) 0}}
-Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-{{- end}}
-{{- end}}
-{{ "\n" }}
-{{- range $key, $env := .Environments }}
-Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
-| Type | Variation | Weight(if Rollout) |
-| --- | --- | --- |
-{{- if not (isNil .Fallthrough_.Rollout) }}
-{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
-| Default | Rollout | |
-{{- range .Fallthrough_.Rollout.Variations }}
-| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
-{{- end }}
-{{- end }}
-{{- else }}
-| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
-{{- end }}
-{{- if kindIs "int32" .OffVariation }}
-| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
-{{- else }}
-Off variation: No off variation set.
-{{- end }}
-{{ end }}
+	**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+	{{- if .Flag.Description}}
+	*{{trim .Flag.Description}}*
+	{{- end}}
+	{{- if .Flag.Tags}}
+	Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+	{{ end}}
+	Kind: **{{ .Flag.Kind }}**
+	Temporary: **{{ .Flag.Temporary }}**
+	{{- if .Aliases }}
+	{{- if ne (len .Aliases) 0}}
+	Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+	{{- end}}
+	{{- end}}
+	{{ "\n" }}
+	{{- range $key, $env := .Environments }}
+	Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
+	| Type | Variation | Weight(if Rollout) |
+	| --- | --- | --- |
+	{{- if not (isNil .Fallthrough_.Rollout) }}
+	{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
+	| Default | Rollout | |
+	{{- range .Fallthrough_.Rollout.Variations }}
+	| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+	{{- end }}
+	{{- end }}
+	{{- else }}
+	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
+	{{- end }}
+	{{- if kindIs "int32" .OffVariation }}
+	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
+	{{- else }}
+	Off variation: No off variation set.
+	{{- end }}
+	{{ end }}
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
-	return html.UnescapeString(commentBody.String()), nil
+	var commentStr []string
+	commentStr = append(commentStr, "\n\n")
+	commentStr = append(commentStr, fmt.Sprintf("- <details><summary> %s</summary>", flag.Name))
+	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
+	commentStr = append(commentStr, "	</details>")
+
+	return commentStr, nil
 }
 
 func GithubNoFlagComment() *github.IssueComment {
@@ -108,18 +116,17 @@ type FlagsRef struct {
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
+	commentStr = append(commentStr, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, "** **Added/Modified** **")
+		commentStr = append(commentStr, fmt.Sprintf("Flag references: Added/Modified (%d)", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
+		//commentStr = append(commentStr, "</details>")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		// Add in divider if there are both removed flags and already added/modified flags
-		if len(buildComment.CommentsAdded) > 0 {
-			commentStr = append(commentStr, "---")
-		}
-		commentStr = append(commentStr, "** **Removed** **")
+		commentStr = append(commentStr, fmt.Sprintf("Flag references: Removed (%d)", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
+		//commentStr = append(commentStr, "</details>")
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
@@ -133,11 +140,11 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 
 	hash := md5.Sum([]byte(postedComments))
 	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
-		fmt.Println("comment already exists")
+		log.Println("comment already exists")
 		return ""
 	}
 
-	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
+	postedComments = postedComments + "\n <!-- comment hash: " + hex.EncodeToString(hash[:]) + " -->"
 	return postedComments
 }
 
@@ -162,9 +169,9 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		}
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment...)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
@@ -182,9 +189,9 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		}
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment...)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 
