@@ -88,7 +88,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentStr []string
 	commentStr = append(commentStr, "\n\n")
-	commentStr = append(commentStr, fmt.Sprintf("    <details><summary> %s</summary>", flag.Name))
+	commentStr = append(commentStr, fmt.Sprintf("- <details><summary> %s</summary>", flag.Name))
 	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
 	commentStr = append(commentStr, "	</details>")
 
@@ -118,7 +118,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Added/Modified (%d)</summary>", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Added/Modified in diffs (%d)</summary>", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		commentStr = append(commentStr, "</details>")
 	}
@@ -127,7 +127,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		if len(buildComment.CommentsAdded) > 0 {
 			commentStr = append(commentStr, "---")
 		}
-		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Removed (%d)</summary>", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("<details><summary>Flags: Removed in diffs (%d)</summary>", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 		commentStr = append(commentStr, "</details>")
 	}
