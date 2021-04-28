@@ -116,7 +116,8 @@ type FlagsRef struct {
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details:")
+	commentStr = append(commentStr, "LaunchDarkly Flag Details:\n")
+	commentStr = append(commentStr, "> flags referenced below have been found in the diffs of the Pull Request")
 	if len(flagsRef.FlagsAdded) > 0 {
 		commentStr = append(commentStr, fmt.Sprintf("Flags: Added/Modified (%d)", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
