@@ -95,7 +95,7 @@ func main() {
 func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	stats, _, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(config.LDClient.Ctx, "").Execute()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	for flagKey, _ := range flags.FlagsAdded {
 		if collection, ok := stats.Flags[flagKey]; ok {
