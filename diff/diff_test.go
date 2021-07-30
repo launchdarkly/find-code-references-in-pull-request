@@ -12,40 +12,42 @@ import (
 
 func ptr(v interface{}) *interface{} { return &v }
 
-func createFlag(key string) ldapi.FeatureFlag {
-	environment := ldapi.FeatureFlagConfig{
-		Site: &ldapi.Site{
-			Href: "test",
+func createFlag(key string) ldapi.GlobalFlagRep {
+	testVal := "test"
+	testVar := int32(0)
+	environment := ldapi.FlagConfigurationRep{
+		Site: ldapi.CoreLink{
+			Href: &testVal,
 		},
-		Fallthrough_: &ldapi.ModelFallthrough{
-			Variation: 0,
+		Fallthrough: ldapi.VariationOrRolloutRep{
+			Variation: &testVar,
 		},
 	}
-	variationTrue := ldapi.Variation{
+	variationTrue := ldapi.VariateRep{
 		Value: ptr(true),
 	}
-	variationFalse := ldapi.Variation{
+	variationFalse := ldapi.VariateRep{
 		Value: ptr(false),
 	}
-	flag := ldapi.FeatureFlag{
+	flag := ldapi.GlobalFlagRep{
 		Key:          key,
 		Name:         "Sample Flag",
 		Kind:         "boolean",
-		Environments: map[string]ldapi.FeatureFlagConfig{"production": environment},
-		Variations:   []ldapi.Variation{variationTrue, variationFalse},
+		Environments: map[string]ldapi.FlagConfigurationRep{"production": environment},
+		Variations:   []ldapi.VariateRep{variationTrue, variationFalse},
 	}
 	return flag
 }
 
 type testProcessor struct {
-	Flags    ldapi.FeatureFlags
+	Flags    ldapi.GlobalFlagCollectionRep
 	FlagsRef comments.FlagsRef
 	Config   config.Config
 }
 
 func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
-	flags := ldapi.FeatureFlags{}
+	flags := ldapi.GlobalFlagCollectionRep{}
 	flags.Items = append(flags.Items, flag)
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)

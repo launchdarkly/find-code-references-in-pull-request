@@ -24,18 +24,19 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 		return nil, errors.New("token cannot be empty")
 	}
 
-	basePath := fmt.Sprintf("%s/api/v2", apiHost)
+	auth := make(map[string]ldapi.APIKey)
+	auth["ApiKey"] = ldapi.APIKey{
+		Key: token,
+	}
 
 	cfg := &ldapi.Configuration{
-		BasePath:      basePath,
+		Host:          apiHost,
 		DefaultHeader: make(map[string]string),
 		UserAgent:     fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
-	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKey, ldapi.APIKey{
-		Key: token,
-	})
+	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, auth)
 	if oauth {
 		ctx = context.WithValue(context.Background(), ldapi.ContextAccessToken, token)
 	}

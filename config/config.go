@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
+	"github.com/launchdarkly/cr-flags/client"
 	"golang.org/x/oauth2"
 )
 
@@ -20,6 +21,7 @@ type Config struct {
 	ApiToken          string
 	Workspace         string
 	GHClient          *github.Client
+	LDClient          *client.Client
 	ReferencePRonFlag bool
 	MaxFlags          int
 }
@@ -61,6 +63,10 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	}
 	config.MaxFlags = int(MaxFlags)
 	config.GHClient = getGithubClient(ctx)
+	config.LDClient, err = client.NewClient(config.ApiToken, config.LdInstance, false)
+	if err != nil {
+		return nil, err
+	}
 	return &config, nil
 }
 

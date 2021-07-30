@@ -11,7 +11,7 @@ import (
 func ptr(v interface{}) *interface{} { return &v }
 
 type testFlagEnv struct {
-	Flag   ldapi.FeatureFlag
+	Flag   ldapi.GlobalFlagRep
 	Config config.Config
 }
 
@@ -28,28 +28,30 @@ func newTestAccEnv() *testFlagEnv {
 	}
 }
 
-func createFlag(key string) ldapi.FeatureFlag {
-	environment := ldapi.FeatureFlagConfig{
+func createFlag(key string) ldapi.GlobalFlagRep {
+	testVal := "test"
+	varVal := int32(0)
+	environment := ldapi.FlagConfigurationRep{
 		EnvironmentName: "Production",
-		Site: &ldapi.Site{
-			Href: "test",
+		Site: ldapi.CoreLink{
+			Href: &testVal,
 		},
-		Fallthrough_: &ldapi.ModelFallthrough{
-			Variation: 0,
+		Fallthrough: ldapi.VariationOrRolloutRep{
+			Variation: &varVal,
 		},
 	}
-	variationTrue := ldapi.Variation{
+	variationTrue := ldapi.VariateRep{
 		Value: ptr(true),
 	}
-	variationFalse := ldapi.Variation{
+	variationFalse := ldapi.VariateRep{
 		Value: ptr(false),
 	}
-	flag := ldapi.FeatureFlag{
+	flag := ldapi.GlobalFlagRep{
 		Key:          key,
 		Name:         "Sample Flag",
 		Kind:         "boolean",
-		Environments: map[string]ldapi.FeatureFlagConfig{"production": environment},
-		Variations:   []ldapi.Variation{variationTrue, variationFalse},
+		Environments: map[string]ldapi.FlagConfigurationRep{"production": environment},
+		Variations:   []ldapi.VariateRep{variationTrue, variationFalse},
 	}
 	return flag
 }
@@ -78,14 +80,14 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 }
 
 type testProcessor struct {
-	Flags    ldapi.FeatureFlags
+	Flags    ldapi.GlobalFlagCollectionRep
 	FlagsRef FlagsRef
 	Config   config.Config
 }
 
 func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
-	flags := ldapi.FeatureFlags{}
+	flags := ldapi.GlobalFlagCollectionRep{}
 	flags.Items = append(flags.Items, flag)
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -169,22 +171,23 @@ func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 }
 
 func (e *testFlagEnv) RolloutFlag(t *testing.T) {
-	trueRollout := ldapi.WeightedVariation{
+	testVal := "test"
+	trueRollout := ldapi.WeightedVariationRep{
 		Variation: 0,
 		Weight:    12345,
 	}
-	falseRollout := ldapi.WeightedVariation{
+	falseRollout := ldapi.WeightedVariationRep{
 		Variation: 1,
 		Weight:    87655,
 	}
-	rollout := ldapi.Rollout{
-		Variations: []ldapi.WeightedVariation{trueRollout, falseRollout},
+	rollout := ldapi.RolloutRep{
+		Variations: []ldapi.WeightedVariationRep{trueRollout, falseRollout},
 	}
-	environment := ldapi.FeatureFlagConfig{
-		Site: &ldapi.Site{
-			Href: "test",
+	environment := ldapi.FlagConfigurationRep{
+		Site: ldapi.CoreLink{
+			Href: &testVal,
 		},
-		Fallthrough_: &ldapi.ModelFallthrough{
+		Fallthrough: ldapi.VariationOrRolloutRep{
 			Rollout: &rollout,
 		},
 	}

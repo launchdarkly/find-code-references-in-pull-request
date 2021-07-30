@@ -72,7 +72,7 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-
+	filterUsingCodeRefsData(flagsRef, config)
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
@@ -92,7 +92,21 @@ func main() {
 	}
 }
 
-func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
+func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
+	stats, _, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(config.LDClient.Ctx, "").Execute()
+	if err != nil {
+		panic(err)
+	}
+	for flagKey, _ := range flags.FlagsAdded {
+		if collection, ok := stats.Flags[flagKey]; ok {
+			if len(collection) != 0 {
+				delete(flags.FlagsAdded, flagKey)
+			}
+		}
+	}
+}
+
+func getFlags(config *lcr.Config) (ldapi.GlobalFlagCollectionRep, []string, error) {
 	var envString string
 	for idx, env := range config.LdEnvironment {
 		envString = envString + fmt.Sprintf("env=%s", env)
@@ -106,15 +120,15 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 
 	req.Header.Add("Authorization", config.ApiToken)
 	if err != nil {
-		return ldapi.FeatureFlags{}, []string{}, err
+		return ldapi.GlobalFlagCollectionRep{}, []string{}, err
 	}
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 
-	flags := ldapi.FeatureFlags{}
+	flags := ldapi.GlobalFlagCollectionRep{}
 	err = json.NewDecoder(resp.Body).Decode(&flags)
 	if err != nil {
-		return ldapi.FeatureFlags{}, []string{}, err
+		return ldapi.GlobalFlagCollectionRep{}, []string{}, err
 	}
 
 	flagKeys := make([]string, 0, len(flags.Items))
@@ -263,7 +277,7 @@ func split(r rune) bool {
 	return r == ',' || r == ' '
 }
 
-func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueComment, config *config.Config, flagsRef ghc.FlagsRef, event *github.PullRequestEvent) {
+func processCustomProps(flags ldapi.GlobalFlagCollectionRep, existingComment *github.IssueComment, config *config.Config, flagsRef ghc.FlagsRef, event *github.PullRequestEvent) {
 	var existingFlagKeys []string
 	if existingComment != nil && strings.Contains(*existingComment.Body, "<!-- flags") {
 		lines := strings.Split(*existingComment.Body, "\n")
@@ -304,7 +318,7 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
-			patch := ldapi.PatchOperation{
+			patch := ldapi.JSONPatchElt{
 				Op:    "replace",
 				Path:  fmt.Sprintf("/customProperties/%s", customProp),
 				Value: ptr(customPatch),
@@ -313,12 +327,13 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 			if err != nil {
 				log.Println(err)
 			}
-			patchComment := ldapi.PatchComment{
-				Patch:   []ldapi.PatchOperation{patch},
-				Comment: "PR Commentor",
+			comment := "PR Commentor"
+			patchComment := ldapi.PatchWithComment{
+				Patch:   []ldapi.JSONPatchElt{patch},
+				Comment: &comment,
 			}
 			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
-				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k, patchComment)
+				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, k).PatchWithComment(patchComment).Execute()
 			})
 			if err != nil {
 				log.Println(err)
@@ -346,7 +361,7 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
-			patch := ldapi.PatchOperation{
+			patch := ldapi.JSONPatchElt{
 				Op:    "replace",
 				Path:  "/customProperties",
 				Value: ptr(customPatch),
@@ -355,12 +370,13 @@ func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueC
 			if err != nil {
 				log.Println(err)
 			}
-			patchComment := ldapi.PatchComment{
-				Patch:   []ldapi.PatchOperation{patch},
-				Comment: "PR Commentor",
+			comment := "PR Commentor"
+			patchComment := ldapi.PatchWithComment{
+				Patch:   []ldapi.JSONPatchElt{patch},
+				Comment: &comment,
 			}
 			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
-				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey, patchComment)
+				return ldClient.Ld.FeatureFlagsApi.PatchFeatureFlag(ldClient.Ctx, config.LdProject, orphanKey).PatchWithComment(patchComment).Execute()
 			})
 			if err != nil {
 				log.Println(err)
