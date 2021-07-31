@@ -33,7 +33,7 @@ func main() {
 	ctx := context.Background()
 	config, err := lcr.ValidateInputandParse(ctx)
 	failExit(err)
-
+	log.Print("Getting Github Event")
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		log.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -107,6 +107,7 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 }
 
 func getFlags(config *lcr.Config) (ldapi.GlobalFlagCollectionRep, []string, error) {
+	log.Print("Getting Flags")
 	var envString string
 	for idx, env := range config.LdEnvironment {
 		envString = envString + fmt.Sprintf("env=%s", env)
