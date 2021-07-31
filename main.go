@@ -94,13 +94,12 @@ func main() {
 
 func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	log.Print("Filtering flags that already exist")
-	auth := make(map[string]ldapi.APIKey)
-	auth["ApiKey"] = ldapi.APIKey{
-		Key: config.ApiToken,
+	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
+	if err != nil {
+		log.Println(err)
 	}
 
-	ctx := context.Background()
-	stats, res, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(config.LDClient.WrapContext(ctx), config.LdProject).Execute()
+	stats, res, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(ldClient.Ctx, config.LdProject).Execute()
 	fmt.Println(res)
 	fmt.Println(stats)
 	if err != nil {

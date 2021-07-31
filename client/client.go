@@ -34,12 +34,9 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 		UserAgent: fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
 	}
 
-	//cfg.AddDefaultHeader("LD-API-Version", APIVersion)
-	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, auth)
-
+	//cfg.AddDefaultHeader("LD-API-Version", APIVersion
 	return &Client{
-		Ld:  ldapi.NewAPIClient(cfg),
-		Ctx: ctx,
+		Ld: ldapi.NewAPIClient(cfg),
 	}, nil
 }
 
