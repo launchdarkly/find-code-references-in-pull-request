@@ -98,7 +98,7 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	fmt.Println(res)
 	fmt.Println(stats)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed getting stats: %s", err))
+		log.Fatal(fmt.Sprintf("Failed getting stats: %s", err.(ldapi.GenericOpenAPIError)))
 	}
 	fmt.Println(flags)
 	if len(flags.FlagsAdded) > 0 {
