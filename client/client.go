@@ -30,18 +30,24 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	}
 	fmt.Println(auth)
 	cfg := &ldapi.Configuration{
-		Host:          apiHost,
-		DefaultHeader: make(map[string]string),
-		UserAgent:     fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
+		Host:      apiHost,
+		UserAgent: fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
 	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, auth)
 
 	return &Client{
-		ApiKey:  token,
-		ApiHost: apiHost,
-		Ld:      ldapi.NewAPIClient(cfg),
-		Ctx:     ctx,
+		Ld:  ldapi.NewAPIClient(cfg),
+		Ctx: ctx,
 	}, nil
+}
+
+func (w *Client) WrapContext(ctx context.Context) context.Context {
+	auth := make(map[string]ldapi.APIKey)
+	auth["ApiKey"] = ldapi.APIKey{
+		Key: w.ApiKey,
+	}
+	return context.WithValue(ctx, ldapi.ContextAPIKeys, auth)
+
 }
