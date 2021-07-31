@@ -72,7 +72,7 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	//filterUsingCodeRefsData(flagsRef, config)
+	filterUsingCodeRefsData(flagsRef, config)
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
