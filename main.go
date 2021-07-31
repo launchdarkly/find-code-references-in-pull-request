@@ -94,6 +94,7 @@ func main() {
 
 func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	log.Print("Filtering flags that already exist")
+	fmt.Println(config.LDClient.Ctx)
 	stats, res, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(config.LDClient.Ctx, config.LdProject).Execute()
 	fmt.Println(res)
 	fmt.Println(stats)
