@@ -99,10 +99,13 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Failed getting stats: %s", err))
 	}
-	for flagKey, _ := range flags.FlagsAdded {
-		if collection, ok := stats.Flags[flagKey]; ok {
-			if len(collection) != 0 {
-				delete(flags.FlagsAdded, flagKey)
+	fmt.Println(flags)
+	if len(flags.FlagsAdded) > 0 {
+		for flagKey, _ := range flags.FlagsAdded {
+			if collection, ok := stats.Flags[flagKey]; ok {
+				if len(collection) != 0 {
+					delete(flags.FlagsAdded, flagKey)
+				}
 			}
 		}
 	}
