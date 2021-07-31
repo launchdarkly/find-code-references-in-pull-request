@@ -28,7 +28,7 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	auth["ApiKey"] = ldapi.APIKey{
 		Key: token,
 	}
-
+	fmt.Println(auth)
 	cfg := &ldapi.Configuration{
 		Host:          apiHost,
 		DefaultHeader: make(map[string]string),
@@ -37,9 +37,6 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
 	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, auth)
-	if oauth {
-		ctx = context.WithValue(context.Background(), ldapi.ContextAccessToken, token)
-	}
 
 	return &Client{
 		ApiKey:  token,
