@@ -29,14 +29,14 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 		Key: token,
 	}
 	fmt.Println(auth)
-	cfg := &ldapi.Configuration{
-		Host:      apiHost,
-		UserAgent: fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
-	}
+	// cfg := &ldapi.Configuration{
+	// 	Host:      apiHost,
+	// 	UserAgent: fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
+	// }
 
 	//cfg.AddDefaultHeader("LD-API-Version", APIVersion
 	return &Client{
-		Ld: ldapi.NewAPIClient(cfg),
+		Ld: ldapi.NewAPIClient(ldapi.NewConfiguration()),
 	}, nil
 }
 
