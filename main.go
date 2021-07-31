@@ -100,8 +100,10 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	}
 
 	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, auth)
-
-	stats, res, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(ctx, config.LdProject).Execute()
+	fmt.Println(config.LdProject)
+	statsPrep := config.LDClient.Ld.CodeReferencesApi.GetStatistics(ctx, config.LdProject)
+	fmt.Println(statsPrep)
+	stats, res, err := statsPrep.Execute()
 	fmt.Println(res)
 	fmt.Println(stats)
 	if err != nil {
