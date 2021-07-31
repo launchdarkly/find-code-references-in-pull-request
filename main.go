@@ -98,8 +98,9 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	if err != nil {
 		log.Println(err)
 	}
-
-	stats, res, err := config.LDClient.Ld.CodeReferencesApi.GetStatistics(ldClient.Ctx, config.LdProject).Execute()
+	fmt.Println(config.LdProject)
+	ctx := context.Background()
+	stats, res, err := ldClient.Ld.CodeReferencesApi.GetStatistics(ctx, config.LdProject).Execute()
 	fmt.Println(res)
 	fmt.Println(stats)
 	if err != nil {
