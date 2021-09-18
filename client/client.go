@@ -25,7 +25,9 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	}
 
 	return &Client{
-		Ld: ldapi.NewAPIClient(ldapi.NewConfiguration()),
+		ApiKey:  token,
+		ApiHost: apiHost,
+		Ld:      ldapi.NewAPIClient(ldapi.NewConfiguration()),
 	}, nil
 }
 
