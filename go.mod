@@ -7,7 +7,7 @@ require (
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.8 // indirect
-	github.com/launchdarkly/api-client-go v0.0.0-20210731000823-f7dd3cce8f8a
+	github.com/launchdarkly/api-client-go v0.0.0-20210903142932-189124572822
 	github.com/launchdarkly/ld-find-code-refs v0.0.1-rc3.0.20210730232939-8c7e17b0281c
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1

@@ -118,7 +118,7 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	}
 }
 
-func getFlags(config *lcr.Config) (ldapi.GlobalFlagCollectionRep, []string, error) {
+func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	log.Print("Getting Flags")
 	var envString string
 	for idx, env := range config.LdEnvironment {
@@ -133,15 +133,15 @@ func getFlags(config *lcr.Config) (ldapi.GlobalFlagCollectionRep, []string, erro
 
 	req.Header.Add("Authorization", config.ApiToken)
 	if err != nil {
-		return ldapi.GlobalFlagCollectionRep{}, []string{}, err
+		return ldapi.FeatureFlags{}, []string{}, err
 	}
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 
-	flags := ldapi.GlobalFlagCollectionRep{}
+	flags := ldapi.FeatureFlags{}
 	err = json.NewDecoder(resp.Body).Decode(&flags)
 	if err != nil {
-		return ldapi.GlobalFlagCollectionRep{}, []string{}, err
+		return ldapi.FeatureFlags{}, []string{}, err
 	}
 
 	flagKeys := make([]string, 0, len(flags.Items))
@@ -290,7 +290,7 @@ func split(r rune) bool {
 	return r == ',' || r == ' '
 }
 
-func processCustomProps(flags ldapi.GlobalFlagCollectionRep, existingComment *github.IssueComment, config *config.Config, flagsRef ghc.FlagsRef, event *github.PullRequestEvent) {
+func processCustomProps(flags ldapi.FeatureFlags, existingComment *github.IssueComment, config *config.Config, flagsRef ghc.FlagsRef, event *github.PullRequestEvent) {
 	var existingFlagKeys []string
 	if existingComment != nil && strings.Contains(*existingComment.Body, "<!-- flags") {
 		lines := strings.Split(*existingComment.Body, "\n")
@@ -331,7 +331,7 @@ func processCustomProps(flags ldapi.GlobalFlagCollectionRep, existingComment *gi
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
-			patch := ldapi.JSONPatchElt{
+			patch := ldapi.PatchOperation{
 				Op:    "replace",
 				Path:  fmt.Sprintf("/customProperties/%s", customProp),
 				Value: ptr(customPatch),
@@ -342,7 +342,7 @@ func processCustomProps(flags ldapi.GlobalFlagCollectionRep, existingComment *gi
 			}
 			comment := "PR Commentor"
 			patchComment := ldapi.PatchWithComment{
-				Patch:   []ldapi.JSONPatchElt{patch},
+				Patch:   []ldapi.PatchOperation{patch},
 				Comment: &comment,
 			}
 			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {
@@ -374,7 +374,7 @@ func processCustomProps(flags ldapi.GlobalFlagCollectionRep, existingComment *gi
 			}
 			customPatch := make(map[string]ldapi.CustomProperty)
 			customPatch[customProp] = customProperty
-			patch := ldapi.JSONPatchElt{
+			patch := ldapi.PatchOperation{
 				Op:    "replace",
 				Path:  "/customProperties",
 				Value: ptr(customPatch),
@@ -385,7 +385,7 @@ func processCustomProps(flags ldapi.GlobalFlagCollectionRep, existingComment *gi
 			}
 			comment := "PR Commentor"
 			patchComment := ldapi.PatchWithComment{
-				Patch:   []ldapi.JSONPatchElt{patch},
+				Patch:   []ldapi.PatchOperation{patch},
 				Comment: &comment,
 			}
 			_, _, err = handleRateLimit(func() (interface{}, *http.Response, error) {

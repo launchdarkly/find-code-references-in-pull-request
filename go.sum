@@ -214,6 +214,8 @@ github.com/launchdarkly/api-client-go v0.0.0-20210730211728-d318df4e5b91 h1:LKGs
 github.com/launchdarkly/api-client-go v0.0.0-20210730211728-d318df4e5b91/go.mod h1:B7SNs2PSVIxqUQJv9QSc8j0bcdDL7nWL07BexRrb2HI=
 github.com/launchdarkly/api-client-go v0.0.0-20210731000823-f7dd3cce8f8a h1:2/cljSv7r5bKg2tn0H9T8C1yJWkahgtQUYoUFrC23Bg=
 github.com/launchdarkly/api-client-go v0.0.0-20210731000823-f7dd3cce8f8a/go.mod h1:B7SNs2PSVIxqUQJv9QSc8j0bcdDL7nWL07BexRrb2HI=
+github.com/launchdarkly/api-client-go v0.0.0-20210903142932-189124572822 h1:otonlO2CSHzZ1sePlQ64pWAhdWXb3Wn8uZxj3da3dZU=
+github.com/launchdarkly/api-client-go v0.0.0-20210903142932-189124572822/go.mod h1:B7SNs2PSVIxqUQJv9QSc8j0bcdDL7nWL07BexRrb2HI=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f h1:jfiPiz2hE/7mHv2NOS4cm07sSJCsKlbxmR7pzPhhvpU=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f/go.mod h1:CHbYdMs8UjvNnS2fatlQvi4UYnBTRYGxRHc/0kQupSQ=
 github.com/launchdarkly/ld-find-code-refs v0.0.1-rc3.0.20210730232939-8c7e17b0281c h1:4LjMWdsiDxns0I6RlvzqUcmxha1gkX+cnsF2Pwi2Mds=

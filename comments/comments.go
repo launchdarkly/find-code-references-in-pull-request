@@ -21,11 +21,11 @@ import (
 )
 
 type Comment struct {
-	Flag         ldapi.GlobalFlagRep
+	Flag         ldapi.FeatureFlag
 	Aliases      []string
 	ChangeType   string
-	Primary      ldapi.FlagConfigurationRep
-	Environments map[string]ldapi.FlagConfigurationRep
+	Primary      ldapi.FeatureFlagConfig
+	Environments map[string]ldapi.FeatureFlagConfig
 	LDInstance   string
 }
 
@@ -34,7 +34,7 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.GlobalFlagRep, aliases []string, config *config.Config) ([]string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) ([]string, error) {
 	env := flag.Environments
 	commentTemplate := Comment{
 		Flag:         flag,
@@ -149,7 +149,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	return postedComments
 }
 
-func ProcessFlags(flagsRef FlagsRef, flags ldapi.GlobalFlagCollectionRep, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
@@ -199,7 +199,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.GlobalFlagCollectionRep, config
 	return buildComment
 }
 
-func find(slice []ldapi.GlobalFlagRep, val string) (int, bool) {
+func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	for i, item := range slice {
 		if item.Key == val {
 			return i, true

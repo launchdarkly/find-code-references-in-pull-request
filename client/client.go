@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	ldapi "github.com/launchdarkly/api-client-go"
 )
@@ -24,11 +23,11 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 		return nil, errors.New("token cannot be empty")
 	}
 
-	auth := make(map[string]ldapi.APIKey)
-	auth["ApiKey"] = ldapi.APIKey{
-		Key: token,
-	}
-	fmt.Println(auth)
+	// auth := make(map[string]ldapi.APIKey)
+	// auth["ApiKey"] = ldapi.APIKey{
+	// 	Key: token,
+	// }
+	// fmt.Println(auth)
 	// cfg := &ldapi.Configuration{
 	// 	Host:      apiHost,
 	// 	UserAgent: fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
