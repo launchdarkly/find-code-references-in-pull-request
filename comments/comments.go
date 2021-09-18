@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
@@ -36,6 +37,13 @@ func isNil(a interface{}) bool {
 
 func deRef(i *[]ldapi.Variation) []ldapi.Variation { return *i }
 
+func parseJSON(a interface{}) string {
+	json, err := json.Marshal(a)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return string(json)
+}
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) ([]string, error) {
 	env := flag.Environments
 	commentTemplate := Comment{
@@ -85,7 +93,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	{{- end }}
 	{{ end }}
 `
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil, "deRef": deRef}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil, "deRef": deRef, "parseJSON": parseJSON}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return []string{}, err
