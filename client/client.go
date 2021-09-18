@@ -23,26 +23,14 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 		return nil, errors.New("token cannot be empty")
 	}
 
-	// auth := make(map[string]ldapi.APIKey)
-	// auth["ApiKey"] = ldapi.APIKey{
-	// 	Key: token,
-	// }
-	// fmt.Println(auth)
-	// cfg := &ldapi.Configuration{
-	// 	Host:      apiHost,
-	// 	UserAgent: fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
-	// }
-
-	//cfg.AddDefaultHeader("LD-API-Version", APIVersion
 	return &Client{
 		Ld: ldapi.NewAPIClient(ldapi.NewConfiguration()),
 	}, nil
 }
 
 func (w *Client) WrapContext(ctx context.Context) context.Context {
-	auth := make(map[string]ldapi.APIKey)
-	auth["ApiKey"] = ldapi.APIKey{
-		Key: w.ApiKey,
+	auth := map[string]ldapi.APIKey{
+		"ApiKey": {Key: w.ApiKey},
 	}
 	return context.WithValue(ctx, ldapi.ContextAPIKeys, auth)
 
