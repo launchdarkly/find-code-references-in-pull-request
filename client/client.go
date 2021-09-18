@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	ldapi "github.com/launchdarkly/api-client-go"
 )
@@ -29,6 +30,7 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 }
 
 func (w *Client) WrapContext(ctx context.Context) context.Context {
+	fmt.Println(w.ApiKey)
 	auth := map[string]ldapi.APIKey{
 		"ApiKey": {Key: w.ApiKey},
 	}
