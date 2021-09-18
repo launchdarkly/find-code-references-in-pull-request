@@ -111,6 +111,7 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 		for flagKey, _ := range flags.FlagsAdded {
 			if collection, ok := stats.Flags[flagKey]; ok {
 				if len(collection) != 0 {
+					fmt.Println(fmt.Sprintf(`Deleting from map: %s`, flagKey))
 					delete(flags.FlagsAdded, flagKey)
 				}
 			}
