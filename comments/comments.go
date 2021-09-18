@@ -73,7 +73,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	{{- end }}
 	{{- end }}
 	{{- else }}
-	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
+	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough.Variation).Value) }}` + "`| |" + `
 	{{- end }}
 	{{- if kindIs "int32" .OffVariation }}
 	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
