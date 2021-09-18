@@ -39,6 +39,7 @@ func main() {
 		log.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 		os.Exit(1)
 	}
+	repoName := os.Getenv("GITHUB_REPOSITORY")
 
 	// Query for flags
 	flags, flagKeys, err := getFlags(config)
@@ -72,7 +73,7 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	filterUsingCodeRefsData(flagsRef, config)
+	filterUsingCodeRefsData(flagsRef, config, repoName)
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
@@ -92,7 +93,7 @@ func main() {
 	}
 }
 
-func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
+func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config, repoName string) {
 	log.Print("Filtering flags that already exist")
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	if err != nil {
@@ -110,9 +111,13 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config) {
 	if len(flags.FlagsAdded) > 0 {
 		for flagKey, _ := range flags.FlagsAdded {
 			if collection, ok := stats.Flags[flagKey]; ok {
-				if len(collection) != 0 {
-					fmt.Println(fmt.Sprintf(`Deleting from map: %s`, flagKey))
-					delete(flags.FlagsAdded, flagKey)
+				for _, entry := range collection {
+					if strings.Contains(repoName, entry.Name) {
+						if entry.HunkCount > 0 {
+							fmt.Println(fmt.Sprintf(`Deleting from map: %s`, flagKey))
+							delete(flags.FlagsAdded, flagKey)
+						}
+					}
 				}
 			}
 		}
