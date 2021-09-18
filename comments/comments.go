@@ -34,6 +34,8 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
+func deRef(i *[]ldapi.Variation) []ldapi.Variation { return *i }
+
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) ([]string, error) {
 	env := flag.Environments
 	commentTemplate := Comment{
@@ -65,11 +67,12 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
 	| Type | Variation | Weight(if Rollout) |
 	| --- | --- | --- |
+	{{ $value := $.Flag.Variations | parseJSON }}
 	{{- if not (isNil .Fallthrough.Rollout) }}
 	{{- if not (isNil .Fallthrough.Rollout.Variations)}}
 	| Default | Rollout | |
 	{{- range .Fallthrough.Rollout.Variations }}
-	| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+	| |` + "`" + `{{  trunc 50 (toRawJson (index $value .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 	{{- end }}
 	{{- end }}
 	{{- else }}
@@ -82,7 +85,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	{{- end }}
 	{{ end }}
 `
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil, "deRef": deRef}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return []string{}, err
