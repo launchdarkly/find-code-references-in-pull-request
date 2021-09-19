@@ -39,6 +39,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 		Fallthrough: ldapi.VariationOrRolloutRep{
 			Variation: &varVal,
 		},
+		OffVariation: &varVal,
 	}
 	variationTrue := ldapi.Variation{
 		Value: ptr(true),
@@ -172,6 +173,7 @@ func (e *testFlagEnv) AliasesAndTags(t *testing.T) {
 
 func (e *testFlagEnv) RolloutFlag(t *testing.T) {
 	testVal := "test"
+	varVal := int32(0)
 	trueRollout := ldapi.WeightedVariation{
 		Variation: 0,
 		Weight:    12345,
@@ -190,6 +192,7 @@ func (e *testFlagEnv) RolloutFlag(t *testing.T) {
 		Fallthrough: ldapi.VariationOrRolloutRep{
 			Rollout: &rollout,
 		},
+		OffVariation: &varVal,
 	}
 	e.Flag.Environments["production"] = environment
 	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "example_flag", "ExampleFlag"}, &e.Config)

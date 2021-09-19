@@ -35,9 +35,9 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func deRef(i *[]ldapi.Variation) []ldapi.Variation { return *i }
+func deRef(i *int32) int32 { return *i }
 
-func parseJSON(a interface{}) string {
+func parseJson(a interface{}) string {
 	json, err := json.Marshal(a)
 	if err != nil {
 		fmt.Println(err)
@@ -75,25 +75,26 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
 	| Type | Variation | Weight(if Rollout) |
 	| --- | --- | --- |
-	{{ $value := $.Flag.Variations | parseJSON }}
 	{{- if not (isNil .Fallthrough.Rollout) }}
 	{{- if not (isNil .Fallthrough.Rollout.Variations)}}
 	| Default | Rollout | |
 	{{- range .Fallthrough.Rollout.Variations }}
-	| |` + "`" + `{{  trunc 50 (toRawJson (index $value .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
+	| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 	{{- end }}
 	{{- end }}
 	{{- else }}
-	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough.Variation).Value) }}` + "`| |" + `
+	{{- $value := .Fallthrough.Variation | deRef }}
+	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations $value).Value) }}` + "`| |" + `
 	{{- end }}
-	{{- if kindIs "int32" .OffVariation }}
-	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
+	{{- if not (isNil .OffVariation) }}
+	{{- $offValue := .OffVariation | deRef }}
+	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations $offValue).Value) }}` + "` | |" + `
 	{{- else }}
 	Off variation: No off variation set.
 	{{- end }}
 	{{ end }}
 `
-	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil, "deRef": deRef, "parseJSON": parseJSON}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil, "deRef": deRef, "parseJson": parseJson}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return []string{}, err
