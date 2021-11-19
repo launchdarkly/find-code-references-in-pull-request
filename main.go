@@ -99,7 +99,6 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config, repoName st
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Println(config.LdProject)
 	ctx := context.Background()
 	stats, res, err := ldClient.Ld.CodeReferencesApi.GetStatistics(ldClient.WrapContext(ctx), config.LdProject).Execute()
 	fmt.Println(res)
@@ -110,8 +109,12 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config, repoName st
 	fmt.Println(flags)
 	if len(flags.FlagsAdded) > 0 {
 		for flagKey, _ := range flags.FlagsAdded {
+			fmt.Println(flagKey)
 			if collection, ok := stats.Flags[flagKey]; ok {
+				fmt.Println("collection")
+				fmt.Println(collection)
 				for _, entry := range collection {
+					fmt.Println(entry)
 					if strings.Contains(repoName, entry.Name) {
 						if entry.HunkCount > 0 {
 							fmt.Println(fmt.Sprintf(`Deleting from map: %s`, flagKey))
