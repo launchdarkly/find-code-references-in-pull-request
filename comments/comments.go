@@ -187,26 +187,6 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 			log.Println(err)
 		}
 	}
-	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for key := range flagsRef.FlagsRemoved {
-		removedKeys = append(removedKeys, key)
-	}
-	sort.Strings(removedKeys)
-	for _, flagKey := range removedKeys {
-		aliases := flagsRef.FlagsRemoved[flagKey]
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
-		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment...)
-		if err != nil {
-			log.Println(err)
-		}
-	}
 
 	return buildComment
 }
