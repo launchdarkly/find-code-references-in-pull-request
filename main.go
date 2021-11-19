@@ -115,7 +115,7 @@ func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config, repoName st
 				fmt.Println(collection)
 				for _, entry := range collection {
 					fmt.Println(entry)
-					if strings.Contains(repoName, entry.Name) {
+					if strings.Contains("v-Microservice", entry.Name) {
 						if entry.HunkCount > 0 {
 							fmt.Println(fmt.Sprintf(`Deleting from map: %s`, flagKey))
 							delete(flags.FlagsAdded, flagKey)
