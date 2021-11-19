@@ -73,10 +73,10 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	filterUsingCodeRefsData(flagsRef, config, repoName)
+	filteredFlags := filterUsingCodeRefsData(flagsRef, config, repoName)
 	existingComment := checkExistingComments(event, config, ctx)
-	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+	buildComment := ghc.ProcessFlags(filteredFlags, flags, config)
+	postedComments := ghc.BuildFlagComment(buildComment, filteredFlags, existingComment)
 	if postedComments == "" {
 		return
 	}
@@ -93,38 +93,33 @@ func main() {
 	}
 }
 
-func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config, repoName string) {
+func filterUsingCodeRefsData(flags ghc.FlagsRef, config *lcr.Config, repoName string) ghc.FlagsRef {
 	log.Print("Filtering flags that already exist")
+	filteredFlags := flags
 	ldClient, err := lc.NewClient(config.ApiToken, config.LdInstance, false)
 	if err != nil {
 		log.Println(err)
 	}
 	ctx := context.Background()
-	stats, res, err := ldClient.Ld.CodeReferencesApi.GetStatistics(ldClient.WrapContext(ctx), config.LdProject).Execute()
-	fmt.Println(res)
-	fmt.Println(stats)
+	stats, _, err := ldClient.Ld.CodeReferencesApi.GetStatistics(ldClient.WrapContext(ctx), config.LdProject).Execute()
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Failed getting stats: %s", err.(ldapi.GenericOpenAPIError)))
 	}
-	fmt.Println(flags)
-	if len(flags.FlagsAdded) > 0 {
-		for flagKey, _ := range flags.FlagsAdded {
-			fmt.Println(flagKey)
+	if len(filteredFlags.FlagsAdded) > 0 {
+		for flagKey, _ := range filteredFlags.FlagsAdded {
 			if collection, ok := stats.Flags[flagKey]; ok {
-				fmt.Println("collection")
-				fmt.Println(collection)
 				for _, entry := range collection {
-					fmt.Println(entry)
-					if strings.Contains("v-Microservice", entry.Name) {
+					if strings.Contains(repoName, entry.Name) {
 						if entry.HunkCount > 0 {
-							fmt.Println(fmt.Sprintf(`Deleting from map: %s`, flagKey))
-							delete(flags.FlagsAdded, flagKey)
+							delete(filteredFlags.FlagsAdded, flagKey)
 						}
 					}
 				}
 			}
 		}
 	}
+
+	return filteredFlags
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
