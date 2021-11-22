@@ -103,12 +103,16 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	url := config.LdInstance + "/api/v2/flags/" + config.LdProject + "?" + envString + "&summary=0"
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
-
-	req.Header.Add("Authorization", config.ApiToken)
 	if err != nil {
 		return ldapi.FeatureFlags{}, []string{}, err
 	}
+	req.Header.Add("Authorization", config.ApiToken)
+
 	resp, err := client.Do(req)
+	if err != nil {
+		return ldapi.FeatureFlags{}, []string{}, err
+	}
+
 	defer resp.Body.Close()
 
 	flags := ldapi.FeatureFlags{}
@@ -118,7 +122,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 	}
 
 	flagKeys := make([]string, 0, len(flags.Items))
-	for _, flag := range append(flags.Items) {
+	for _, flag := range flags.Items {
 		flagKeys = append(flagKeys, flag.Key)
 	}
 	return flags, flagKeys, nil

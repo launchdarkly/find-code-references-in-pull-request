@@ -30,7 +30,7 @@ type Comment struct {
 }
 
 func isNil(a interface{}) bool {
-	defer func() { recover() }()
+	defer func() { recover() }() //nolint:errcheck
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 

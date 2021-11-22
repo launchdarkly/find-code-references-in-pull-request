@@ -29,7 +29,7 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	cfg := &ldapi.Configuration{
 		BasePath:      basePath,
 		DefaultHeader: make(map[string]string),
-		UserAgent:     fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
+		UserAgent:     "launchdarkly-pr-flags/0.1.0",
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
