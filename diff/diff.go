@@ -69,7 +69,7 @@ func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlag
 					for _, alias := range aliases[flag.Key] {
 						if strings.Contains(row, alias) {
 							currentKeys := flagsRef.FlagsAdded[flag.Key]
-							for i, _ := range currentKeys {
+							for i := range currentKeys {
 								if alias == currentKeys[i] {
 									// If key already exists we do not want to add it
 									continue CheckAliasAdded

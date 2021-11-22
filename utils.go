@@ -8,11 +8,6 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func remove(s []string, i int) []string {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
 // pulled from ld-find-code-refs github action
 func parseEvent(path string) (*github.PullRequestEvent, error) {
 	/* #nosec */

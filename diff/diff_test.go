@@ -50,10 +50,8 @@ func newProcessFlagAccEnv() *testProcessor {
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
 	flagsAdded := make(map[string][]string)
-	flagsRemoved := make(map[string][]string)
 	flagsRef := comments.FlagsRef{
-		FlagsAdded:   flagsAdded,
-		FlagsRemoved: flagsRemoved,
+		FlagsAdded: flagsAdded,
 	}
 
 	config := config.Config{
@@ -121,8 +119,7 @@ func TestProcessDiffs(t *testing.T) {
 		{
 			name: "add flag",
 			expected: comments.FlagsRef{
-				FlagsAdded:   map[string][]string{"example-flag": []string{""}},
-				FlagsRemoved: map[string][]string{},
+				FlagsAdded: map[string][]string{"example-flag": []string{""}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -135,26 +132,9 @@ func TestProcessDiffs(t *testing.T) {
  in the hunk`,
 		},
 		{
-			name: "remove flag",
-			expected: comments.FlagsRef{
-				FlagsRemoved: map[string][]string{"example-flag": []string{""}},
-				FlagsAdded:   map[string][]string{},
-			},
-			aliases: map[string][]string{},
-			sampleBody: `
-			-Testing data
--this is for testing
--here is a flag
--example-flag
--
- this is no changes
- in the hunk`,
-		},
-		{
 			name: "modified flag",
 			expected: comments.FlagsRef{
-				FlagsAdded:   map[string][]string{"example-flag": []string{""}},
-				FlagsRemoved: map[string][]string{"example-flag": []string{""}},
+				FlagsAdded: map[string][]string{"example-flag": []string{""}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -171,8 +151,7 @@ func TestProcessDiffs(t *testing.T) {
 		{
 			name: "alias flag",
 			expected: comments.FlagsRef{
-				FlagsAdded:   map[string][]string{"example-flag": []string{"exampleFlag"}},
-				FlagsRemoved: map[string][]string{},
+				FlagsAdded: map[string][]string{"example-flag": []string{"exampleFlag"}},
 			},
 			aliases: map[string][]string{"example-flag": []string{"exampleFlag"}},
 			sampleBody: `
