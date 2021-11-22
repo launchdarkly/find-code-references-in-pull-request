@@ -21,7 +21,6 @@ defaults:
           command: |
             sudo apt-get install -yqq git
       - run: go get -u $COMMON_GO_PACKAGES
-      - run: go mod tidy
       - run: sudo apt-get update
       - run: sudo apt-get install python3-pip
       - run: sudo pip install pre-commit
