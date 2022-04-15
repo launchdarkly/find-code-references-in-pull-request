@@ -14,15 +14,17 @@ import (
 )
 
 type flagLinkMetadata struct{
-	Number *int `json:"number"`
+	Number string `json:"number"`
 	Avatar *string `json:"avatar"`
 	State *string `json:"state"`
 	ContextMessage string `json:"contextMessage"`
+	Name *string `json:"name"`
 }
 
 type flagLink struct {
 	DeepLink       string `json:"deepLink"`
 	Key            string `json:"key"`
+	Timestamp            string `json:"timestamp"`
 	IntegrationKey string `json:"integrationKey"`
 	Title          *string `json:"title"`
 	Metadata       *flagLinkMetadata `json:"metadata"`
@@ -37,12 +39,14 @@ func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr 
 		DeepLink: *pr.HTMLURL,
 		Key: strconv.FormatInt(*pr.ID, 10),
 		IntegrationKey: "github",
+		Timestamp: strconv.FormatInt(pr.CreatedAt.UnixMilli(), 10),
 		Title: pr.Title,
 		Metadata: &flagLinkMetadata{
 			ContextMessage: "",
-			Number: pr.Number,
+			Number: strconv.Itoa(*pr.Number),
 			Avatar: pr.User.AvatarURL,
 			State: pr.State,
+			Name: pr.User.Name,
 		},
 	}
 
