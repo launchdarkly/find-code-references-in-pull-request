@@ -28,18 +28,6 @@ type flagLink struct {
 	Metadata       *flagLinkMetadata `json:"metadata"`
 }
 
-// data: {
-// 	deepLink: data.deepLink,
-// 	key: data.id, // unique key
-// 	integrationKey: 'trello',
-// 	title: data.title,
-// 	metadata: {
-// 		creator: data.fullName,
-// 		cardTitle: data.title,
-// 		avatar: data.avatar,
-// 	},
-// },
-
 func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr *github.PullRequest, config *lcr.Config) {
 	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
 		return
@@ -51,43 +39,44 @@ func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr 
 		IntegrationKey: "github",
 		Title: pr.Title,
 		Metadata: &flagLinkMetadata{
-			ContextMessage: "added flag",
+			ContextMessage: "",
 			Number: pr.Number,
 			Avatar: pr.User.AvatarURL,
 			State: pr.State,
 		},
 	}
 
+	for k := range added {
+		link.Metadata.ContextMessage = "added"
+		sendFlagRequest(link, k, config.LdInstance, config.LdProject, config.ApiToken)
+	}
+
+	for k := range removed {
+		link.Metadata.ContextMessage = "removed"
+		sendFlagRequest(link, k, config.LdInstance, config.LdProject, config.ApiToken)
+	}
+
 	log.Printf("added ****** %+v", added)
 	log.Printf("removed ****** %+v", removed)
 	log.Printf("link ****** %+v", link)
+	log.Printf("link ****** %+v", pr)
+}
 
+func sendFlagRequest(link flagLink, flagKey, ldHost, projKey, token string) {
 	requestBody, err := json.Marshal(link)
-	// requestBody, err := json.Marshal(map[string]string{
-	// 	"deepLink": *pr.HTMLURL,
-	// 	"key": string(*pr.ID),
-	// 	"integrationKey": "github",
-	// 	"title": strPtr(pr.Title),
-	// 	"metadata": json.Marshal([string]string{
-	// 		"contextMessage": "added flag",
-	// 		"number": strPtr(pr.Number),
-	// 		"avatar": strPtr(pr.User.AvatarURL),
-	// 		"state": strPtr(pr.State),
-	// 	}),
-	// })
 	if err != nil {
 		log.Println("Unable to construct flag link payload")
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v2/flag-links/projects/default/flags/enable-everything", config.LdInstance), bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v2/flag-links/projects/%s/flags/%s", ldHost, projKey, flagKey), bytes.NewBuffer(requestBody))
 	if err != nil {
 		log.Println("Could not to create flag link request")
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("LD-API-Version", "beta")
-	req.Header.Set("Authorization", config.ApiToken)
+	req.Header.Set("Authorization", token)
 
 	client := http.Client{}
 	resp, err := client.Do(req)
@@ -103,19 +92,4 @@ func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr 
 	}
 
 	log.Println(string(body))
-
-	
-	
-	// log.Printf("Title ****** %+v", pr.Title)
-	// log.Printf("User.AvatarURL ****** %+v", pr.User.AvatarURL)
-	// log.Printf("HTMLURL ****** %+v", pr.HTMLURL)
-	// log.Printf("State ****** %+v", pr.State)
-	// log.Printf("PR ****** %+v", pr)
-
-	// pr.Number // #15
-	// pr.Title //Testing setup
-	// pr.User.AvatarURL
-	// pr.HTMLURL - "https://github.com/launchdarkly/cr-flags/pull/15"
-	// pr.State
-
 }
