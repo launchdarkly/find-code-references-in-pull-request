@@ -3,6 +3,7 @@ package flaglink
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -79,7 +80,7 @@ func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr 
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, config.LdInstance, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v2/flag-links/projects/default/flags/enable-everything", config.LdInstance), bytes.NewBuffer(requestBody))
 	if err != nil {
 		log.Println("Could not to create flag link request")
 		return
