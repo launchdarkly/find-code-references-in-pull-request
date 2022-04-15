@@ -18,7 +18,6 @@ type flagLinkMetadata struct{
 	Avatar *string `json:"avatar"`
 	State *string `json:"state"`
 	ContextMessage string `json:"contextMessage"`
-	Name *string `json:"name"`
 }
 
 type flagLink struct {
@@ -46,7 +45,6 @@ func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr 
 			Number: strconv.Itoa(*pr.Number),
 			Avatar: pr.User.AvatarURL,
 			State: pr.State,
-			Name: pr.User.Name,
 		},
 	}
 
