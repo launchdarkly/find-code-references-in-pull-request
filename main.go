@@ -19,6 +19,7 @@ import (
 	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
+	"github.com/launchdarkly/cr-flags/flaglink"
 	"github.com/launchdarkly/ld-find-code-refs/coderefs"
 	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -85,32 +86,13 @@ func main() {
 
 	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
-	createFlagLinks(flagsRef, *event.PullRequest);
+	flaglink.CreateFlagLinks(flagsRef.FlagsAdded, flagsRef.FlagsRemoved, event.PullRequest, config)
 
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	if config.ReferencePRonFlag {
 		processCustomProps(flags, existingComment, config, flagsRef, event)
 	}
-}
-
-// delete me
-func createFlagLinks(diff ghc.FlagsRef, pr github.PullRequest) {
-	log.Printf("added ****** %+v", diff.FlagsAdded)
-	log.Printf("removed ****** %+v", diff.FlagsRemoved)
-	log.Printf("Number ****** %+v", pr.Number)
-	log.Printf("Title ****** %+v", pr.Title)
-	log.Printf("User.AvatarURL ****** %+v", pr.User.AvatarURL)
-	log.Printf("HTMLURL ****** %+v", pr.HTMLURL)
-	log.Printf("State ****** %+v", pr.State)
-	log.Printf("PR ****** %+v", pr)
-
-	// pr.Number // #15
-	// pr.Title //Testing setup 
-	// pr.User.AvatarURL
-	// pr.HTMLURL - "https://github.com/launchdarkly/cr-flags/pull/15"
-	// pr.State
-
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
