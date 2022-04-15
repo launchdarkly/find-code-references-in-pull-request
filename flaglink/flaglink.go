@@ -23,7 +23,7 @@ type flagLinkMetadata struct{
 type flagLink struct {
 	DeepLink       string `json:"deepLink"`
 	Key            string `json:"key"`
-	Timestamp            string `json:"timestamp"`
+	// Timestamp            string `json:"timestamp"`
 	IntegrationKey string `json:"integrationKey"`
 	Title          *string `json:"title"`
 	Metadata       *flagLinkMetadata `json:"metadata"`
@@ -38,7 +38,7 @@ func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr 
 		DeepLink: *pr.HTMLURL,
 		Key: strconv.FormatInt(*pr.ID, 10),
 		IntegrationKey: "github",
-		Timestamp: strconv.FormatInt(pr.CreatedAt.UnixMilli(), 10),
+		// Timestamp: strconv.FormatInt(pr.CreatedAt.UnixMilli(), 10),
 		Title: pr.Title,
 		Metadata: &flagLinkMetadata{
 			ContextMessage: "",
