@@ -98,7 +98,19 @@ func main() {
 func createFlagLinks(diff ghc.FlagsRef, pr github.PullRequest) {
 	log.Printf("added ****** %+v", diff.FlagsAdded)
 	log.Printf("removed ****** %+v", diff.FlagsRemoved)
+	log.Printf("Number ****** %+v", pr.Number)
+	log.Printf("Title ****** %+v", pr.Title)
+	log.Printf("User.AvatarURL ****** %+v", pr.User.AvatarURL)
+	log.Printf("HTMLURL ****** %+v", pr.HTMLURL)
+	log.Printf("State ****** %+v", pr.State)
 	log.Printf("PR ****** %+v", pr)
+
+	// pr.Number // #15
+	// pr.Title //Testing setup 
+	// pr.User.AvatarURL
+	// pr.HTMLURL - "https://github.com/launchdarkly/cr-flags/pull/15"
+	// pr.State
+
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
