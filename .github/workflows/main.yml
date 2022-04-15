@@ -13,6 +13,6 @@ jobs:
         with:
           projKey: flag-links
           envKey: production
-          accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
+          accessToken: api-cf81efed-67d4-4bed-a1fc-4442c8dc0f58
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          baseUri: https://app.launchdarkly.com
+          baseUri: https://ld-ctawiah.ngrok.io
