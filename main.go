@@ -85,11 +85,20 @@ func main() {
 
 	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 
+	createFlagLinks(flagsRef, *event.PullRequest);
+
 	// All keys are added to flagsRef.Added for simpler looping of custom props
 	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	if config.ReferencePRonFlag {
 		processCustomProps(flags, existingComment, config, flagsRef, event)
 	}
+}
+
+// delete me
+func createFlagLinks(diff ghc.FlagsRef, pr github.PullRequest) {
+	log.Printf("added ****** %+v", diff.FlagsAdded)
+	log.Printf("removed ****** %+v", diff.FlagsRemoved)
+	log.Printf("PR ****** %+v", pr)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
