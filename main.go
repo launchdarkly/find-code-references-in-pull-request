@@ -84,12 +84,6 @@ func main() {
 	}
 
 	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
-
-	// All keys are added to flagsRef.Added for simpler looping of custom props
-	mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
-	if config.ReferencePRonFlag {
-		processCustomProps(flags, existingComment, config, flagsRef, event)
-	}
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {

@@ -12,16 +12,15 @@ import (
 )
 
 type Config struct {
-	LdProject         string
-	LdEnvironment     []string
-	LdInstance        string
-	Owner             string
-	Repo              []string
-	ApiToken          string
-	Workspace         string
-	GHClient          *github.Client
-	ReferencePRonFlag bool
-	MaxFlags          int
+	LdProject     string
+	LdEnvironment []string
+	LdInstance    string
+	Owner         string
+	Repo          []string
+	ApiToken      string
+	Workspace     string
+	GHClient      *github.Client
+	MaxFlags      int
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -48,12 +47,6 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	}
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
-
-	ReferencePRonFlag, err := strconv.ParseBool(os.Getenv("INPUT_REFERENCEPRONFLAG"))
-	if err != nil {
-		return nil, err
-	}
-	config.ReferencePRonFlag = ReferencePRonFlag
 
 	MaxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAXFLAGS"), 10, 32)
 	if err != nil {
