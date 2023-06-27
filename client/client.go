@@ -33,7 +33,7 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
-	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKey, ldapi.APIKey{
+	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, ldapi.APIKey{
 		Key: token,
 	})
 	if oauth {
