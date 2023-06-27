@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
-	ldapi "github.com/launchdarkly/api-client-go"
+	ldapi "github.com/launchdarkly/api-client-go/v7"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
-	"github.com/launchdarkly/ld-find-code-refs/coderefs"
-	"github.com/launchdarkly/ld-find-code-refs/options"
+	"github.com/launchdarkly/ld-find-code-refs/v2/coderefs"
+	options "github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 )

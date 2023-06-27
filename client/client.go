@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	ldapi "github.com/launchdarkly/api-client-go"
+	ldapi "github.com/launchdarkly/api-client-go/v7"
 )
 
 type Client struct {

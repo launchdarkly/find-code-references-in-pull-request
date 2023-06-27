@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	ldapi "github.com/launchdarkly/api-client-go"
+	ldapi "github.com/launchdarkly/api-client-go/v7"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/sourcegraph/go-diff/diff"

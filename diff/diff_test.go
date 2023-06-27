@@ -3,7 +3,7 @@ package diff
 import (
 	"testing"
 
-	ldapi "github.com/launchdarkly/api-client-go"
+	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/comments"
 	"github.com/launchdarkly/cr-flags/config"
 	"github.com/sourcegraph/go-diff/diff"
