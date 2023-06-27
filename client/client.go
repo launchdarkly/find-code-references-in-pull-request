@@ -27,7 +27,7 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	basePath := fmt.Sprintf("%s/api/v2", apiHost)
 
 	cfg := &ldapi.Configuration{
-		BasePath:      basePath,
+		Host:          basePath,
 		DefaultHeader: make(map[string]string),
 		UserAgent:     "launchdarkly-pr-flags/0.1.0",
 	}

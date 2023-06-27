@@ -14,8 +14,8 @@ import (
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
-	"github.com/launchdarkly/ld-find-code-refs/v2/coderefs"
-	options "github.com/launchdarkly/ld-find-code-refs/v2/options"
+	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
+	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 )
@@ -186,7 +186,7 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 		log.Println(err)
 	}
 
-	return coderefs.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
+	return aliases.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
 
 }
 
