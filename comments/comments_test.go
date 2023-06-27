@@ -29,13 +29,15 @@ func newTestAccEnv() *testFlagEnv {
 }
 
 func createFlag(key string) ldapi.FeatureFlag {
+	variation := int32(0)
+	href := "test"
 	environment := ldapi.FeatureFlagConfig{
 		EnvironmentName: "Production",
-		Site: &ldapi.Site{
-			Href: "test",
+		Site: ldapi.Link{
+			Href: &href,
 		},
-		Fallthrough_: &ldapi.ModelFallthrough{
-			Variation: 0,
+		Fallthrough: ldapi.VariationOrRolloutRep{
+			Variation: &variation,
 		},
 	}
 	variationTrue := ldapi.Variation{
@@ -180,11 +182,12 @@ func (e *testFlagEnv) RolloutFlag(t *testing.T) {
 	rollout := ldapi.Rollout{
 		Variations: []ldapi.WeightedVariation{trueRollout, falseRollout},
 	}
+	href := "test"
 	environment := ldapi.FeatureFlagConfig{
-		Site: &ldapi.Site{
-			Href: "test",
+		Site: ldapi.Link{
+			Href: &href,
 		},
-		Fallthrough_: &ldapi.ModelFallthrough{
+		Fallthrough: ldapi.VariationOrRolloutRep{
 			Rollout: &rollout,
 		},
 	}
