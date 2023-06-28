@@ -143,7 +143,7 @@ func TestProcessFlags(t *testing.T) {
 
 func TestGithubNoFlagComment(t *testing.T) {
 	comment := GithubNoFlagComment()
-	assert.Equal(t, "# LaunchDarkly flag references\n\n **No flag references found in PR**", *comment.Body, "they should be equal")
+	assert.Equal(t, "## LaunchDarkly flag references\n\n **No flag references found in PR**", *comment.Body, "they should be equal")
 }
 
 func TestBuildFlagComment(t *testing.T) {
@@ -178,7 +178,7 @@ func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "# LaunchDarkly flag references\n## :green_circle: 1 flag references added or modified\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n <!-- flags:example-flag -->\n <!-- comment hash: 5e4ed16eb53ca4128b2cac3a47f785d3 -->"
+	expected := "## LaunchDarkly flag references\n### :green_circle: 1 flag references added or modified\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n <!-- flags:example-flag -->\n <!-- comment hash: ac5109720d5974e3edf68e41b722b8b1 -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -187,7 +187,7 @@ func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "# LaunchDarkly flag references\n## :red_circle: 1 flag references removed\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: cffaa8620ebdd00e8ca2954b61a92efd -->"
+	expected := "## LaunchDarkly flag references\n### :red_circle: 1 flag references removed\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: 07ed1ad6355372cd9c1f9942a2a82d2c -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -198,7 +198,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "# LaunchDarkly flag references\n## :green_circle: 1 flag references added or modified\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n## :red_circle: 1 flag references removed\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: f1a16a3880cd9ff51d62935c4c5bd8c8 -->"
+	expected := "## LaunchDarkly flag references\n### :green_circle: 1 flag references added or modified\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n### :red_circle: 1 flag references removed\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: 0779e4fa9ff94973124b923bc6c00258 -->"
 
 	assert.Equal(t, expected, comment)
 
