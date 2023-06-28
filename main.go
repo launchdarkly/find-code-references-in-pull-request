@@ -72,9 +72,7 @@ func main() {
 	}
 
 	err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
-	if err != nil {
-		log.Println(err)
-	}
+	failExit(err)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
