@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/google/go-github/github"
@@ -16,7 +16,7 @@ func parseEvent(path string) (*github.PullRequestEvent, error) {
 		return nil, err
 	}
 
-	eventJsonBytes, err := ioutil.ReadAll(eventJsonFile)
+	eventJsonBytes, err := io.ReadAll(eventJsonFile)
 	if err != nil {
 		return nil, err
 	}
