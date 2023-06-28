@@ -38,3 +38,9 @@ inputs:
     description: 'Maximum number of flags to find per PR.'
     required: false
     default: '5'
+
+outputs:
+  flags_modified:
+    description: Number of flags added or modified in pull request
+  flags_removed:
+    description: Number of flags removed in pull request

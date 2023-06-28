@@ -14,6 +14,7 @@ import (
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
+	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -61,6 +62,10 @@ func main() {
 		}
 	}
 
+	// Set outputs
+	setOutputs(flagsRef)
+
+	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
@@ -181,6 +186,17 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 
 	return aliases.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
 
+}
+
+func setOutputs(flagsRef ghc.FlagsRef) {
+	err := gha.SetOutput("flags_modified", fmt.Sprintf("%d", len(flagsRef.FlagsAdded)))
+	if err != nil {
+		log.Println("Failed to set outputs.flags_modified")
+	}
+	err = gha.SetOutput("flags_removed", fmt.Sprintf("%d", len(flagsRef.FlagsRemoved)))
+	if err != nil {
+		log.Println("Failed to set outputs.flags_removed")
+	}
 }
 
 func failExit(err error) {
