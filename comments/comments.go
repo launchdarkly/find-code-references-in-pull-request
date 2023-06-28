@@ -126,7 +126,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("## :red_square: %d flag references removed", len(flagsRef.FlagsRemoved)))
+		commentStr = append(commentStr, fmt.Sprintf("## :red_circle: %d flag references removed", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
 	postedComments := strings.Join(commentStr, "\n")
