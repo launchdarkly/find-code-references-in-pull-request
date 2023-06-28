@@ -25,7 +25,7 @@ jobs:
           echo "flags addded or modified ${{ steps.find_flags.outputs.modified_flags_count }}"
           echo "flags removed ${{ steps.find_flags.outputs.removed_flags_count }}"
       - name: Added or modified flags
-        if: steps.find_flags.outputs.any_modfied == 'true'
+        if: steps.find_flags.outputs.any_modified == 'true'
         run: |
           for flag in ${{ steps.find_flags.outputs.modified_flags }}; do
             echo "$flag was added or modified"
