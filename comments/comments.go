@@ -44,7 +44,12 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` + "`" + `{{.Flag.Key}}` + "` | ALIASES |"
+	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` + "`" + `{{.Flag.Key}}` + "` | " +
+		`{{- if .Aliases }}` +
+		`{{- if ne (len .Aliases) 0}}` +
+		`{{range $i, $e := .Aliases }}` + `{{if $i}}, {{end}}` + "`" + `{{$e}}` + "`" + `{{end}}` +
+		`{{- end}}` +
+		`{{- end}} |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
