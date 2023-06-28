@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Masterminds/sprig/v3"
+	sprig "github.com/Masterminds/sprig/v3"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v7"
