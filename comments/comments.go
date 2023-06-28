@@ -44,53 +44,15 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `
-	**[{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-	{{- if .Flag.Description}}
-	*{{trim .Flag.Description}}*
-	{{- end}}
-	{{- if .Flag.Tags}}
-	Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-	{{ end}}
-	Kind: **{{ .Flag.Kind }}**
-	Temporary: **{{ .Flag.Temporary }}**
-	{{- if .Aliases }}
-	{{- if ne (len .Aliases) 0}}
-	Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
-	{{- end}}
-	{{- end}}
-	{{ "\n" }}
-	{{- range $key, $env := .Environments }}
-	Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
-	| Type | Variation | Weight(if Rollout) |
-	| --- | --- | --- |
-	{{- if not (isNil .Fallthrough.Rollout) }}
-	{{- if not (isNil .Fallthrough.Rollout.Variations)}}
-	| Default | Rollout | |
-	{{- range .Fallthrough.Rollout.Variations }}
-	| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
-	{{- end }}
-	{{- end }}
-	{{- else }}
-	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough.Variation).Value) }}` + "`| |" + `
-	{{- end }}
-	{{- if kindIs "int32" .OffVariation }}
-	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
-	{{- else }}
-	Off variation: No off variation set.
-	{{- end }}
-	{{ end }}
-`
+	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` + "`" + `{{.Flag.Key}}` + "` | ALIASES |"
+
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return []string{}, err
 	}
 	var commentStr []string
-	commentStr = append(commentStr, "\n\n")
-	commentStr = append(commentStr, fmt.Sprintf("- <details><summary> %s</summary>", flag.Name))
 	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
-	commentStr = append(commentStr, "	</details>")
 
 	return commentStr, nil
 }
@@ -120,14 +82,19 @@ func (fr FlagsRef) Found() bool {
 }
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
+	tableHeader := `| Flag name | Key | Aliases |
+	| --- | --- | --- |
+		`
 	var commentStr []string
 	commentStr = append(commentStr, "# LaunchDarkly flag references\n")
 	if len(flagsRef.FlagsAdded) > 0 {
 		commentStr = append(commentStr, fmt.Sprintf("## :green_circle: %d flag references added or modified", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		commentStr = append(commentStr, fmt.Sprintf("## :red_circle: %d flag references removed", len(flagsRef.FlagsRemoved)))
+		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
 	postedComments := strings.Join(commentStr, "\n")
