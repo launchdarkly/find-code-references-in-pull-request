@@ -34,7 +34,7 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) ([]string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
 	commentTemplate := Comment{
 		Flag:         flag,
 		Aliases:      aliases,
@@ -44,20 +44,17 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` + "`" + `{{.Flag.Key}}` + "` | " +
-		`{{- if .Aliases }}` +
+	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` + "`" + `{{.Flag.Key}}` + "` |" +
 		`{{- if ne (len .Aliases) 0}}` +
-		`{{range $i, $e := .Aliases }}` + `{{if $i}}, {{end}}` + "`" + `{{$e}}` + "`" + `{{end}}` +
-		`{{- end}}` +
+		`{{range $i, $e := .Aliases }}` + `{{if $i}},{{end}}` + " `" + `{{$e}}` + "`" + `{{end}}` +
 		`{{- end}} |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
-		return []string{}, err
+		return "", err
 	}
-	var commentStr []string
-	commentStr = append(commentStr, html.UnescapeString(commentBody.String()))
+	commentStr := html.UnescapeString(commentBody.String())
 
 	return commentStr, nil
 }
@@ -143,7 +140,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		}
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment...)
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			log.Println(err)
 		}
@@ -163,7 +160,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 		}
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment...)
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			log.Println(err)
 		}
