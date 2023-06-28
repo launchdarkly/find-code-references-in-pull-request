@@ -60,9 +60,6 @@ func main() {
 			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases, config.MaxFlags)
 		}
 	}
-	if err != nil {
-		log.Println(err)
-	}
 
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
@@ -75,9 +72,7 @@ func main() {
 	}
 
 	err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
-	if err != nil {
-		log.Println(err)
-	}
+	failExit(err)
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
@@ -123,7 +118,7 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	}
 
 	for _, comment := range comments {
-		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
+		if strings.Contains(*comment.Body, "LaunchDarkly flag references") {
 			return comment
 		}
 	}
