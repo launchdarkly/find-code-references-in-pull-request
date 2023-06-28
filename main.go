@@ -20,10 +20,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	MAX_429_RETRIES = 10
-)
-
 func main() {
 	ctx := context.Background()
 	config, err := lcr.ValidateInputandParse(ctx)
