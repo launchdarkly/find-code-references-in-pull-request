@@ -120,17 +120,14 @@ func (fr FlagsRef) Found() bool {
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
-	commentStr = append(commentStr, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n")
+	commentStr = append(commentStr, "# LaunchDarkly flag references\n")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("Flag references: Added/Modified (%d)", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("## :green_circle: %d flag references added or modified", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
-		//commentStr = append(commentStr, "</details>")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
-		// Add in divider if there are both removed flags and already added/modified flags
-		commentStr = append(commentStr, fmt.Sprintf("Flag references: Removed (%d)", len(flagsRef.FlagsRemoved)))
+		commentStr = append(commentStr, fmt.Sprintf("## :red_square: %d flag references removed", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
-		//commentStr = append(commentStr, "</details>")
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
