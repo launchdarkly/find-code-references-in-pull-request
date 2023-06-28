@@ -118,7 +118,7 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	}
 
 	for _, comment := range comments {
-		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
+		if strings.Contains(*comment.Body, "LaunchDarkly flag references") {
 			return comment
 		}
 	}

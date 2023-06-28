@@ -124,7 +124,7 @@ func TestProcessFlags(t *testing.T) {
 }
 func TestGithubNoFlagComment(t *testing.T) {
 	comment := GithubNoFlagComment()
-	assert.Equal(t, "LaunchDarkly Flag Details:\n **No flag references found in PR**", *comment.Body, "they should be equal")
+	assert.Equal(t, "# LaunchDarkly flag references\n\n **No flag references found in PR**", *comment.Body, "they should be equal")
 }
 
 func TestBuildFlagComment(t *testing.T) {
@@ -205,14 +205,14 @@ func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 	e.FlagsRef.FlagsAdded["example-flag"] = []string{}
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
-	assert.Equal(t, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n\nFlag references: Added/Modified (1)\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: b47fc43b30d97bf647a43d48ce1b85fd -->", comment)
+	assert.Equal(t, "LaunchDarkly flag references, references to flags have been found in the diff:\n\n\nFlag references: Added/Modified (1)\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: b47fc43b30d97bf647a43d48ce1b85fd -->", comment)
 }
 
 func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.FlagsRef.FlagsRemoved["example-flag"] = []string{}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
-	assert.Equal(t, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n\nFlag references: Removed (1)\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: e39d16108df3e5369f43176ab1a12323 -->", comment)
+	assert.Equal(t, "LaunchDarkly flag references, references to flags have been found in the diff:\n\n\nFlag references: Removed (1)\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: e39d16108df3e5369f43176ab1a12323 -->", comment)
 }
 
 func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
@@ -221,7 +221,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
-	assert.Equal(t, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n\nFlag references: Added/Modified (1)\ncomment1\ncomment2\nFlag references: Removed (1)\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: e9b00faf6005ae2ed28911472366fcc0 -->", comment)
+	assert.Equal(t, "LaunchDarkly flag references, references to flags have been found in the diff:\n\n\nFlag references: Added/Modified (1)\ncomment1\ncomment2\nFlag references: Removed (1)\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: e9b00faf6005ae2ed28911472366fcc0 -->", comment)
 }
 
 func (e *testProcessor) Basic(t *testing.T) {

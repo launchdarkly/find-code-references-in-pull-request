@@ -96,7 +96,8 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 }
 
 func GithubNoFlagComment() *github.IssueComment {
-	commentStr := `LaunchDarkly Flag Details:
+	commentStr := `# LaunchDarkly flag references
+
  **No flag references found in PR**`
 	comment := github.IssueComment{
 		Body: &commentStr,
