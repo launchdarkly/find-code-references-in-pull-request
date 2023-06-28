@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	ldapi "github.com/launchdarkly/api-client-go"
+	ldapi "github.com/launchdarkly/api-client-go/v7"
 )
 
 type Client struct {
@@ -27,13 +27,13 @@ func NewClient(token string, apiHost string, oauth bool) (*Client, error) {
 	basePath := fmt.Sprintf("%s/api/v2", apiHost)
 
 	cfg := &ldapi.Configuration{
-		BasePath:      basePath,
+		Host:          basePath,
 		DefaultHeader: make(map[string]string),
 		UserAgent:     "launchdarkly-pr-flags/0.1.0",
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
-	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKey, ldapi.APIKey{
+	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKeys, ldapi.APIKey{
 		Key: token,
 	})
 	if oauth {

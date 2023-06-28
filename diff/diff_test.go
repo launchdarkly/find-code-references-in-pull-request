@@ -3,7 +3,7 @@ package diff
 import (
 	"testing"
 
-	ldapi "github.com/launchdarkly/api-client-go"
+	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/comments"
 	"github.com/launchdarkly/cr-flags/config"
 	"github.com/sourcegraph/go-diff/diff"
@@ -13,12 +13,14 @@ import (
 func ptr(v interface{}) *interface{} { return &v }
 
 func createFlag(key string) ldapi.FeatureFlag {
+	variation := int32(0)
+	href := "test"
 	environment := ldapi.FeatureFlagConfig{
-		Site: &ldapi.Site{
-			Href: "test",
+		Site: ldapi.Link{
+			Href: &href,
 		},
-		Fallthrough_: &ldapi.ModelFallthrough{
-			Variation: 0,
+		Fallthrough: ldapi.VariationOrRolloutRep{
+			Variation: &variation,
 		},
 	}
 	variationTrue := ldapi.Variation{

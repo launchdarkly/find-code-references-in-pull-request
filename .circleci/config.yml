@@ -10,7 +10,7 @@ defaults:
   environment: &environment
     CIRCLE_TEST_REPORTS: /tmp/circle-reports
     CIRCLE_ARTIFACTS: /tmp/circle-artifacts
-      
+
   build_steps: &build_steps
     steps:
       - checkout
@@ -18,13 +18,14 @@ defaults:
           name: install pre dependencies
           command: |
             sudo apt-get install -yqq git
-      - run: go install github.com/jstemmer/go-junit-report@v0.9.1
-      - run: go install github.com/kyoh86/richgo@v0.3.10
+      - run: go install github.com/jstemmer/go-junit-report/v2
+      - run: go install github.com/kyoh86/richgo@v0.3.12
       - run: sudo apt-get update
       - run: sudo apt-get install python3-pip
       - run: sudo pip install pre-commit
       - run: pre-commit install
-      - run: pre-commit run -a
+      # skip unit tests because they run later
+      - run: SKIP=go-unit-tests pre-commit run
       - run:
           name: Set up Code Climate test-reporter
           command: |
@@ -59,7 +60,7 @@ defaults:
 jobs:
   go-test:
     docker:
-      - image: cimg/go:1.17.1
+      - image: cimg/go:1.20.3
         environment:
           <<: *environment
 

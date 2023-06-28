@@ -3,7 +3,7 @@ package ignore
 import (
 	"path/filepath"
 
-	"github.com/monochromegane/go-gitignore"
+	gitignore "github.com/monochromegane/go-gitignore"
 )
 
 type Ignore struct {
