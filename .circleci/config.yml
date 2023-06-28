@@ -59,7 +59,6 @@ defaults:
 
 jobs:
   go-test:
-    # resource_class: large
     docker:
       - image: cimg/go:1.20.3
         environment:
