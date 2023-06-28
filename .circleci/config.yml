@@ -24,7 +24,8 @@ defaults:
       - run: sudo apt-get install python3-pip
       - run: sudo pip install pre-commit
       - run: pre-commit install
-      - run: pre-commit run -a
+      # skip unit tests because they run later
+      - run: SKIP=go-unit-tests pre-commit run
       - run:
           name: Set up Code Climate test-reporter
           command: |
@@ -58,7 +59,7 @@ defaults:
 
 jobs:
   go-test:
-    resource_class: large
+    # resource_class: large
     docker:
       - image: cimg/go:1.20.3
         environment:
