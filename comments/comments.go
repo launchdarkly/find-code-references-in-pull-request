@@ -114,6 +114,10 @@ type FlagsRef struct {
 	FlagsRemoved map[string][]string
 }
 
+func (fr FlagsRef) Found() bool {
+	return len(fr.FlagsAdded) > 0 || len(fr.FlagsRemoved) > 0
+}
+
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	var commentStr []string
 	commentStr = append(commentStr, "LaunchDarkly Flag Details, references to flags have been found in the diff:\n\n")
