@@ -84,22 +84,22 @@ func (fr FlagsRef) Found() bool {
 }
 
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
-	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |\n"
+	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
 	var commentStr []string
-	commentStr = append(commentStr, "# LaunchDarkly flag references\n")
+	commentStr = append(commentStr, "# LaunchDarkly flag references")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("## :green_circle: %d flag references added or modified\n\n", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("## :green_circle: %d flag references added or modified\n", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
-		commentStr = append(commentStr, "\n\n")
+		commentStr = append(commentStr, "\n")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("## :red_circle: %d flag references removed\n\n", len(flagsRef.FlagsRemoved)))
+		commentStr = append(commentStr, fmt.Sprintf("## :red_circle: %d flag references removed\n", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
-	postedComments := strings.Join(commentStr, "")
+	postedComments := strings.Join(commentStr, "\n")
 	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	if len(allFlagKeys) > 0 {
 		var flagKeys []string
