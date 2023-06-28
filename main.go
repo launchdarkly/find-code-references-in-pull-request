@@ -74,7 +74,10 @@ func main() {
 		Body: &postedComments,
 	}
 
-	postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	err = postGithubComments(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
@@ -128,39 +131,30 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	return nil
 }
 
-func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) {
-	if !(len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0) {
-		var existingCommentId int64
-		if existingComment != nil {
-			existingCommentId = existingComment.GetID()
-		} else {
-			existingCommentId = 0
-		}
+func postGithubComments(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
+	var existingCommentId int64
+	if existingComment != nil {
+		existingCommentId = existingComment.GetID()
+	}
+
+	if flagsRef.Found() {
 		if existingCommentId > 0 {
 			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
-			if err != nil {
-				log.Println(err)
-			}
-		} else {
-			_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
-			if err != nil {
-				log.Println(err)
-			}
+			return err
 		}
 
-	} else if len(flagsRef.FlagsAdded) == 0 && len(flagsRef.FlagsRemoved) == 0 && os.Getenv("PLACEHOLDER_COMMENT") == "true" {
-		// Check if this is already the body, flags could have originally been included then removed in later commit
-		if existingComment != nil && strings.Contains(*existingComment.Body, "No flag references found in PR") {
-			return
-		}
-		createComment := ghc.GithubNoFlagComment()
-		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
-		if err != nil {
-			log.Println(err)
-		}
-	} else {
-		log.Println("No flags found.")
+		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
+		return err
 	}
+
+	// Check if this is already the body, flags could have originally been included then removed in later commit
+	if existingCommentId > 0 && strings.Contains(*existingComment.Body, "No flag references found in PR") {
+		return nil
+	}
+
+	createComment := ghc.GithubNoFlagComment()
+	_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, createComment)
+	return err
 }
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
