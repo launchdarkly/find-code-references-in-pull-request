@@ -60,7 +60,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 }
 
 func GithubNoFlagComment() *github.IssueComment {
-	commentStr := `# LaunchDarkly flag references
+	commentStr := `## LaunchDarkly flag references
 
  **No flag references found in PR**`
 	comment := github.IssueComment{
@@ -87,15 +87,15 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
 	var commentStr []string
-	commentStr = append(commentStr, "# LaunchDarkly flag references")
+	commentStr = append(commentStr, "## LaunchDarkly flag references")
 	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("## :green_circle: %d flag references added or modified\n", len(flagsRef.FlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("### :green_circle: %d flag references added or modified\n", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		commentStr = append(commentStr, "\n")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("## :red_circle: %d flag references removed\n", len(flagsRef.FlagsRemoved)))
+		commentStr = append(commentStr, fmt.Sprintf("### :red_circle: %d flag references removed\n", len(flagsRef.FlagsRemoved)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
