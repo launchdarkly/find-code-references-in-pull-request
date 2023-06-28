@@ -60,9 +60,6 @@ func main() {
 			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases, config.MaxFlags)
 		}
 	}
-	if err != nil {
-		log.Println(err)
-	}
 
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
