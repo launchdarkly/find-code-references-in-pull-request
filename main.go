@@ -114,6 +114,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
+	log.Printf("OWNER %s, REPO %s, PR %d", config.Owner, config.Repo[1], *event.PullRequest.Number)
 	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		log.Println(err)
