@@ -114,17 +114,12 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
-	log.Printf("OWNER %s, REPO %s, PR %d\n", config.Owner, config.Repo[1], *event.PullRequest.Number)
-	comments, resp, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
+	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
 	if err != nil {
 		log.Println(err)
 	}
-	log.Printf("RESP %#v\n", resp)
-
-	log.Printf("NUM COMMENTS: %d\n", len(comments))
 
 	for _, comment := range comments {
-		log.Printf("ID: %d\nBODY: %s", *comment.ID, *comment.Body)
 		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
 			return comment
 		}
