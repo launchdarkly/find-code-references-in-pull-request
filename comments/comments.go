@@ -64,15 +64,15 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	Environment: {{ if .EnvironmentName }}**{{ .EnvironmentName }}** {{ end -}}` + "`" + `{{ $key }}` + "`" + `
 	| Type | Variation | Weight(if Rollout) |
 	| --- | --- | --- |
-	{{- if not (isNil .Fallthrough_.Rollout) }}
-	{{- if not (isNil .Fallthrough_.Rollout.Variations)}}
+	{{- if not (isNil .Fallthrough.Rollout) }}
+	{{- if not (isNil .Fallthrough.Rollout.Variations)}}
 	| Default | Rollout | |
-	{{- range .Fallthrough_.Rollout.Variations }}
+	{{- range .Fallthrough.Rollout.Variations }}
 	| |` + "`" + `{{  trunc 50 (toRawJson (index $.Flag.Variations .Variation).Value) }}` + "` | `" + `{{  divf .Weight 1000 }}%` + "`|" + `
 	{{- end }}
 	{{- end }}
 	{{- else }}
-	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough_.Variation).Value) }}` + "`| |" + `
+	| Default | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .Fallthrough.Variation).Value) }}` + "`| |" + `
 	{{- end }}
 	{{- if kindIs "int32" .OffVariation }}
 	| Off | ` + "`" + `{{ trunc 50 (toRawJson (index $.Flag.Variations .OffVariation).Value) }}` + "` | |" + `
