@@ -1,0 +1,11 @@
+{
+  "pull_request": {
+    "number": 20,
+    "head": {
+      "ref": "sample-head-ref"
+    },
+    "base": {
+      "ref": "sample-base-ref"
+    }
+  }
+}

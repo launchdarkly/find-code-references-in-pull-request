@@ -1,3 +1,6 @@
+# Run test file with command:
+#   act pull_request -e testdata/act/pull-request.json
+
 name: Test Find Flags
 on: pull_request
 
@@ -17,3 +20,8 @@ jobs:
           accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           baseUri: https://app.launchdarkly.com
+      - name: Find flags summary
+        run: |
+          echo "flags addded or modified ${{ steps.find_flags.outputs.flags_modified }}"
+          echo "flags removed ${{ steps.find_flags.outputs.flags_removed }}"
+
