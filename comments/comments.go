@@ -90,6 +90,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		commentStr = append(commentStr, fmt.Sprintf("## :green_circle: %d flag references added or modified\n\n", len(flagsRef.FlagsAdded)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
+		commentStr = append(commentStr, "\n\n")
 	}
 	if len(flagsRef.FlagsRemoved) > 0 {
 		commentStr = append(commentStr, fmt.Sprintf("## :red_circle: %d flag references removed\n\n", len(flagsRef.FlagsRemoved)))
