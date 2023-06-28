@@ -19,6 +19,7 @@ repos:
   rev: v0.11.0
   hooks:
     - id: circleci-config-validate
+    - id: goimports
     - id: compile-go-tests
       entry: bin/run-script run-on-dirs "parallel -n 1 cd {} && env GO111MODULE=on go test -tags launchdarkly_easyjson,api_smoke_tests -c -o /dev/null :::"
       exclude: '^vendor/|^.circleci/image/tools'
