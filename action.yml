@@ -43,12 +43,12 @@ outputs:
   any_modified:
     description: Returns true if any flags have been added or modified in pull request
   modified_flags:
-    description: Comma-separated list of flags added or modified in pull request
+    description: Space-separated list of flags added or modified in pull request
   modified_flags_count:
     description: Number of flags added or modified in pull request
   any_removed:
     description: Returns true if any flags have been removed in pull request
   removed_flags:
-    description: Comma-separated list of flags removed in pull request
+    description: Space-separated list of flags removed in pull request
   removed_flags_count:
     description: Number of flags removed in pull request
