@@ -67,7 +67,7 @@ func main() {
 
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)
-	buildComment := ghc.ProcessFlags(&flagsRef, flags, config)
+	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
 	if postedComments != "" {
 		comment := github.IssueComment{
