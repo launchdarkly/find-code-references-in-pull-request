@@ -9,7 +9,7 @@ runs:
     LD_ACCESS_TOKEN: ${{ inputs.access-token }}
     LD_BASE_URI: ${{ inputs.base-uri }}
     LD_ENV_KEY: ${{ inputs.environment-key }}
-    GITHUB_TOKEN: ${{ inputs.github-token }}
+    GITHUB_TOKEN: ${{ inputs.repo-token }}
 inputs:
   project-key:
     description: 'LaunchDarkly Project'
@@ -23,8 +23,8 @@ inputs:
     description: 'The base URI for the LaunchDarkly server. Most users should use the default value.'
     required: false
     default: 'https://app.launchdarkly.com'
-  github-token:
-    description: 'Token to access your GitHub repository'
+  repo-token:
+    description: 'Token to use to authorize comments on PR. Typically the GITHUB_TOKEN secret.'
     required: true
   access-token:
     description: 'LaunchDarkly access token'

@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -25,8 +26,17 @@ type Config struct {
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
+	// mask tokens
+	if accessToken := os.Getenv("INPUT_ACCESS-TOKEN"); len(accessToken) > 0 {
+		fmt.Printf("::add-mask::%s\n", accessToken)
+	}
+	if repoToken := os.Getenv("INPUT_REPO-TOKEN"); len(repoToken) > 0 {
+		fmt.Printf("::add-mask::%s\n", repoToken)
+	}
+
+	// set config
 	var config Config
-	config.LdProject = os.Getenv("INPUT_PROJECTKEY")
+	config.LdProject = os.Getenv("INPUT_PROJECT-KEY")
 	if config.LdProject == "" {
 		return nil, errors.New("`project-key` is required")
 	}
@@ -48,11 +58,11 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
 
-	MaxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAX-FLAGS"), 10, 32)
+	maxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAX-FLAGS"), 10, 32)
 	if err != nil {
 		return nil, err
 	}
-	config.MaxFlags = int(MaxFlags)
+	config.MaxFlags = int(maxFlags)
 
 	if placholderComment, err := strconv.ParseBool(os.Getenv("INPUT_PLACEHOLDER-COMMENT")); err == nil {
 		// ignore error
