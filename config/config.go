@@ -25,30 +25,30 @@ type Config struct {
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	var config Config
-	config.LdProject = os.Getenv("INPUT_PROJKEY")
+	config.LdProject = os.Getenv("INPUT_PROJECT_KEY")
 	if config.LdProject == "" {
-		return nil, errors.New("`project` is required.")
+		return nil, errors.New("`project-key` is required.")
 
 	}
-	config.LdEnvironment = strings.Split(os.Getenv("INPUT_ENVKEY"), ",")
+	config.LdEnvironment = strings.Split(os.Getenv("INPUT_ENVIRONMENT_KEY"), ",")
 	if len(config.LdEnvironment) == 0 {
-		return nil, errors.New("`environment` is required.")
+		return nil, errors.New("`environment-key` is required.")
 	}
-	config.LdInstance = os.Getenv("INPUT_BASEURI")
+	config.LdInstance = os.Getenv("INPUT_BASE_URI")
 	if config.LdInstance == "" {
-		return nil, errors.New("`baseUri` is required.")
+		return nil, errors.New("`base-uri` is required.")
 	}
 	config.Owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
 	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 
-	config.ApiToken = os.Getenv("INPUT_ACCESSTOKEN")
+	config.ApiToken = os.Getenv("INPUT_ACCESS_TOKEN")
 	if config.ApiToken == "" {
-		return nil, errors.New("`accessToken` is required.")
+		return nil, errors.New("`access-token` is required.")
 	}
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
 
-	MaxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAXFLAGS"), 10, 32)
+	MaxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAX_FLAGS"), 10, 32)
 	if err != nil {
 		return nil, err
 	}
