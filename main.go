@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -62,21 +63,21 @@ func main() {
 		}
 	}
 
-	// Set outputs
-	setOutputs(flagsRef)
-
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	if postedComments == "" {
-		return
-	}
-	comment := github.IssueComment{
-		Body: &postedComments,
+	if postedComments != "" {
+		comment := github.IssueComment{
+			Body: &postedComments,
+		}
+
+		err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 	}
 
-	err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	// Set outputs
+	setOutputs(flagsRef)
+
 	failExit(err)
 }
 
@@ -189,13 +190,40 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 }
 
 func setOutputs(flagsRef ghc.FlagsRef) {
-	err := gha.SetOutput("flags_modified", fmt.Sprintf("%d", len(flagsRef.FlagsAdded)))
-	if err != nil {
-		log.Println("Failed to set outputs.flags_modified")
+	log.Println("Setting outputs")
+	flagsAddedCount := len(flagsRef.FlagsAdded)
+
+	if err := gha.SetOutput("any_modified", fmt.Sprintf("%t", flagsAddedCount > 0)); err != nil {
+		log.Println("Failed to set outputs.any_modified")
 	}
-	err = gha.SetOutput("flags_removed", fmt.Sprintf("%d", len(flagsRef.FlagsRemoved)))
-	if err != nil {
-		log.Println("Failed to set outputs.flags_removed")
+	if err := gha.SetOutput("modified_flags_count", fmt.Sprintf("%d", flagsAddedCount)); err != nil {
+		log.Println("Failed to set outputs.modified_flags_count")
+	}
+	flagKeysAdded := make([]string, 0, len(flagsRef.FlagsAdded))
+	for k := range flagsRef.FlagsAdded {
+		flagKeysAdded = append(flagKeysAdded, k)
+	}
+	sort.Strings(flagKeysAdded)
+	if err := gha.SetOutput("modified_flags", strings.Join(flagKeysAdded, " ")); err != nil {
+		log.Println("Failed to set outputs.modified_flags")
+	}
+
+	flagsRemovedCount := len(flagsRef.FlagsRemoved)
+
+	if err := gha.SetOutput("any_removed", fmt.Sprintf("%t", flagsRemovedCount > 0)); err != nil {
+		log.Println("Failed to set outputs.any_removed")
+	}
+	if err := gha.SetOutput("removed_flags_count", fmt.Sprintf("%d", flagsRemovedCount)); err != nil {
+		log.Println("Failed to set outputs.removed_flags_count")
+	}
+
+	flagKeysRemoved := make([]string, 0, len(flagsRef.FlagsRemoved))
+	for k := range flagsRef.FlagsRemoved {
+		flagKeysRemoved = append(flagKeysRemoved, k)
+	}
+	sort.Strings(flagKeysRemoved)
+	if err := gha.SetOutput("removed_flags", strings.Join(flagKeysRemoved, " ")); err != nil {
+		log.Println("Failed to set outputs.removed_flags")
 	}
 }
 
