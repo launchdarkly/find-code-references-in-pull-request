@@ -149,7 +149,7 @@ func postGithubComment(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.C
 	}
 
 	// Check if this is already the body, flags could have originally been included then removed in later commit
-	if existingCommentId > 0 {
+	if os.Getenv("PLACEHOLDER_COMMENT") == "true" && existingCommentId > 0 {
 		if strings.Contains(*existingComment.Body, "No flag references found in PR") {
 			return nil
 		}
