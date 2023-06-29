@@ -5,50 +5,49 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
-    LD_PROJ_KEY: ${{ inputs.projKey }}
-    LD_ACCESS_TOKEN: ${{ inputs.accessToken }}
-    LD_BASE_URI: ${{ inputs.baseUri }}
-    LD_ENV_KEY: ${{ inputs.envKey }}
-    GITHUB_TOKEN: ${{ inputs.githubToken }}
-    PLACEHOLDER_COMMENT: ${{ inputs.placeholderComment }}
+    LD_PROJ_KEY: ${{ inputs.project-key }}
+    LD_ACCESS_TOKEN: ${{ inputs.access-token }}
+    LD_BASE_URI: ${{ inputs.base-uri }}
+    LD_ENV_KEY: ${{ inputs.environment-key }}
+    GITHUB_TOKEN: ${{ inputs.repo-token }}
 inputs:
-  projKey:
+  project-key:
     description: 'LaunchDarkly Project'
     required: false
     default: 'default'
-  envKey:
-    description: 'LaunchDarkly Environment for Project. Can be a comma separated list of environment keys.'
+  environment-key:
+    description: 'LaunchDarkly environment for setting flag links. Can be a comma-separated list of environment keys.'
     required: false
     default: 'production'
-  baseUri:
-    description: 'LaunchDarkly Instance'
+  base-uri:
+    description: 'The base URI for the LaunchDarkly server. Most users should use the default value.'
     required: false
     default: 'https://app.launchdarkly.com'
-  githubToken:
-    description: 'Token to access your GitHub repository.'
+  repo-token:
+    description: 'Token to use to authorize comments on PR. Typically the GITHUB_TOKEN secret.'
     required: true
-  accessToken:
+  access-token:
     description: 'LaunchDarkly access token'
     required: true
-  placeholderComment:
+  placeholder-comment:
     description: 'Comment even if no flags are found. If flags are found in later commits this comment will be updated.'
     required: false
-    default: 'true'
-  maxFlags:
-    description: 'Maximum number of flags to find per PR.'
+    default: 'false'
+  max-flags:
+    description: 'Maximum number of flags to find per PR'
     required: false
     default: '5'
 
 outputs:
-  any_modified:
+  any-modified:
     description: Returns true if any flags have been added or modified in pull request
-  modified_flags:
+  modified-flags:
     description: Space-separated list of flags added or modified in pull request
-  modified_flags_count:
+  modified-flags-count:
     description: Number of flags added or modified in pull request
-  any_removed:
+  any-removed:
     description: Returns true if any flags have been removed in pull request
-  removed_flags:
+  removed-flags:
     description: Space-separated list of flags removed in pull request
-  removed_flags_count:
+  removed-flags-count:
     description: Number of flags removed in pull request

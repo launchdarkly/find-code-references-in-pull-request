@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -12,47 +13,62 @@ import (
 )
 
 type Config struct {
-	LdProject     string
-	LdEnvironment []string
-	LdInstance    string
-	Owner         string
-	Repo          []string
-	ApiToken      string
-	Workspace     string
-	GHClient      *github.Client
-	MaxFlags      int
+	LdProject          string
+	LdEnvironment      []string
+	LdInstance         string
+	Owner              string
+	Repo               string
+	ApiToken           string
+	Workspace          string
+	GHClient           *github.Client
+	MaxFlags           int
+	PlaceholderComment bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
-	var config Config
-	config.LdProject = os.Getenv("INPUT_PROJKEY")
-	if config.LdProject == "" {
-		return nil, errors.New("`project` is required.")
+	// mask tokens
+	if accessToken := os.Getenv("INPUT_ACCESS-TOKEN"); len(accessToken) > 0 {
+		fmt.Printf("::add-mask::%s\n", accessToken)
+	}
+	if repoToken := os.Getenv("INPUT_REPO-TOKEN"); len(repoToken) > 0 {
+		fmt.Printf("::add-mask::%s\n", repoToken)
+	}
 
+	// set config
+	var config Config
+	config.LdProject = os.Getenv("INPUT_PROJECT-KEY")
+	if config.LdProject == "" {
+		return nil, errors.New("`project-key` is required")
 	}
-	config.LdEnvironment = strings.Split(os.Getenv("INPUT_ENVKEY"), ",")
+	config.LdEnvironment = strings.Split(os.Getenv("INPUT_ENVIRONMENT-KEY"), ",")
 	if len(config.LdEnvironment) == 0 {
-		return nil, errors.New("`environment` is required.")
+		return nil, errors.New("`environment-key` is required")
 	}
-	config.LdInstance = os.Getenv("INPUT_BASEURI")
+	config.LdInstance = os.Getenv("INPUT_BASE-URI")
 	if config.LdInstance == "" {
-		return nil, errors.New("`baseUri` is required.")
+		return nil, errors.New("`base-uri` is required.")
 	}
 	config.Owner = os.Getenv("GITHUB_REPOSITORY_OWNER")
-	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+	config.Repo = strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")[1]
 
-	config.ApiToken = os.Getenv("INPUT_ACCESSTOKEN")
+	config.ApiToken = os.Getenv("INPUT_ACCESS-TOKEN")
 	if config.ApiToken == "" {
-		return nil, errors.New("`accessToken` is required.")
+		return nil, errors.New("`access-token` is required")
 	}
 
 	config.Workspace = os.Getenv("GITHUB_WORKSPACE")
 
-	MaxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAXFLAGS"), 10, 32)
+	maxFlags, err := strconv.ParseInt(os.Getenv("INPUT_MAX-FLAGS"), 10, 32)
 	if err != nil {
 		return nil, err
 	}
-	config.MaxFlags = int(MaxFlags)
+	config.MaxFlags = int(maxFlags)
+
+	if placholderComment, err := strconv.ParseBool(os.Getenv("INPUT_PLACEHOLDER-COMMENT")); err == nil {
+		// ignore error
+		config.PlaceholderComment = placholderComment
+	}
+
 	config.GHClient = getGithubClient(ctx)
 	return &config, nil
 }

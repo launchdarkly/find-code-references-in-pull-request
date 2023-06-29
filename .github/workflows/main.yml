@@ -15,24 +15,25 @@ jobs:
         uses: ./ # Uses an action in the root directory
         id: find_flags
         with:
-          projKey: demo-dan-042021-2
-          envKey: development
-          accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          baseUri: https://app.launchdarkly.com
+          project-key: demo-dan-042021-2
+          environment-key: development
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
       - name: Find flags summary
         run: |
-          echo "flags addded or modified ${{ steps.find_flags.outputs.modified_flags_count }}"
-          echo "flags removed ${{ steps.find_flags.outputs.removed_flags_count }}"
+          echo "flags addded or modified ${{ steps.find_flags.outputs.modified-flags-count }}"
+          echo "flags removed ${{ steps.find_flags.outputs.removed-flags-count }}"
       - name: Added or modified flags
-        if: steps.find_flags.outputs.any_modified == 'true'
+        if: steps.find_flags.outputs.any-modified == 'true'
         run: |
-          for flag in ${{ steps.find_flags.outputs.modified_flags }}; do
+          for flag in ${{ steps.find_flags.outputs.modified-flags }}; do
             echo "$flag was added or modified"
           done
       - name: Removed flags
-        if: steps.find_flags.outputs.any_removed == 'true'
+        if: steps.find_flags.outputs.any-removed == 'true'
         run: |
-          for flag in ${{ steps.find_flags.outputs.removed_flags }}; do
+          for flag in ${{ steps.find_flags.outputs.removed-flags }}; do
             echo "$flag was removed"
           done

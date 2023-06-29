@@ -15,6 +15,7 @@ import (
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
+	e "github.com/launchdarkly/cr-flags/errors"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
@@ -27,9 +28,10 @@ func main() {
 	config, err := lcr.ValidateInputandParse(ctx)
 	failExit(err)
 
-	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
+	eventPath := os.Getenv("GITHUB_EVENT_PATH")
+	event, err := parseEvent(eventPath)
 	if err != nil {
-		log.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
+		log.Printf("error parsing GitHub event payload at %q: %v", eventPath, err)
 		os.Exit(1)
 	}
 
@@ -38,7 +40,7 @@ func main() {
 	failExit(err)
 
 	if len(flags.Items) == 0 {
-		log.Println("No flags found.")
+		log.Println("No flags found")
 		os.Exit(0)
 	}
 
@@ -118,7 +120,7 @@ func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
-	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo[1], *event.PullRequest.Number, nil)
+	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo, *event.PullRequest.Number, nil)
 	if err != nil {
 		log.Println(err)
 	}
@@ -140,32 +142,37 @@ func postGithubComment(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.C
 
 	if flagsRef.Found() {
 		if existingCommentId > 0 {
-			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, &comment)
+			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo, existingCommentId, &comment)
 			return err
 		}
 
-		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, &comment)
+		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo, prNumber, &comment)
 		return err
 	}
 
 	// Check if this is already the body, flags could have originally been included then removed in later commit
-	if os.Getenv("PLACEHOLDER_COMMENT") == "true" && existingCommentId > 0 {
+	if config.PlaceholderComment && existingCommentId > 0 {
 		if strings.Contains(*existingComment.Body, "No flag references found in PR") {
 			return nil
 		}
 
-		_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo[1], existingCommentId, ghc.GithubNoFlagComment())
+		_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo, existingCommentId, ghc.GithubNoFlagComment())
 		return err
 	}
 
-	_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo[1], prNumber, ghc.GithubNoFlagComment())
+	_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo, prNumber, ghc.GithubNoFlagComment())
 	return err
 }
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo[1], prNumber, rawOpts)
+	raw, resp, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo, prNumber, rawOpts)
 	if err != nil {
+		// TODO use this elsewhere
+		if resp.StatusCode == http.StatusUnauthorized {
+			return nil, e.UnauthorizedError
+		}
+
 		return nil, err
 	}
 	return diff.ParseMultiFileDiff([]byte(raw))
@@ -190,31 +197,30 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 }
 
 func setOutputs(flagsRef ghc.FlagsRef) {
-	log.Println("Setting outputs")
 	flagsAddedCount := len(flagsRef.FlagsAdded)
 
-	if err := gha.SetOutput("any_modified", fmt.Sprintf("%t", flagsAddedCount > 0)); err != nil {
-		log.Println("Failed to set outputs.any_modified")
+	if err := gha.SetOutput("any-modified", fmt.Sprintf("%t", flagsAddedCount > 0)); err != nil {
+		log.Println("Failed to set outputs.any-modified")
 	}
-	if err := gha.SetOutput("modified_flags_count", fmt.Sprintf("%d", flagsAddedCount)); err != nil {
-		log.Println("Failed to set outputs.modified_flags_count")
+	if err := gha.SetOutput("modified-flags-count", fmt.Sprintf("%d", flagsAddedCount)); err != nil {
+		log.Println("Failed to set outputs.modified-flags-count")
 	}
 	flagKeysAdded := make([]string, 0, len(flagsRef.FlagsAdded))
 	for k := range flagsRef.FlagsAdded {
 		flagKeysAdded = append(flagKeysAdded, k)
 	}
 	sort.Strings(flagKeysAdded)
-	if err := gha.SetOutput("modified_flags", strings.Join(flagKeysAdded, " ")); err != nil {
-		log.Println("Failed to set outputs.modified_flags")
+	if err := gha.SetOutput("modified-flags", strings.Join(flagKeysAdded, " ")); err != nil {
+		log.Println("Failed to set outputs.modified-flags")
 	}
 
 	flagsRemovedCount := len(flagsRef.FlagsRemoved)
 
-	if err := gha.SetOutput("any_removed", fmt.Sprintf("%t", flagsRemovedCount > 0)); err != nil {
-		log.Println("Failed to set outputs.any_removed")
+	if err := gha.SetOutput("any-removed", fmt.Sprintf("%t", flagsRemovedCount > 0)); err != nil {
+		log.Println("Failed to set outputs.any-removed")
 	}
-	if err := gha.SetOutput("removed_flags_count", fmt.Sprintf("%d", flagsRemovedCount)); err != nil {
-		log.Println("Failed to set outputs.removed_flags_count")
+	if err := gha.SetOutput("removed-flags-count", fmt.Sprintf("%d", flagsRemovedCount)); err != nil {
+		log.Println("Failed to set outputs.removed-flags-count")
 	}
 
 	flagKeysRemoved := make([]string, 0, len(flagsRef.FlagsRemoved))
@@ -222,14 +228,19 @@ func setOutputs(flagsRef ghc.FlagsRef) {
 		flagKeysRemoved = append(flagKeysRemoved, k)
 	}
 	sort.Strings(flagKeysRemoved)
-	if err := gha.SetOutput("removed_flags", strings.Join(flagKeysRemoved, " ")); err != nil {
-		log.Println("Failed to set outputs.removed_flags")
+	if err := gha.SetOutput("removed-flags", strings.Join(flagKeysRemoved, " ")); err != nil {
+		log.Println("Failed to set outputs.removed-flags")
 	}
 }
 
 func failExit(err error) {
 	if err != nil {
+		logError(err.Error())
 		log.Println(err)
 		os.Exit(1)
 	}
+}
+
+func logError(message string) {
+	fmt.Printf("::error::%s\n", message)
 }

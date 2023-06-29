@@ -28,28 +28,28 @@ jobs:
 ```
 
 <!-- action-docs-inputs -->
-## Inputs
+### Inputs
 
 | parameter | description | required | default |
 | --- | --- | --- | --- |
-| projKey | LaunchDarkly Project | `false` | default |
-| envKey | LaunchDarkly Environment for Project. Can be a comma separated list of environment keys. | `false` | production |
-| baseUri | LaunchDarkly Instance | `false` | https://app.launchdarkly.com |
-| githubToken | Token to access your GitHub repository. | `true` |  |
-| accessToken | LaunchDarkly access token | `true` |  |
-| placeholderComment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | true |
-| maxFlags | Maximum number of flags to find per PR. | `false` | 5 |
+| project-key | LaunchDarkly Project | `false` | default |
+| environment-key | LaunchDarkly environment for setting flag links. Can be a comma-separated list of environment keys. | `false` | production |
+| base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
+| repo-token | Token to use to authorize comments on PR. Typically the GITHUB_TOKEN secret. | `true` |  |
+| access-token | LaunchDarkly access token | `true` |  |
+| placeholder-comment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | false |
+| max-flags | Maximum number of flags to find per PR | `false` | 5 |
 <!-- action-docs-inputs -->
 
 <!-- action-docs-outputs -->
-## Outputs
+### Outputs
 
 | parameter | description |
 | --- | --- |
-| any_modified | Returns true if any flags have been added or modified in pull request |
-| modified_flags | Space-separated list of flags added or modified in pull request |
-| modified_flags_count | Number of flags added or modified in pull request |
-| any_removed | Returns true if any flags have been removed in pull request |
-| removed_flags | Space-separated list of flags removed in pull request |
-| removed_flags_count | Number of flags removed in pull request |
+| any-modified | Returns true if any flags have been added or modified in pull request |
+| modified-flags | Space-separated list of flags added or modified in pull request |
+| modified-flags-count | Number of flags added or modified in pull request |
+| any-removed | Returns true if any flags have been removed in pull request |
+| removed-flags | Space-separated list of flags removed in pull request |
+| removed-flags-count | Number of flags removed in pull request |
 <!-- action-docs-outputs -->
