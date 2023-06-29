@@ -67,13 +67,6 @@ func main() {
 
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)
-
-	// dedupe flags
-	for key := range flagsRef.FlagsAdded {
-		// If flag is in both added and removed then it is being modified
-		delete(flagsRef.FlagsRemoved, key)
-	}
-
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
 	if postedComments != "" {
