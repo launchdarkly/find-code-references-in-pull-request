@@ -39,15 +39,15 @@ inputs:
     default: '5'
 
 outputs:
-  any_modified:
+  any-modified:
     description: Returns true if any flags have been added or modified in pull request
-  modified_flags:
+  modified-flags:
     description: Space-separated list of flags added or modified in pull request
-  modified_flags_count:
+  modified-flags-count:
     description: Number of flags added or modified in pull request
-  any_removed:
+  any-removed:
     description: Returns true if any flags have been removed in pull request
-  removed_flags:
+  removed-flags:
     description: Space-separated list of flags removed in pull request
-  removed_flags_count:
+  removed-flags-count:
     description: Number of flags removed in pull request

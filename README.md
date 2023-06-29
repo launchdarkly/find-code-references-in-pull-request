@@ -28,7 +28,7 @@ jobs:
 ```
 
 <!-- action-docs-inputs -->
-## Inputs
+### Inputs
 
 | parameter | description | required | default |
 | --- | --- | --- | --- |
@@ -42,14 +42,14 @@ jobs:
 <!-- action-docs-inputs -->
 
 <!-- action-docs-outputs -->
-## Outputs
+### Outputs
 
 | parameter | description |
 | --- | --- |
-| any_modified | Returns true if any flags have been added or modified in pull request |
-| modified_flags | Space-separated list of flags added or modified in pull request |
-| modified_flags_count | Number of flags added or modified in pull request |
-| any_removed | Returns true if any flags have been removed in pull request |
-| removed_flags | Space-separated list of flags removed in pull request |
-| removed_flags_count | Number of flags removed in pull request |
+| any-modified | Returns true if any flags have been added or modified in pull request |
+| modified-flags | Space-separated list of flags added or modified in pull request |
+| modified-flags-count | Number of flags added or modified in pull request |
+| any-removed | Returns true if any flags have been removed in pull request |
+| removed-flags | Space-separated list of flags removed in pull request |
+| removed-flags-count | Number of flags removed in pull request |
 <!-- action-docs-outputs -->
