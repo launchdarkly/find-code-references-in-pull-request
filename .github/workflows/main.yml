@@ -27,7 +27,8 @@ jobs:
       - name: Added or modified flags
         if: steps.find_flags.outputs.any_modified == 'true'
         run: |
-          for flag in ${${{ fromJSON(steps.find_flags.outputs.modified_flags) }}[@]}; do
+          IFS=", "
+          for flag in ${{ steps.find_flags.outputs.modified_flags }}; do
             echo "$flag was added or modified"
           done
       # - name: Removed flags
