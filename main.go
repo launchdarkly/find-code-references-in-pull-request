@@ -15,6 +15,7 @@ import (
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
+	e "github.com/launchdarkly/cr-flags/errors"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
@@ -165,8 +166,13 @@ func postGithubComment(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.C
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, _, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo, prNumber, rawOpts)
+	raw, resp, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo, prNumber, rawOpts)
 	if err != nil {
+		// TODO use this elsewhere
+		if resp.StatusCode == http.StatusUnauthorized {
+			return nil, e.UnauthorizedError
+		}
+
 		return nil, err
 	}
 	return diff.ParseMultiFileDiff([]byte(raw))
@@ -230,8 +236,12 @@ func setOutputs(flagsRef ghc.FlagsRef) {
 
 func failExit(err error) {
 	if err != nil {
-		fmt.Printf("::error::%s\n", err.Error())
+		logError(err.Error())
 		log.Println(err)
 		os.Exit(1)
 	}
+}
+
+func logError(message string) {
+	fmt.Printf("::error::%s\n", message)
 }
