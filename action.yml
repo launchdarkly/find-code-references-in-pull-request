@@ -10,14 +10,13 @@ runs:
     LD_BASE_URI: ${{ inputs.base-uri }}
     LD_ENV_KEY: ${{ inputs.environment-key }}
     GITHUB_TOKEN: ${{ inputs.github-token }}
-    PLACEHOLDER_COMMENT: ${{ inputs.placeholder-comment }}
 inputs:
   project-key:
     description: 'LaunchDarkly Project'
     required: false
     default: 'default'
   environment-key:
-    description: 'LaunchDarkly Environment for Project. Can be a comma separated list of environment keys.'
+    description: 'LaunchDarkly environment for setting flag links. Can be a comma-separated list of environment keys.'
     required: false
     default: 'production'
   base-uri:

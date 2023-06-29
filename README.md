@@ -32,13 +32,13 @@ jobs:
 
 | parameter | description | required | default |
 | --- | --- | --- | --- |
-| projKey | LaunchDarkly Project | `false` | default |
-| envKey | LaunchDarkly Environment for Project. Can be a comma separated list of environment keys. | `false` | production |
-| baseUri | LaunchDarkly Instance | `false` | https://app.launchdarkly.com |
-| githubToken | Token to access your GitHub repository. | `true` |  |
-| accessToken | LaunchDarkly access token | `true` |  |
-| placeholderComment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | true |
-| maxFlags | Maximum number of flags to find per PR. | `false` | 5 |
+| project-key | LaunchDarkly Project | `false` | default |
+| environment-key | LaunchDarkly environment for setting flag links. Can be a comma-separated list of environment keys. | `false` | production |
+| base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
+| github-token | Token to access your GitHub repository | `true` |  |
+| access-token | LaunchDarkly access token | `true` |  |
+| placeholder-comment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | false |
+| max-flags | Maximum number of flags to find per PR | `false` | 5 |
 <!-- action-docs-inputs -->
 
 <!-- action-docs-outputs -->
