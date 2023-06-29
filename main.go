@@ -203,7 +203,11 @@ func setOutputs(flagsRef ghc.FlagsRef) {
 	for k := range flagsRef.FlagsAdded {
 		flagKeysAdded = append(flagKeysAdded, k)
 	}
-	if err := gha.SetOutput("modified_flags", strings.Join(flagKeysAdded, ",")); err != nil {
+	addedFlagsStr, err := json.Marshal(flagKeysAdded)
+	if err != nil {
+		log.Println("Failed to set outputs.removed_flags")
+	}
+	if err := gha.SetOutput("modified_flags", string(addedFlagsStr)); err != nil {
 		log.Println("Failed to set outputs.modified_flags")
 	}
 
@@ -220,7 +224,11 @@ func setOutputs(flagsRef ghc.FlagsRef) {
 	for k := range flagsRef.FlagsRemoved {
 		flagKeysRemoved = append(flagKeysRemoved, k)
 	}
-	if err := gha.SetOutput("removed_flags", strings.Join(flagKeysAdded, ",")); err != nil {
+	removedFlagsStr, err := json.Marshal(flagKeysRemoved)
+	if err != nil {
+		log.Println("Failed to set outputs.removed_flags")
+	}
+	if err := gha.SetOutput("removed_flags", string(removedFlagsStr)); err != nil {
 		log.Println("Failed to set outputs.removed_flags")
 	}
 }
