@@ -86,6 +86,7 @@ func (fr FlagsRef) Found() bool {
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
+	log.Printf("BUILDING: %#v\n", flagsRef)
 	var commentStr []string
 	commentStr = append(commentStr, "## LaunchDarkly flag references")
 	if len(flagsRef.FlagsAdded) > 0 {
