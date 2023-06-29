@@ -99,11 +99,11 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
-	postedComments := strings.Join(commentStr, "\n")
 	allFlagKeys := uniqueKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	if len(allFlagKeys) > 0 {
-		postedComments = postedComments + fmt.Sprintf("\n <!-- flags:%s -->", strings.Join(allFlagKeys, ","))
+		commentStr = append(commentStr, fmt.Sprintf(" <!-- flags:%s -->", strings.Join(allFlagKeys, ",")))
 	}
+	postedComments := strings.Join(commentStr, "\n")
 
 	hash := md5.Sum([]byte(postedComments))
 	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
