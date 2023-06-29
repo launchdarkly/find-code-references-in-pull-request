@@ -230,7 +230,7 @@ func setOutputs(flagsRef ghc.FlagsRef) {
 
 func failExit(err error) {
 	if err != nil {
-		log.Printf("::error::%s\n", err.Error())
+		fmt.Printf("::error::%s\n", err.Error())
 		log.Println(err)
 		os.Exit(1)
 	}
