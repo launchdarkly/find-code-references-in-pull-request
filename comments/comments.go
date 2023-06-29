@@ -86,6 +86,7 @@ func (fr FlagsRef) Found() bool {
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
+	log.Printf("BUILDING: %#v\n", flagsRef)
 	var commentStr []string
 	commentStr = append(commentStr, "## LaunchDarkly flag references")
 	if len(flagsRef.FlagsAdded) > 0 {
@@ -99,15 +100,11 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
-	postedComments := strings.Join(commentStr, "\n")
-	allFlagKeys := mergeKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
+	allFlagKeys := uniqueKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	if len(allFlagKeys) > 0 {
-		var flagKeys []string
-		for v := range allFlagKeys {
-			flagKeys = append(flagKeys, v)
-		}
-		postedComments = postedComments + fmt.Sprintf("\n <!-- flags:%s -->", strings.Join(flagKeys, ","))
+		commentStr = append(commentStr, fmt.Sprintf(" <!-- flags:%s -->", strings.Join(allFlagKeys, ",")))
 	}
+	postedComments := strings.Join(commentStr, "\n")
 
 	hash := md5.Sum([]byte(postedComments))
 	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
@@ -178,10 +175,18 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	return -1, false
 }
 
-func mergeKeys(a map[string][]string, b map[string][]string) map[string][]string {
-	allKeys := a
-	for k, v := range b {
-		allKeys[k] = v
+func uniqueKeys(a map[string][]string, b map[string][]string) []string {
+	maxKeys := len(a) + len(b)
+	allKeys := make([]string, 0, maxKeys)
+	for k := range a {
+		allKeys = append(allKeys, k)
 	}
+
+	for k := range b {
+		if _, ok := a[k]; !ok {
+			allKeys = append(allKeys, k)
+		}
+	}
+
 	return allKeys
 }
