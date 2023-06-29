@@ -197,7 +197,6 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 }
 
 func setOutputs(flagsRef ghc.FlagsRef) {
-	log.Println("Setting outputs")
 	flagsAddedCount := len(flagsRef.FlagsAdded)
 
 	if err := gha.SetOutput("any-modified", fmt.Sprintf("%t", flagsAddedCount > 0)); err != nil {
