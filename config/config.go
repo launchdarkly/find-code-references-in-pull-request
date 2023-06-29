@@ -26,7 +26,7 @@ type Config struct {
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	var config Config
-	config.LdProject = os.Getenv("INPUT_PROJECTKEY")
+	config.LdProject = os.Getenv("INPUT_PROJECT-KEY")
 	if config.LdProject == "" {
 		return nil, errors.New("`project-key` is required")
 	}
