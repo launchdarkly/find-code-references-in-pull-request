@@ -128,8 +128,6 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
 	for _, flagKey := range addedKeys {
-		// If flag is in both added and removed then it is being modified
-		delete(flagsRef.FlagsRemoved, flagKey)
 		aliases := flagsRef.FlagsAdded[flagKey]
 
 		flagAliases := aliases[:0]
