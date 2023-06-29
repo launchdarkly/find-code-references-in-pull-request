@@ -33,6 +33,6 @@ jobs:
       - name: Removed flags
         if: steps.find_flags.outputs.any_removed == 'true'
         run: |
-          for flag in ${{ toJson(steps.find_flags.outputs.removed_flags) }}; do
+          for flag in "${{ toJson(steps.find_flags.outputs.removed_flags) }}[@]"; do
             echo "$flag was added or modified"
           done
