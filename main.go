@@ -66,14 +66,13 @@ func main() {
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	if postedComments == "" {
-		return
-	}
-	comment := github.IssueComment{
-		Body: &postedComments,
-	}
+	if postedComments != "" {
+		comment := github.IssueComment{
+			Body: &postedComments,
+		}
 
-	err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+		err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+	}
 
 	// Set outputs
 	setOutputs(flagsRef)
