@@ -7,7 +7,7 @@ Add this action for Pull Requests to receive a comment whenever a LaunchDarkly F
 ## Configuration
 PR Commenter has full support for Code Reference Aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file it will use the aliases defined there.
 
-```
+```yaml
 on: pull_request
 
 jobs:
