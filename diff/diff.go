@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	ldapi "github.com/launchdarkly/api-client-go/v7"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/launchdarkly/cr-flags/ignore"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
@@ -51,7 +50,7 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, maxFlags int) {
+func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, flagsRef lflags.FlagsRef, maxFlags int) {
 	diffLines := strings.Split(string(hunk.Body), "\n")
 	for _, line := range diffLines {
 		if flagsRef.Count() >= maxFlags {

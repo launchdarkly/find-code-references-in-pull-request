@@ -65,7 +65,7 @@ func main() {
 			continue
 		}
 		for _, hunk := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(matcher, hunk, flagsRef, flags, config.MaxFlags)
+			ldiff.ProcessDiffs(matcher, hunk, flagsRef, config.MaxFlags)
 		}
 	}
 
