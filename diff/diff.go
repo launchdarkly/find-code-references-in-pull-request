@@ -51,45 +51,39 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 }
 
 func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, flagsRef lflags.FlagsRef, maxFlags int) {
+	flagMap := map[Operation]lflags.FlagAliasMap{
+		Add:    flagsRef.FlagsAdded,
+		Delete: flagsRef.FlagsRemoved,
+	}
 	diffLines := strings.Split(string(hunk.Body), "\n")
 	for _, line := range diffLines {
 		if flagsRef.Count() >= maxFlags {
 			break
 		}
+
 		op := operation(line)
+		if op == Equal {
+			continue
+		}
 
 		// only one for now
 		elementMatcher := matcher.Elements[0]
-
 		for _, flagKey := range elementMatcher.FindMatches(line) {
-			if op == Add {
-				if _, ok := flagsRef.FlagsAdded[flagKey]; !ok {
-					flagsRef.FlagsAdded[flagKey] = lflags.AliasSet{}
-				}
-			} else if op == Delete {
-				if _, ok := flagsRef.FlagsRemoved[flagKey]; !ok {
-					flagsRef.FlagsRemoved[flagKey] = lflags.AliasSet{}
-				}
+			if _, ok := flagMap[op][flagKey]; !ok {
+				flagMap[op][flagKey] = make(lflags.AliasSet)
 			}
 			if aliasMatches := matcher.FindAliases(line, flagKey); len(aliasMatches) > 0 {
-				if op == Add {
-					if _, ok := flagsRef.FlagsAdded[flagKey]; !ok {
-						flagsRef.FlagsAdded[flagKey] = lflags.AliasSet{}
-					}
-					for _, alias := range aliasMatches {
-						flagsRef.FlagsAdded[flagKey][alias] = true
-					}
-				} else if op == Delete {
-					if _, ok := flagsRef.FlagsRemoved[flagKey]; !ok {
-						flagsRef.FlagsRemoved[flagKey] = lflags.AliasSet{}
-					}
-					for _, alias := range aliasMatches {
-						flagsRef.FlagsRemoved[flagKey][alias] = true
-					}
+				if _, ok := flagMap[op][flagKey]; !ok {
+					flagMap[op][flagKey] = make(lflags.AliasSet)
+				}
+				for _, alias := range aliasMatches {
+					flagMap[op][flagKey][alias] = true
 				}
 			}
 		}
 	}
+	flagsRef.FlagsAdded = flagMap[Add]
+	flagsRef.FlagsRemoved = flagMap[Delete]
 }
 
 // Operation defines the operation of a diff item.
