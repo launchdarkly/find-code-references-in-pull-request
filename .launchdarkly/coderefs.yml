@@ -1,3 +1,4 @@
 aliases:
   - type: camelcase
   - type: snakecase
+  - type: kebabcase
