@@ -86,17 +86,20 @@ func (fr FlagsRef) Found() bool {
 func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
 	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
-	log.Printf("BUILDING: %#v\n", flagsRef)
 	var commentStr []string
 	commentStr = append(commentStr, "## LaunchDarkly flag references")
-	if len(flagsRef.FlagsAdded) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("### :green_circle: %d flag references added or modified\n", len(flagsRef.FlagsAdded)))
+
+	numFlagsAdded := len(flagsRef.FlagsAdded)
+	if numFlagsAdded > 0 {
+		commentStr = append(commentStr, fmt.Sprintf("### :green_circle: %s added or modified\n", pluralize("flag reference", numFlagsAdded)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		commentStr = append(commentStr, "\n")
 	}
-	if len(flagsRef.FlagsRemoved) > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("### :red_circle: %d flag references removed\n", len(flagsRef.FlagsRemoved)))
+
+	numFlagsRemoved := len(flagsRef.FlagsRemoved)
+	if numFlagsRemoved > 0 {
+		commentStr = append(commentStr, fmt.Sprintf("### :red_circle: %s removed\n", pluralize("flag reference", numFlagsRemoved)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
@@ -189,4 +192,13 @@ func uniqueKeys(a map[string][]string, b map[string][]string) []string {
 	}
 
 	return allKeys
+}
+
+func pluralize(str string, strLength int) string {
+	tmpl := "%d %s"
+	if strLength != 1 {
+		tmpl += "s"
+	}
+
+	return fmt.Sprintf(tmpl, strLength, str)
 }
