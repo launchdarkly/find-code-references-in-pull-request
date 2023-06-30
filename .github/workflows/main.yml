@@ -43,3 +43,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Remove label
+        if: steps.find_flags.outputs.any-modified == 'false' && steps.find_flags.outputs.any-removed == 'false'
+        run: gh pr edit $PR_NUMBER --remove-label ld-flags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
