@@ -37,3 +37,9 @@ jobs:
           for flag in ${{ steps.find_flags.outputs.removed-flags }}; do
             echo "$flag was removed"
           done
+      - name: Add label
+        if: steps.find_flags.outputs.any-modified == 'true' || steps.find_flags.outputs.any-removed == 'true'
+        run: gh pr edit $PR_NUMBER --add-label ld-flags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
