@@ -18,6 +18,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 )
 
 type Comment struct {
@@ -74,16 +75,7 @@ type FlagComments struct {
 	CommentsRemoved []string
 }
 
-type FlagsRef struct {
-	FlagsAdded   map[string][]string
-	FlagsRemoved map[string][]string
-}
-
-func (fr FlagsRef) Found() bool {
-	return len(fr.FlagsAdded) > 0 || len(fr.FlagsRemoved) > 0
-}
-
-func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
+func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, existingComment *github.IssueComment) string {
 	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
 	var commentStr []string
@@ -103,8 +95,9 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
-	allFlagKeys := uniqueKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
+	allFlagKeys := uniqueFlagKeys(flagsRef.FlagsAdded, flagsRef.FlagsRemoved)
 	if len(allFlagKeys) > 0 {
+		sort.Strings(allFlagKeys)
 		commentStr = append(commentStr, fmt.Sprintf(" <!-- flags:%s -->", strings.Join(allFlagKeys, ",")))
 	}
 	postedComments := strings.Join(commentStr, "\n")
@@ -119,7 +112,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	return postedComments
 }
 
-func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
@@ -130,14 +123,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 	for _, flagKey := range addedKeys {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRef.FlagsRemoved, flagKey)
-		aliases := flagsRef.FlagsAdded[flagKey]
-
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
+		flagAliases := uniqueAliases(flagsRef.FlagsAdded[flagKey])
 		idx, _ := find(flags.Items, flagKey)
 		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
@@ -151,13 +137,7 @@ func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Confi
 	}
 	sort.Strings(removedKeys)
 	for _, flagKey := range removedKeys {
-		aliases := flagsRef.FlagsRemoved[flagKey]
-		flagAliases := aliases[:0]
-		for _, alias := range aliases {
-			if !(len(strings.TrimSpace(alias)) == 0) {
-				flagAliases = append(flagAliases, alias)
-			}
-		}
+		flagAliases := uniqueAliases(flagsRef.FlagsRemoved[flagKey])
 		idx, _ := find(flags.Items, flagKey)
 		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
@@ -178,7 +158,7 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	return -1, false
 }
 
-func uniqueKeys(a map[string][]string, b map[string][]string) []string {
+func uniqueFlagKeys(a, b lflags.FlagAliasMap) []string {
 	maxKeys := len(a) + len(b)
 	allKeys := make([]string, 0, maxKeys)
 	for k := range a {
@@ -192,6 +172,16 @@ func uniqueKeys(a map[string][]string, b map[string][]string) []string {
 	}
 
 	return allKeys
+}
+
+func uniqueAliases(aliases lflags.AliasSet) []string {
+	flagAliases := make([]string, 0, len(aliases))
+	for alias := range aliases {
+		if len(strings.TrimSpace(alias)) > 0 {
+			flagAliases = append(flagAliases, alias)
+		}
+	}
+	return flagAliases
 }
 
 func pluralize(str string, strLength int) string {

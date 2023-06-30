@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	ldapi "github.com/launchdarkly/api-client-go/v7"
-	ghc "github.com/launchdarkly/cr-flags/comments"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/sourcegraph/go-diff/diff"
 )
@@ -50,61 +50,65 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(raw *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string, maxFlags int) {
-	diffRows := strings.Split(string(raw.Body), "\n")
+func ProcessDiffs(hunk *diff.Hunk, flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string, maxFlags int) {
+	diffRows := strings.Split(string(hunk.Body), "\n")
 	for _, row := range diffRows {
-
-		if (len(flagsRef.FlagsAdded) + len(flagsRef.FlagsRemoved)) >= maxFlags {
+		if flagsRef.Count() >= maxFlags {
 			break
 		}
-		if strings.HasPrefix(row, "+") {
-			for _, flag := range flags.Items {
-				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRef.FlagsAdded[flag.Key]
-					currentKeys = append(currentKeys, "")
-					flagsRef.FlagsAdded[flag.Key] = currentKeys
-				}
-				if len(aliases[flag.Key]) > 0 {
-				CheckAliasAdded:
-					for _, alias := range aliases[flag.Key] {
-						if strings.Contains(row, alias) {
-							currentKeys := flagsRef.FlagsAdded[flag.Key]
-							for i := range currentKeys {
-								if alias == currentKeys[i] {
-									// If key already exists we do not want to add it
-									continue CheckAliasAdded
-								}
-							}
-							currentKeys = append(currentKeys, alias)
-							flagsRef.FlagsAdded[flag.Key] = currentKeys
-						}
+		op := operation(row)
+		for _, flag := range flags.Items {
+			if strings.Contains(row, flag.Key) {
+				if op == Add {
+					if _, ok := flagsRef.FlagsAdded[flag.Key]; !ok {
+						flagsRef.FlagsAdded[flag.Key] = lflags.AliasSet{}
+					}
+				} else if op == Delete {
+					if _, ok := flagsRef.FlagsRemoved[flag.Key]; !ok {
+						flagsRef.FlagsRemoved[flag.Key] = lflags.AliasSet{}
 					}
 				}
 			}
-		} else if strings.HasPrefix(row, "-") {
-			for _, flag := range flags.Items {
-				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRef.FlagsRemoved[flag.Key]
-					currentKeys = append(currentKeys, "")
-					flagsRef.FlagsRemoved[flag.Key] = currentKeys
-				}
-				if len(aliases[flag.Key]) > 0 {
-				CheckAliasRemoved:
-					for _, alias := range aliases[flag.Key] {
-						if strings.Contains(row, alias) {
-							currentKeys := flagsRef.FlagsRemoved[flag.Key]
-							for i := range currentKeys {
-								// If key already exists we do not want to add it
-								if alias == currentKeys[i] {
-									continue CheckAliasRemoved
-								}
+			if len(aliases[flag.Key]) > 0 {
+				for _, alias := range aliases[flag.Key] {
+					if strings.Contains(row, alias) {
+						if op == Add {
+							if _, ok := flagsRef.FlagsAdded[flag.Key]; !ok {
+								flagsRef.FlagsAdded[flag.Key] = lflags.AliasSet{}
 							}
-							currentKeys = append(currentKeys, alias)
-							flagsRef.FlagsRemoved[flag.Key] = currentKeys
+							flagsRef.FlagsAdded[flag.Key][alias] = true
+						} else if op == Delete {
+							if _, ok := flagsRef.FlagsRemoved[flag.Key]; !ok {
+								flagsRef.FlagsRemoved[flag.Key] = lflags.AliasSet{}
+							}
+							flagsRef.FlagsRemoved[flag.Key][alias] = true
 						}
 					}
 				}
 			}
 		}
 	}
+}
+
+// Operation defines the operation of a diff item.
+type Operation int
+
+const (
+	// Equal item represents an equals diff.
+	Equal Operation = iota
+	// Add item represents an insert diff.
+	Add
+	// Delete item represents a delete diff.
+	Delete
+)
+
+func operation(row string) Operation {
+	if strings.HasPrefix(row, "+") {
+		return Add
+	}
+	if strings.HasPrefix(row, "-") {
+		return Delete
+	}
+
+	return Equal
 }
