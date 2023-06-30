@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	ldapi "github.com/launchdarkly/api-client-go/v7"
-	"github.com/launchdarkly/cr-flags/comments"
 	"github.com/launchdarkly/cr-flags/config"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +41,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 
 type testProcessor struct {
 	Flags    ldapi.FeatureFlags
-	FlagsRef comments.FlagsRef
+	FlagsRef lflags.FlagsRef
 	Config   config.Config
 }
 
@@ -49,9 +49,9 @@ func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
-	flagsAdded := make(comments.FlagAliasMap)
-	flagsRemoved := make(comments.FlagAliasMap)
-	flagsRef := comments.FlagsRef{
+	flagsAdded := make(lflags.FlagAliasMap)
+	flagsRemoved := make(lflags.FlagAliasMap)
+	flagsRef := lflags.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -115,14 +115,14 @@ func TestProcessDiffs(t *testing.T) {
 	cases := []struct {
 		name       string
 		sampleBody string
-		expected   comments.FlagsRef
+		expected   lflags.FlagsRef
 		aliases    map[string][]string
 	}{
 		{
 			name: "add flag",
-			expected: comments.FlagsRef{
-				FlagsAdded:   comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
-				FlagsRemoved: comments.FlagAliasMap{},
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
+				FlagsRemoved: lflags.FlagAliasMap{},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -136,9 +136,9 @@ func TestProcessDiffs(t *testing.T) {
 		},
 		{
 			name: "remove flag",
-			expected: comments.FlagsRef{
-				FlagsAdded:   comments.FlagAliasMap{},
-				FlagsRemoved: comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{},
+				FlagsRemoved: lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -152,9 +152,9 @@ func TestProcessDiffs(t *testing.T) {
 		},
 		{
 			name: "modified flag",
-			expected: comments.FlagsRef{
-				FlagsAdded:   comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
-				FlagsRemoved: comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
+				FlagsRemoved: lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -170,9 +170,9 @@ func TestProcessDiffs(t *testing.T) {
 		},
 		{
 			name: "alias flag",
-			expected: comments.FlagsRef{
-				FlagsAdded:   comments.FlagAliasMap{"example-flag": comments.AliasSet{"exampleFlag": true}},
-				FlagsRemoved: comments.FlagAliasMap{},
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{"exampleFlag": true}},
+				FlagsRemoved: lflags.FlagAliasMap{},
 			},
 			aliases: map[string][]string{"example-flag": []string{"exampleFlag"}},
 			sampleBody: `

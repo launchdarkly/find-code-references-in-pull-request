@@ -18,6 +18,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 )
 
 type Comment struct {
@@ -74,24 +75,7 @@ type FlagComments struct {
 	CommentsRemoved []string
 }
 
-type FlagAliasMap = map[string]AliasSet
-
-type AliasSet = map[string]bool
-
-type FlagsRef struct {
-	FlagsAdded   FlagAliasMap
-	FlagsRemoved FlagAliasMap
-}
-
-func (fr FlagsRef) Found() bool {
-	return fr.Count() > 0
-}
-
-func (fr FlagsRef) Count() int {
-	return len(fr.FlagsAdded) + len(fr.FlagsRemoved)
-}
-
-func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComment *github.IssueComment) string {
+func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, existingComment *github.IssueComment) string {
 	tableHeader := "| Flag name | Key | Aliases |\n| --- | --- | --- |"
 
 	var commentStr []string
@@ -128,7 +112,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef FlagsRef, existingComm
 	return postedComments
 }
 
-func ProcessFlags(flagsRef FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
@@ -174,7 +158,7 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	return -1, false
 }
 
-func uniqueFlagKeys(a, b FlagAliasMap) []string {
+func uniqueFlagKeys(a, b lflags.FlagAliasMap) []string {
 	maxKeys := len(a) + len(b)
 	allKeys := make([]string, 0, maxKeys)
 	for k := range a {
@@ -190,7 +174,7 @@ func uniqueFlagKeys(a, b FlagAliasMap) []string {
 	return allKeys
 }
 
-func uniqueAliases(aliases AliasSet) []string {
+func uniqueAliases(aliases lflags.AliasSet) []string {
 	flagAliases := make([]string, 0, len(aliases))
 	for alias := range aliases {
 		if len(strings.TrimSpace(alias)) > 0 {

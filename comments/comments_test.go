@@ -6,6 +6,7 @@ import (
 
 	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/config"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +57,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 
 type testCommentBuilder struct {
 	Comments FlagComments
-	FlagsRef FlagsRef
+	FlagsRef lflags.FlagsRef
 }
 
 func newCommentBuilderAccEnv() *testCommentBuilder {
@@ -64,9 +65,9 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 		CommentsAdded:   []string{},
 		CommentsRemoved: []string{},
 	}
-	flagsAdded := make(FlagAliasMap)
-	flagsRemoved := make(FlagAliasMap)
-	flagsRef := FlagsRef{
+	flagsAdded := make(lflags.FlagAliasMap)
+	flagsRemoved := make(lflags.FlagAliasMap)
+	flagsRef := lflags.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -79,7 +80,7 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 
 type testProcessor struct {
 	Flags    ldapi.FeatureFlags
-	FlagsRef FlagsRef
+	FlagsRef lflags.FlagsRef
 	Config   config.Config
 }
 
@@ -87,9 +88,9 @@ func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
-	flagsAdded := make(FlagAliasMap)
-	flagsRemoved := make(FlagAliasMap)
-	flagsRef := FlagsRef{
+	flagsAdded := make(lflags.FlagAliasMap)
+	flagsRemoved := make(lflags.FlagAliasMap)
+	flagsRef := lflags.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -109,9 +110,9 @@ func newProcessMultipleFlagsFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flag2 := createFlag("second-flag")
 	flags := ldapi.FeatureFlags{Items: []ldapi.FeatureFlag{flag, flag2}}
-	flagsAdded := make(FlagAliasMap)
-	flagsRemoved := make(FlagAliasMap)
-	flagsRef := FlagsRef{
+	flagsAdded := make(lflags.FlagAliasMap)
+	flagsRemoved := make(lflags.FlagAliasMap)
+	flagsRef := lflags.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -174,7 +175,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 }
 
 func (e *testCommentBuilder) AddedOnly(t *testing.T) {
-	e.FlagsRef.FlagsAdded["example-flag"] = AliasSet{}
+	e.FlagsRef.FlagsAdded["example-flag"] = lflags.AliasSet{}
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
@@ -183,8 +184,8 @@ func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 }
 
 func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
-	e.FlagsRef.FlagsRemoved["example-flag"] = AliasSet{}
-	e.FlagsRef.FlagsRemoved["sample-flag"] = AliasSet{}
+	e.FlagsRef.FlagsRemoved["example-flag"] = lflags.AliasSet{}
+	e.FlagsRef.FlagsRemoved["sample-flag"] = lflags.AliasSet{}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
@@ -193,8 +194,8 @@ func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 }
 
 func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
-	e.FlagsRef.FlagsAdded["example-flag"] = AliasSet{}
-	e.FlagsRef.FlagsRemoved["example-flag"] = AliasSet{}
+	e.FlagsRef.FlagsAdded["example-flag"] = lflags.AliasSet{}
+	e.FlagsRef.FlagsRemoved["example-flag"] = lflags.AliasSet{}
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
@@ -206,7 +207,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 }
 
 func (e *testProcessor) Basic(t *testing.T) {
-	e.FlagsRef.FlagsAdded["example-flag"] = AliasSet{"": true}
+	e.FlagsRef.FlagsAdded["example-flag"] = lflags.AliasSet{"": true}
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
 		CommentsAdded: []string{"| [example flag](https://example.com/test) | `example-flag` | |"},
@@ -215,8 +216,8 @@ func (e *testProcessor) Basic(t *testing.T) {
 }
 
 func (e *testProcessor) Multi(t *testing.T) {
-	e.FlagsRef.FlagsAdded["example-flag"] = AliasSet{"": true}
-	e.FlagsRef.FlagsAdded["second-flag"] = AliasSet{"": true}
+	e.FlagsRef.FlagsAdded["example-flag"] = lflags.AliasSet{"": true}
+	e.FlagsRef.FlagsAdded["second-flag"] = lflags.AliasSet{"": true}
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
 		CommentsAdded: []string{

@@ -16,6 +16,7 @@ import (
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
 	e "github.com/launchdarkly/cr-flags/errors"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
@@ -50,9 +51,9 @@ func main() {
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
-	flagsRef := ghc.FlagsRef{
-		FlagsAdded:   make(ghc.FlagAliasMap),
-		FlagsRemoved: make(ghc.FlagAliasMap),
+	flagsRef := lflags.FlagsRef{
+		FlagsAdded:   make(lflags.FlagAliasMap),
+		FlagsRemoved: make(lflags.FlagAliasMap),
 	}
 
 	for _, parsedDiff := range multiFiles {
@@ -134,7 +135,7 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	return nil
 }
 
-func postGithubComment(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
+func postGithubComment(ctx context.Context, flagsRef lflags.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
 	var existingCommentId int64
 	if existingComment != nil {
 		existingCommentId = existingComment.GetID()
@@ -205,7 +206,7 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 
 }
 
-func setOutputs(flagsRef ghc.FlagsRef) {
+func setOutputs(flagsRef lflags.FlagsRef) {
 	flagsAddedCount := len(flagsRef.FlagsAdded)
 
 	if err := gha.SetOutput("any-modified", fmt.Sprintf("%t", flagsAddedCount > 0)); err != nil {

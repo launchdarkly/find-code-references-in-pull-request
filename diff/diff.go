@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	ldapi "github.com/launchdarkly/api-client-go/v7"
-	ghc "github.com/launchdarkly/cr-flags/comments"
+	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/launchdarkly/cr-flags/ignore"
 	"github.com/sourcegraph/go-diff/diff"
 )
@@ -50,7 +50,7 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(hunk *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string, maxFlags int) {
+func ProcessDiffs(hunk *diff.Hunk, flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string, maxFlags int) {
 	diffRows := strings.Split(string(hunk.Body), "\n")
 	for _, row := range diffRows {
 		if flagsRef.Count() >= maxFlags {
@@ -61,11 +61,11 @@ func ProcessDiffs(hunk *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFla
 			if strings.Contains(row, flag.Key) {
 				if op == Add {
 					if _, ok := flagsRef.FlagsAdded[flag.Key]; !ok {
-						flagsRef.FlagsAdded[flag.Key] = ghc.AliasSet{}
+						flagsRef.FlagsAdded[flag.Key] = lflags.AliasSet{}
 					}
 				} else if op == Delete {
 					if _, ok := flagsRef.FlagsRemoved[flag.Key]; !ok {
-						flagsRef.FlagsRemoved[flag.Key] = ghc.AliasSet{}
+						flagsRef.FlagsRemoved[flag.Key] = lflags.AliasSet{}
 					}
 				}
 			}
@@ -74,12 +74,12 @@ func ProcessDiffs(hunk *diff.Hunk, flagsRef ghc.FlagsRef, flags ldapi.FeatureFla
 					if strings.Contains(row, alias) {
 						if op == Add {
 							if _, ok := flagsRef.FlagsAdded[flag.Key]; !ok {
-								flagsRef.FlagsAdded[flag.Key] = ghc.AliasSet{}
+								flagsRef.FlagsAdded[flag.Key] = lflags.AliasSet{}
 							}
 							flagsRef.FlagsAdded[flag.Key][alias] = true
 						} else if op == Delete {
 							if _, ok := flagsRef.FlagsRemoved[flag.Key]; !ok {
-								flagsRef.FlagsRemoved[flag.Key] = ghc.AliasSet{}
+								flagsRef.FlagsRemoved[flag.Key] = lflags.AliasSet{}
 							}
 							flagsRef.FlagsRemoved[flag.Key][alias] = true
 						}
