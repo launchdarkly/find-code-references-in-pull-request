@@ -128,6 +128,7 @@ func TestProcessDiffs(t *testing.T) {
 		sampleBody string
 		expected   lflags.FlagsRef
 		aliases    map[string][]string
+		delimiters string
 	}{
 		{
 			name: "add flag",
@@ -211,6 +212,36 @@ func TestProcessDiffs(t *testing.T) {
 +exampleFlag
 +`,
 		},
+		{
+			name: "require delimiters - no matches",
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{},
+				FlagsRemoved: lflags.FlagAliasMap{},
+			},
+			delimiters: "'\"",
+			aliases:    map[string][]string{},
+			sampleBody: `
+			+Testing data
++this is for testing
++here is a flag
++example-flag
++`,
+		},
+		{
+			name: "require delimiters - match",
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
+				FlagsRemoved: lflags.FlagAliasMap{},
+			},
+			delimiters: "'\"",
+			aliases:    map[string][]string{},
+			sampleBody: `
+			+Testing data
++this is for testing
++here is a flag
++"example-flag"
++`,
+		},
 	}
 
 	for _, tc := range cases {
@@ -225,7 +256,7 @@ func TestProcessDiffs(t *testing.T) {
 				Body:          []byte(tc.sampleBody),
 			}
 			elements := []lsearch.ElementMatcher{}
-			elements = append(elements, lsearch.NewElementMatcher("default", "", "", processor.flagKeys(), tc.aliases))
+			elements = append(elements, lsearch.NewElementMatcher("default", "", tc.delimiters, processor.flagKeys(), tc.aliases))
 			matcher := lsearch.Matcher{
 				Elements: elements,
 			}
