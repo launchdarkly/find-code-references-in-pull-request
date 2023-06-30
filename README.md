@@ -8,7 +8,7 @@ Add this action for Pull Requests to receive a comment whenever a LaunchDarkly F
 PR Commenter has full support for Code Reference Aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file it will use the aliases defined there.
 
 ```
-on: [pull_request]
+on: pull_request
 
 jobs:
   find_flags:
