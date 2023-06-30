@@ -13,18 +13,18 @@ on: [pull_request]
 jobs:
   find_flags:
     runs-on: ubuntu-latest
-    name: Test Find Flags
+    name: Find LaunchDarkly Feature Flags
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Find Flags
-        uses: ./ # Uses an action in the root directory
+        uses: launchdarkly/cr-flags@v0.6.0
         id: find_flags
         with:
-          projKey: default
-          envKey: production
-          accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          project-key: default
+          environmet-key: production
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 <!-- action-docs-inputs -->
