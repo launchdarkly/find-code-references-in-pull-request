@@ -6,6 +6,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/config"
 	lflags "github.com/launchdarkly/cr-flags/flags"
+	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,6 +44,14 @@ type testProcessor struct {
 	Flags    ldapi.FeatureFlags
 	FlagsRef lflags.FlagsRef
 	Config   config.Config
+}
+
+func (t testProcessor) flagKeys() []string {
+	keys := make([]string, 0, len(t.Flags.Items))
+	for _, f := range t.Flags.Items {
+		keys = append(keys, f.Key)
+	}
+	return keys
 }
 
 func newProcessFlagAccEnv() *testProcessor {
@@ -196,7 +205,12 @@ func TestProcessDiffs(t *testing.T) {
 				StartPosition: 1,
 				Body:          []byte(tc.sampleBody),
 			}
-			ProcessDiffs(hunk, processor.FlagsRef, processor.Flags, tc.aliases, 5)
+			elements := []lsearch.ElementMatcher{}
+			elements = append(elements, lsearch.NewElementMatcher("default", "", "", processor.flagKeys(), tc.aliases))
+			matcher := lsearch.Matcher{
+				Elements: elements,
+			}
+			ProcessDiffs(matcher, hunk, processor.FlagsRef, processor.Flags, 5)
 			assert.Equal(t, tc.expected, processor.FlagsRef)
 		})
 	}
