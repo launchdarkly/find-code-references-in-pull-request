@@ -2,7 +2,7 @@
 
 Add this action for Pull Requests to receive a comment whenever a LaunchDarkly Feature Flag is referenced in any of the code changes.
 
-<img src="https://github.com/launchdarkly/cr-flags/raw/master/images/example-comment.png?raw=true" alt="Example comment" width="100%">
+<img src="https://github.com/launchdarkly/cr-flags/raw/main/images/example-comment.png?raw=true" alt="Example comment" width="100%">
 
 ## Configuration
 PR Commenter has full support for Code Reference Aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file it will use the aliases defined there.
