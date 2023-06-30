@@ -49,8 +49,8 @@ func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
-	flagsAdded := make(map[string][]string)
-	flagsRemoved := make(map[string][]string)
+	flagsAdded := make(comments.FlagAliasMap)
+	flagsRemoved := make(comments.FlagAliasMap)
 	flagsRef := comments.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
@@ -121,8 +121,8 @@ func TestProcessDiffs(t *testing.T) {
 		{
 			name: "add flag",
 			expected: comments.FlagsRef{
-				FlagsAdded:   map[string][]string{"example-flag": []string{""}},
-				FlagsRemoved: map[string][]string{},
+				FlagsAdded:   comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
+				FlagsRemoved: comments.FlagAliasMap{},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -137,8 +137,8 @@ func TestProcessDiffs(t *testing.T) {
 		{
 			name: "remove flag",
 			expected: comments.FlagsRef{
-				FlagsRemoved: map[string][]string{"example-flag": []string{""}},
-				FlagsAdded:   map[string][]string{},
+				FlagsAdded:   comments.FlagAliasMap{},
+				FlagsRemoved: comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -153,8 +153,8 @@ func TestProcessDiffs(t *testing.T) {
 		{
 			name: "modified flag",
 			expected: comments.FlagsRef{
-				FlagsAdded:   map[string][]string{"example-flag": []string{""}},
-				FlagsRemoved: map[string][]string{"example-flag": []string{""}},
+				FlagsAdded:   comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
+				FlagsRemoved: comments.FlagAliasMap{"example-flag": comments.AliasSet{}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -171,8 +171,8 @@ func TestProcessDiffs(t *testing.T) {
 		{
 			name: "alias flag",
 			expected: comments.FlagsRef{
-				FlagsAdded:   map[string][]string{"example-flag": []string{"exampleFlag"}},
-				FlagsRemoved: map[string][]string{},
+				FlagsAdded:   comments.FlagAliasMap{"example-flag": comments.AliasSet{"exampleFlag": true}},
+				FlagsRemoved: comments.FlagAliasMap{},
 			},
 			aliases: map[string][]string{"example-flag": []string{"exampleFlag"}},
 			sampleBody: `
@@ -197,7 +197,7 @@ func TestProcessDiffs(t *testing.T) {
 				Body:          []byte(tc.sampleBody),
 			}
 			ProcessDiffs(hunk, processor.FlagsRef, processor.Flags, tc.aliases, 5)
-			assert.Equal(t, tc.expected, processor.FlagsRef, "")
+			assert.Equal(t, tc.expected, processor.FlagsRef)
 		})
 	}
 }

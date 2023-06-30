@@ -51,8 +51,8 @@ func main() {
 	failExit(err)
 
 	flagsRef := ghc.FlagsRef{
-		FlagsAdded:   make(map[string][]string),
-		FlagsRemoved: make(map[string][]string),
+		FlagsAdded:   make(ghc.FlagAliasMap),
+		FlagsRemoved: make(ghc.FlagAliasMap),
 	}
 
 	for _, parsedDiff := range multiFiles {
@@ -60,8 +60,8 @@ func main() {
 		if getPath.Skip {
 			continue
 		}
-		for _, raw := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(raw, flagsRef, flags, aliases, config.MaxFlags)
+		for _, hunk := range parsedDiff.Hunks {
+			ldiff.ProcessDiffs(hunk, flagsRef, flags, aliases, config.MaxFlags)
 		}
 	}
 
