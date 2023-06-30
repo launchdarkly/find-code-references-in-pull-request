@@ -151,17 +151,26 @@ func postGithubComment(ctx context.Context, flagsRef ghc.FlagsRef, config *lcr.C
 	}
 
 	// Check if this is already the body, flags could have originally been included then removed in later commit
-	if config.PlaceholderComment && existingCommentId > 0 {
-		if strings.Contains(*existingComment.Body, "No flag references found in PR") {
-			return nil
+	if existingCommentId > 0 {
+		if config.PlaceholderComment {
+			if strings.Contains(*existingComment.Body, "No flag references found in PR") {
+				return nil
+			}
+
+			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo, existingCommentId, ghc.GithubNoFlagComment())
+			return err
 		}
 
-		_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo, existingCommentId, ghc.GithubNoFlagComment())
+		_, err := config.GHClient.Issues.DeleteComment(ctx, config.Owner, config.Repo, existingCommentId)
 		return err
 	}
 
-	_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo, prNumber, ghc.GithubNoFlagComment())
-	return err
+	if config.PlaceholderComment {
+		_, _, err := config.GHClient.Issues.CreateComment(ctx, config.Owner, config.Repo, prNumber, ghc.GithubNoFlagComment())
+		return err
+	}
+
+	return nil
 }
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
