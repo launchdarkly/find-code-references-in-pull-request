@@ -6,6 +6,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v7"
 	"github.com/launchdarkly/cr-flags/config"
 	lflags "github.com/launchdarkly/cr-flags/flags"
+	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/stretchr/testify/assert"
 )
@@ -45,10 +46,20 @@ type testProcessor struct {
 	Config   config.Config
 }
 
+func (t testProcessor) flagKeys() []string {
+	keys := make([]string, 0, len(t.Flags.Items))
+	for _, f := range t.Flags.Items {
+		keys = append(keys, f.Key)
+	}
+	return keys
+}
+
 func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
+	flag2 := createFlag("sample-flag")
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
+	flags.Items = append(flags.Items, flag2)
 	flagsAdded := make(lflags.FlagAliasMap)
 	flagsRemoved := make(lflags.FlagAliasMap)
 	flagsRef := lflags.FlagsRef{
@@ -117,6 +128,7 @@ func TestProcessDiffs(t *testing.T) {
 		sampleBody string
 		expected   lflags.FlagsRef
 		aliases    map[string][]string
+		delimiters string
 	}{
 		{
 			name: "add flag",
@@ -151,6 +163,23 @@ func TestProcessDiffs(t *testing.T) {
  in the hunk`,
 		},
 		{
+			name: "add and remove flag",
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{"sample-flag": lflags.AliasSet{}},
+				FlagsRemoved: lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
+			},
+			aliases: map[string][]string{},
+			sampleBody: `
+			-Testing data
+-this is for testing
+-here is a flag
+-example-flag
+-
++ sample-flag
+ this is no changes
+ in the hunk`,
+		},
+		{
 			name: "modified flag",
 			expected: lflags.FlagsRef{
 				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
@@ -174,13 +203,43 @@ func TestProcessDiffs(t *testing.T) {
 				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{"exampleFlag": true}},
 				FlagsRemoved: lflags.FlagAliasMap{},
 			},
-			aliases: map[string][]string{"example-flag": []string{"exampleFlag"}},
+			aliases: map[string][]string{"example-flag": {"exampleFlag"}},
 			sampleBody: `
 			+Testing data
 +this is for testing
 +here is a flag
 +exampleFlag
 +exampleFlag
++`,
+		},
+		{
+			name: "require delimiters - no matches",
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{},
+				FlagsRemoved: lflags.FlagAliasMap{},
+			},
+			delimiters: "'\"",
+			aliases:    map[string][]string{},
+			sampleBody: `
+			+Testing data
++this is for testing
++here is a flag
++example-flag
++`,
+		},
+		{
+			name: "require delimiters - match",
+			expected: lflags.FlagsRef{
+				FlagsAdded:   lflags.FlagAliasMap{"example-flag": lflags.AliasSet{}},
+				FlagsRemoved: lflags.FlagAliasMap{},
+			},
+			delimiters: "'\"",
+			aliases:    map[string][]string{},
+			sampleBody: `
+			+Testing data
++this is for testing
++here is a flag
++"example-flag"
 +`,
 		},
 	}
@@ -196,7 +255,12 @@ func TestProcessDiffs(t *testing.T) {
 				StartPosition: 1,
 				Body:          []byte(tc.sampleBody),
 			}
-			ProcessDiffs(hunk, processor.FlagsRef, processor.Flags, tc.aliases, 5)
+			elements := []lsearch.ElementMatcher{}
+			elements = append(elements, lsearch.NewElementMatcher("default", "", tc.delimiters, processor.flagKeys(), tc.aliases))
+			matcher := lsearch.Matcher{
+				Elements: elements,
+			}
+			ProcessDiffs(matcher, hunk, processor.FlagsRef, 5)
 			assert.Equal(t, tc.expected, processor.FlagsRef)
 		})
 	}

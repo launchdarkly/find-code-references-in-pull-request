@@ -18,7 +18,7 @@ import (
 	e "github.com/launchdarkly/cr-flags/errors"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
-	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
+	"github.com/launchdarkly/cr-flags/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
@@ -45,7 +45,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	aliases, err := getAliases(config, flagKeys)
+	opts, err := getOptions(config)
+	failExit(err)
+
+	matcher, err := search.GetMatcher(config, opts, flagKeys)
 	failExit(err)
 
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
@@ -62,7 +65,7 @@ func main() {
 			continue
 		}
 		for _, hunk := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(hunk, flagsRef, flags, aliases, config.MaxFlags)
+			ldiff.ProcessDiffs(matcher, hunk, flagsRef, config.MaxFlags)
 		}
 	}
 
@@ -188,7 +191,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 	return diff.ParseMultiFileDiff([]byte(raw))
 }
 
-func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, error) {
+func getOptions(config *lcr.Config) (options.Options, error) {
 	// Needed for ld-find-code-refs to work as a library
 	viper.Set("dir", config.Workspace)
 	viper.Set("accessToken", config.ApiToken)
@@ -197,13 +200,7 @@ func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, err
 	if err != nil {
 		log.Println(err)
 	}
-	opts, err := options.GetOptions()
-	if err != nil {
-		log.Println(err)
-	}
-
-	return aliases.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
-
+	return options.GetOptions()
 }
 
 func setOutputs(flagsRef lflags.FlagsRef) {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	ldapi "github.com/launchdarkly/api-client-go/v7"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/launchdarkly/cr-flags/ignore"
+	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 )
 
@@ -50,44 +50,40 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(hunk *diff.Hunk, flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, aliases map[string][]string, maxFlags int) {
-	diffRows := strings.Split(string(hunk.Body), "\n")
-	for _, row := range diffRows {
+func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, flagsRef lflags.FlagsRef, maxFlags int) {
+	flagMap := map[Operation]lflags.FlagAliasMap{
+		Add:    flagsRef.FlagsAdded,
+		Delete: flagsRef.FlagsRemoved,
+	}
+	diffLines := strings.Split(string(hunk.Body), "\n")
+	for _, line := range diffLines {
 		if flagsRef.Count() >= maxFlags {
 			break
 		}
-		op := operation(row)
-		for _, flag := range flags.Items {
-			if strings.Contains(row, flag.Key) {
-				if op == Add {
-					if _, ok := flagsRef.FlagsAdded[flag.Key]; !ok {
-						flagsRef.FlagsAdded[flag.Key] = lflags.AliasSet{}
-					}
-				} else if op == Delete {
-					if _, ok := flagsRef.FlagsRemoved[flag.Key]; !ok {
-						flagsRef.FlagsRemoved[flag.Key] = lflags.AliasSet{}
-					}
-				}
+
+		op := operation(line)
+		if op == Equal {
+			continue
+		}
+
+		// only one for now
+		elementMatcher := matcher.Elements[0]
+		for _, flagKey := range elementMatcher.FindMatches(line) {
+			if _, ok := flagMap[op][flagKey]; !ok {
+				flagMap[op][flagKey] = make(lflags.AliasSet)
 			}
-			if len(aliases[flag.Key]) > 0 {
-				for _, alias := range aliases[flag.Key] {
-					if strings.Contains(row, alias) {
-						if op == Add {
-							if _, ok := flagsRef.FlagsAdded[flag.Key]; !ok {
-								flagsRef.FlagsAdded[flag.Key] = lflags.AliasSet{}
-							}
-							flagsRef.FlagsAdded[flag.Key][alias] = true
-						} else if op == Delete {
-							if _, ok := flagsRef.FlagsRemoved[flag.Key]; !ok {
-								flagsRef.FlagsRemoved[flag.Key] = lflags.AliasSet{}
-							}
-							flagsRef.FlagsRemoved[flag.Key][alias] = true
-						}
-					}
+			if aliasMatches := matcher.FindAliases(line, flagKey); len(aliasMatches) > 0 {
+				if _, ok := flagMap[op][flagKey]; !ok {
+					flagMap[op][flagKey] = make(lflags.AliasSet)
+				}
+				for _, alias := range aliasMatches {
+					flagMap[op][flagKey][alias] = true
 				}
 			}
 		}
 	}
+	flagsRef.FlagsAdded = flagMap[Add]
+	flagsRef.FlagsRemoved = flagMap[Delete]
 }
 
 // Operation defines the operation of a diff item.
