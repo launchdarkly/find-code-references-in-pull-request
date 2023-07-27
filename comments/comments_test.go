@@ -189,7 +189,7 @@ func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :red_circle: 2 flag references removed\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag,sample-flag -->\n <!-- comment hash: ef9e8187f6dece438b177756d5a287e5 -->"
+	expected := "## LaunchDarkly flag references\n### :red_circle: 2 flag references removed\n\n| Flag name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag,sample-flag -->\n <!-- comment hash: ef9e8187f6dece438b177756d5a287e5 -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -200,7 +200,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :green_circle: 1 flag reference added or modified\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n### :red_circle: 1 flag reference removed\n\n| Flag name | Key | Aliases |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: af4e13e6bd401df02d3c61d5adb70933 -->"
+	expected := "## LaunchDarkly flag references\n### :green_circle: 1 flag reference added or modified\n\n| Flag name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n### :red_circle: 1 flag reference removed\n\n| Flag name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: af4e13e6bd401df02d3c61d5adb70933 -->"
 
 	assert.Equal(t, expected, comment)
 
