@@ -1,7 +1,6 @@
 package search
 
 import (
-	"log"
 	"strings"
 
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
@@ -9,7 +8,6 @@ import (
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 
 	lcr "github.com/launchdarkly/cr-flags/config"
-	"github.com/spf13/viper"
 )
 
 func GetMatcher(config *lcr.Config, opts options.Options, flagKeys []string) (matcher lsearch.Matcher, err error) {
@@ -20,30 +18,13 @@ func GetMatcher(config *lcr.Config, opts options.Options, flagKeys []string) (ma
 		return lsearch.Matcher{}, err
 	}
 
-	delimiters := strings.Join(Dedupe(getDelimiters(opts)), "")
+	delimiters := strings.Join(dedupe(getDelimiters(opts)), "")
 	elements = append(elements, lsearch.NewElementMatcher(config.LdProject, "", delimiters, flagKeys, aliasesByFlagKey))
 	matcher = lsearch.Matcher{
 		Elements: elements,
 	}
 
 	return matcher, nil
-}
-
-func getAliases(config *lcr.Config, flagKeys []string) (map[string][]string, error) {
-	// Needed for ld-find-code-refs to work as a library
-	viper.Set("dir", config.Workspace)
-	viper.Set("accessToken", config.ApiToken)
-
-	err := options.InitYAML()
-	if err != nil {
-		log.Println(err)
-	}
-	opts, err := options.GetOptions()
-	if err != nil {
-		log.Println(err)
-	}
-
-	return aliases.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
 }
 
 func getDelimiters(opts options.Options) []string {
@@ -57,7 +38,7 @@ func getDelimiters(opts options.Options) []string {
 	return delims
 }
 
-func Dedupe(s []string) []string {
+func dedupe(s []string) []string {
 	if len(s) <= 1 {
 		return s
 	}
