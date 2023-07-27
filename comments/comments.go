@@ -76,7 +76,7 @@ type FlagComments struct {
 }
 
 func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, existingComment *github.IssueComment) string {
-	tableHeader := "| Flag name | Key | Aliases found |\n| --- | --- | --- |"
+	tableHeader := "| Name | Key | Aliases found |\n| --- | --- | --- |"
 
 	var commentStr []string
 	commentStr = append(commentStr, "## LaunchDarkly flag references")
