@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	LdProject          string
-	LdEnvironment      []string
+	LdEnvironment      string
 	LdInstance         string
 	Owner              string
 	Repo               string
@@ -40,7 +40,7 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	if config.LdProject == "" {
 		return nil, errors.New("`project-key` is required")
 	}
-	config.LdEnvironment = strings.Split(os.Getenv("INPUT_ENVIRONMENT-KEY"), ",")
+	config.LdEnvironment = os.Getenv("INPUT_ENVIRONMENT-KEY")
 	if len(config.LdEnvironment) == 0 {
 		return nil, errors.New("`environment-key` is required")
 	}

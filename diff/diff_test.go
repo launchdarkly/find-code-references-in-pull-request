@@ -68,7 +68,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	}
 
 	config := config.Config{
-		LdEnvironment: []string{"production"},
+		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
 	}
 	return &testProcessor{

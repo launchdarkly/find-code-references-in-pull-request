@@ -22,12 +22,11 @@ import (
 )
 
 type Comment struct {
-	Flag         ldapi.FeatureFlag
-	Aliases      []string
-	ChangeType   string
-	Primary      ldapi.FeatureFlagConfig
-	Environments map[string]ldapi.FeatureFlagConfig
-	LDInstance   string
+	Flag       ldapi.FeatureFlag
+	Aliases    []string
+	ChangeType string
+	Primary    ldapi.FeatureFlagConfig
+	LDInstance string
 }
 
 func isNil(a interface{}) bool {
@@ -37,11 +36,10 @@ func isNil(a interface{}) bool {
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
 	commentTemplate := Comment{
-		Flag:         flag,
-		Aliases:      aliases,
-		Primary:      flag.Environments[config.LdEnvironment[0]],
-		Environments: flag.Environments,
-		LDInstance:   config.LdInstance,
+		Flag:       flag,
+		Aliases:    aliases,
+		Primary:    flag.Environments[config.LdEnvironment],
+		LDInstance: config.LdInstance,
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.

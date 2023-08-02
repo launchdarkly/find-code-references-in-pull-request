@@ -22,7 +22,7 @@ inputs:
     required: false
     default: 'default'
   environment-key:
-    description: 'LaunchDarkly environment for setting flag links. Can be a comma-separated list of environment keys.'
+    description: 'LaunchDarkly environment for creating flag links'
     required: false
     default: 'production'
   placeholder-comment:

@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// Query for flags
-	flags, flagKeys, err := getFlags(config)
+	flags, err := getFlags(config)
 	failExit(err)
 
 	if len(flags.Items) == 0 {
@@ -48,7 +48,7 @@ func main() {
 	opts, err := getOptions(config)
 	failExit(err)
 
-	matcher, err := search.GetMatcher(config, opts, flagKeys)
+	matcher, err := search.GetMatcher(config, opts, flags)
 	failExit(err)
 
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
@@ -87,40 +87,28 @@ func main() {
 	failExit(err)
 }
 
-func getFlags(config *lcr.Config) (ldapi.FeatureFlags, []string, error) {
-	var envString string
-	for idx, env := range config.LdEnvironment {
-		envString = envString + fmt.Sprintf("env=%s", env)
-		if idx != (len(config.LdEnvironment) - 1) {
-			envString = envString + "&"
-		}
-	}
-	url := config.LdInstance + "/api/v2/flags/" + config.LdProject + "?" + envString + "&summary=0"
+func getFlags(config *lcr.Config) (ldapi.FeatureFlags, error) {
+	url := fmt.Sprintf("%s/api/v2/flags/%s?env=%s", config.LdInstance, config.LdProject, config.LdEnvironment)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return ldapi.FeatureFlags{}, []string{}, err
+		return ldapi.FeatureFlags{}, err
 	}
 	req.Header.Add("Authorization", config.ApiToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return ldapi.FeatureFlags{}, []string{}, err
+		return ldapi.FeatureFlags{}, err
 	}
-
 	defer resp.Body.Close()
 
 	flags := ldapi.FeatureFlags{}
 	err = json.NewDecoder(resp.Body).Decode(&flags)
 	if err != nil {
-		return ldapi.FeatureFlags{}, []string{}, err
+		return ldapi.FeatureFlags{}, err
 	}
 
-	flagKeys := make([]string, 0, len(flags.Items))
-	for _, flag := range flags.Items {
-		flagKeys = append(flagKeys, flag.Key)
-	}
-	return flags, flagKeys, nil
+	return flags, nil
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {

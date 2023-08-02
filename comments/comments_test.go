@@ -22,7 +22,7 @@ func newTestAccEnv() *testFlagEnv {
 
 	flag := createFlag("example-flag")
 	config := config.Config{
-		LdEnvironment: []string{"production"},
+		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
 	}
 	return &testFlagEnv{
@@ -96,7 +96,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	}
 
 	config := config.Config{
-		LdEnvironment: []string{"production"},
+		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
 	}
 	return &testProcessor{
@@ -118,7 +118,7 @@ func newProcessMultipleFlagsFlagAccEnv() *testProcessor {
 	}
 
 	config := config.Config{
-		LdEnvironment: []string{"production"},
+		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
 	}
 	return &testProcessor{
