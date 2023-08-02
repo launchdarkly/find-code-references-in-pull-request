@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	ldapi "github.com/launchdarkly/api-client-go/v7"
+	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/cr-flags/config"
 )
 

@@ -3,7 +3,7 @@ package diff
 import (
 	"testing"
 
-	ldapi "github.com/launchdarkly/api-client-go/v7"
+	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/cr-flags/config"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
@@ -11,17 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func ptr(v interface{}) *interface{} { return &v }
+func ptr[T any](t T) *T { return &t }
 
 func createFlag(key string) ldapi.FeatureFlag {
-	variation := int32(0)
-	href := "test"
 	environment := ldapi.FeatureFlagConfig{
 		Site: ldapi.Link{
-			Href: &href,
-		},
-		Fallthrough: ldapi.VariationOrRolloutRep{
-			Variation: &variation,
+			Href: ptr("test"),
 		},
 	}
 	variationTrue := ldapi.Variation{

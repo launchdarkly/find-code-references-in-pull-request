@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	ldapi "github.com/launchdarkly/api-client-go/v7"
+	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"

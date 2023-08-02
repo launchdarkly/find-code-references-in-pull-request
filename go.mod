@@ -16,9 +16,11 @@ require (
 require (
 	github.com/jstemmer/go-junit-report/v2 v2.0.0
 	github.com/kyoh86/richgo v0.3.12
-	github.com/launchdarkly/api-client-go/v7 v7.1.1
+	github.com/launchdarkly/api-client-go/v13 v13.0.0
 	github.com/launchdarkly/ld-find-code-refs/v2 v2.10.1-0.20230628134336-ed386199c5f4
 )
+
+require github.com/launchdarkly/api-client-go/v7 v7.1.1 // indirect
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
