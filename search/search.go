@@ -13,9 +13,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-func GetMatcher(config *lcr.Config, opts options.Options, flags ldapi.FeatureFlags) (matcher lsearch.Matcher, err error) {
-	flagKeys := make([]string, 0, len(flags.Items))
-	for _, flag := range flags.Items {
+func GetMatcher(config *lcr.Config, opts options.Options, flags []ldapi.FeatureFlag) (matcher lsearch.Matcher, err error) {
+	flagKeys := make([]string, 0, len(flags))
+	for _, flag := range flags {
 		flagKeys = append(flagKeys, flag.Key)
 	}
 

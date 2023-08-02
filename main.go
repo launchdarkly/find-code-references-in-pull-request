@@ -40,7 +40,7 @@ func main() {
 	flags, err := getFlags(config)
 	failExit(err)
 
-	if len(flags.Items) == 0 {
+	if len(flags) == 0 {
 		log.Println("No flags found")
 		os.Exit(0)
 	}
@@ -87,28 +87,28 @@ func main() {
 	failExit(err)
 }
 
-func getFlags(config *lcr.Config) (ldapi.FeatureFlags, error) {
+func getFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 	url := fmt.Sprintf("%s/api/v2/flags/%s?env=%s", config.LdInstance, config.LdProject, config.LdEnvironment)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return ldapi.FeatureFlags{}, err
+		return []ldapi.FeatureFlag{}, err
 	}
 	req.Header.Add("Authorization", config.ApiToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return ldapi.FeatureFlags{}, err
+		return []ldapi.FeatureFlag{}, err
 	}
 	defer resp.Body.Close()
 
 	flags := ldapi.FeatureFlags{}
 	err = json.NewDecoder(resp.Body).Decode(&flags)
 	if err != nil {
-		return ldapi.FeatureFlags{}, err
+		return []ldapi.FeatureFlag{}, err
 	}
 
-	return flags, nil
+	return flags.Items, nil
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {

@@ -79,15 +79,14 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 }
 
 type testProcessor struct {
-	Flags    ldapi.FeatureFlags
+	Flags    []ldapi.FeatureFlag
 	FlagsRef lflags.FlagsRef
 	Config   config.Config
 }
 
 func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
-	flags := ldapi.FeatureFlags{}
-	flags.Items = append(flags.Items, flag)
+	flags := []ldapi.FeatureFlag{flag}
 	flagsAdded := make(lflags.FlagAliasMap)
 	flagsRemoved := make(lflags.FlagAliasMap)
 	flagsRef := lflags.FlagsRef{
@@ -109,7 +108,7 @@ func newProcessFlagAccEnv() *testProcessor {
 func newProcessMultipleFlagsFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flag2 := createFlag("second-flag")
-	flags := ldapi.FeatureFlags{Items: []ldapi.FeatureFlag{flag, flag2}}
+	flags := []ldapi.FeatureFlag{flag, flag2}
 	flagsAdded := make(lflags.FlagAliasMap)
 	flagsRemoved := make(lflags.FlagAliasMap)
 	flagsRef := lflags.FlagsRef{
