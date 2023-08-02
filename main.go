@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/go-github/github"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
@@ -16,7 +18,7 @@ import (
 	e "github.com/launchdarkly/cr-flags/errors"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
-	"github.com/launchdarkly/cr-flags/internal/ldapi"
+	ldclient "github.com/launchdarkly/cr-flags/internal/ldclient"
 	"github.com/launchdarkly/cr-flags/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -31,12 +33,12 @@ func main() {
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
 	event, err := parseEvent(eventPath)
 	if err != nil {
-		log.Printf("error parsing GitHub event payload at %q: %v", eventPath, err)
-		os.Exit(1)
+		err := errors.Wrap(err, fmt.Sprintf("error parsing GitHub event payload at %q", eventPath))
+		failExit(err)
 	}
 
 	// Query for flags
-	flags, err := ldapi.GetFlags(config)
+	flags, err := ldclient.GetFlags(config)
 	failExit(err)
 
 	if len(flags) == 0 {
