@@ -35,7 +35,7 @@ jobs:
 | repo-token | Token to use to authorize comments on PR. Typically the GITHUB_TOKEN secret. | `true` |  |
 | access-token | LaunchDarkly access token | `true` |  |
 | project-key | LaunchDarkly Project | `false` | default |
-| environment-key | LaunchDarkly environment for setting flag links. Can be a comma-separated list of environment keys. | `false` | production |
+| environment-key | LaunchDarkly environment for creating flag links | `false` | production |
 | placeholder-comment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | false |
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |

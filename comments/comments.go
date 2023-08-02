@@ -22,12 +22,11 @@ import (
 )
 
 type Comment struct {
-	Flag         ldapi.FeatureFlag
-	Aliases      []string
-	ChangeType   string
-	Primary      ldapi.FeatureFlagConfig
-	Environments map[string]ldapi.FeatureFlagConfig
-	LDInstance   string
+	Flag       ldapi.FeatureFlag
+	Aliases    []string
+	ChangeType string
+	Primary    ldapi.FeatureFlagConfig
+	LDInstance string
 }
 
 func isNil(a interface{}) bool {
@@ -37,11 +36,10 @@ func isNil(a interface{}) bool {
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
 	commentTemplate := Comment{
-		Flag:         flag,
-		Aliases:      aliases,
-		Primary:      flag.Environments[config.LdEnvironment[0]],
-		Environments: flag.Environments,
-		LDInstance:   config.LdInstance,
+		Flag:       flag,
+		Aliases:    aliases,
+		Primary:    flag.Environments[config.LdEnvironment],
+		LDInstance: config.LdInstance,
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.
@@ -112,7 +110,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, exist
 	return postedComments
 }
 
-func ProcessFlags(flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
@@ -124,8 +122,8 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, config *lc
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRef.FlagsRemoved, flagKey)
 		flagAliases := uniqueAliases(flagsRef.FlagsAdded[flagKey])
-		idx, _ := find(flags.Items, flagKey)
-		createComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
+		idx, _ := find(flags, flagKey)
+		createComment, err := githubFlagComment(flags[idx], flagAliases, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			log.Println(err)
@@ -138,8 +136,8 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags ldapi.FeatureFlags, config *lc
 	sort.Strings(removedKeys)
 	for _, flagKey := range removedKeys {
 		flagAliases := uniqueAliases(flagsRef.FlagsRemoved[flagKey])
-		idx, _ := find(flags.Items, flagKey)
-		removedComment, err := githubFlagComment(flags.Items[idx], flagAliases, config)
+		idx, _ := find(flags, flagKey)
+		removedComment, err := githubFlagComment(flags[idx], flagAliases, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			log.Println(err)
