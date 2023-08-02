@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
-	ldapi "github.com/launchdarkly/api-client-go/v7"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
 	e "github.com/launchdarkly/cr-flags/errors"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
+	"github.com/launchdarkly/cr-flags/internal/ldapi"
 	"github.com/launchdarkly/cr-flags/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -37,7 +36,7 @@ func main() {
 	}
 
 	// Query for flags
-	flags, err := getFlags(config)
+	flags, err := ldapi.GetFlags(config)
 	failExit(err)
 
 	if len(flags) == 0 {
@@ -85,30 +84,6 @@ func main() {
 	setOutputs(flagsRef)
 
 	failExit(err)
-}
-
-func getFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
-	url := fmt.Sprintf("%s/api/v2/flags/%s?env=%s", config.LdInstance, config.LdProject, config.LdEnvironment)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
-	}
-	req.Header.Add("Authorization", config.ApiToken)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
-	}
-	defer resp.Body.Close()
-
-	flags := ldapi.FeatureFlags{}
-	err = json.NewDecoder(resp.Body).Decode(&flags)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
-	}
-
-	return flags.Items, nil
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
