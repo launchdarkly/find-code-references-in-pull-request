@@ -7,6 +7,7 @@ import (
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/cr-flags/config"
+	"github.com/launchdarkly/cr-flags/internal/version"
 )
 
 func GetFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
@@ -18,6 +19,7 @@ func GetFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 	}
 	req.Header.Add("Authorization", config.ApiToken)
 	req.Header.Add("LD-API-Version", "20220603")
+	req.Header.Add("User-Agent", fmt.Sprintf("find-code-references-pr/%s", version.Version))
 
 	resp, err := client.Do(req)
 	if err != nil {
