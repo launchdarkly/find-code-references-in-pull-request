@@ -16,9 +16,11 @@ require (
 require (
 	github.com/jstemmer/go-junit-report/v2 v2.0.0
 	github.com/kyoh86/richgo v0.3.12
-	github.com/launchdarkly/api-client-go/v7 v7.1.1
+	github.com/launchdarkly/api-client-go/v13 v13.0.0
 	github.com/launchdarkly/ld-find-code-refs/v2 v2.10.1-0.20230628134336-ed386199c5f4
 )
+
+require github.com/launchdarkly/api-client-go/v7 v7.1.1 // indirect
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -48,6 +50,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/petar-dambovaliev/aho-corasick v0.0.0-20211021192214-5ab2d9280aa9 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/afero v1.9.5 // indirect

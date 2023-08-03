@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,14 +9,16 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/google/go-github/github"
-	ldapi "github.com/launchdarkly/api-client-go/v7"
 	ghc "github.com/launchdarkly/cr-flags/comments"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	ldiff "github.com/launchdarkly/cr-flags/diff"
 	e "github.com/launchdarkly/cr-flags/errors"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	gha "github.com/launchdarkly/cr-flags/internal/github_actions"
+	ldclient "github.com/launchdarkly/cr-flags/internal/ldclient"
 	"github.com/launchdarkly/cr-flags/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -32,12 +33,12 @@ func main() {
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
 	event, err := parseEvent(eventPath)
 	if err != nil {
-		log.Printf("error parsing GitHub event payload at %q: %v", eventPath, err)
-		os.Exit(1)
+		err := errors.Wrap(err, fmt.Sprintf("error parsing GitHub event payload at %q", eventPath))
+		failExit(err)
 	}
 
 	// Query for flags
-	flags, err := getFlags(config)
+	flags, err := ldclient.GetFlags(config)
 	failExit(err)
 
 	if len(flags) == 0 {
@@ -85,30 +86,6 @@ func main() {
 	setOutputs(flagsRef)
 
 	failExit(err)
-}
-
-func getFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
-	url := fmt.Sprintf("%s/api/v2/flags/%s?env=%s", config.LdInstance, config.LdProject, config.LdEnvironment)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
-	}
-	req.Header.Add("Authorization", config.ApiToken)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
-	}
-	defer resp.Body.Close()
-
-	flags := ldapi.FeatureFlags{}
-	err = json.NewDecoder(resp.Body).Decode(&flags)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
-	}
-
-	return flags.Items, nil
 }
 
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {

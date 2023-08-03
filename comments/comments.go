@@ -15,7 +15,7 @@ import (
 	sprig "github.com/Masterminds/sprig/v3"
 
 	"github.com/google/go-github/github"
-	ldapi "github.com/launchdarkly/api-client-go/v7"
+	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/cr-flags/config"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	lflags "github.com/launchdarkly/cr-flags/flags"

@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	ldapi "github.com/launchdarkly/api-client-go/v7"
+	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/cr-flags/config"
 	lflags "github.com/launchdarkly/cr-flags/flags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func ptr(v interface{}) *interface{} { return &v }
+func ptr[T any](t T) *T { return &t }
 
 type testFlagEnv struct {
 	Flag   ldapi.FeatureFlag
@@ -19,7 +19,6 @@ type testFlagEnv struct {
 }
 
 func newTestAccEnv() *testFlagEnv {
-
 	flag := createFlag("example-flag")
 	config := config.Config{
 		LdEnvironment: "production",
@@ -32,11 +31,10 @@ func newTestAccEnv() *testFlagEnv {
 }
 
 func createFlag(key string) ldapi.FeatureFlag {
-	href := "test"
 	environment := ldapi.FeatureFlagConfig{
 		EnvironmentName: "Production",
 		Site: ldapi.Link{
-			Href: &href,
+			Href: ptr("test"),
 		},
 	}
 	variationTrue := ldapi.Variation{
