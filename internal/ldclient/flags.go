@@ -51,9 +51,17 @@ func getFlags(config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error
 		return []ldapi.FeatureFlag{}, err
 	}
 	defer resp.Body.Close()
+	decoder := json.NewDecoder(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		var r interface{}
+		_ = decoder.Decode(&r)
+		err := fmt.Errorf("unexpected status code: %d with response: %#v", resp.StatusCode, r)
+		return nil, err
+	}
 
 	flags := ldapi.FeatureFlags{}
-	err = json.NewDecoder(resp.Body).Decode(&flags)
+	err = decoder.Decode(&flags)
 	if err != nil {
 		return []ldapi.FeatureFlag{}, err
 	}
