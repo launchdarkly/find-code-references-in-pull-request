@@ -23,6 +23,7 @@ import (
 
 type Comment struct {
 	Flag       ldapi.FeatureFlag
+	Added      bool
 	Aliases    []string
 	ChangeType string
 	Primary    ldapi.FeatureFlagConfig
@@ -34,16 +35,18 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.Config) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added bool, config *config.Config) (string, error) {
 	commentTemplate := Comment{
 		Flag:       flag,
+		Added:      added,
 		Aliases:    aliases,
 		Primary:    flag.Environments[config.LdEnvironment],
 		LDInstance: config.LdInstance,
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
+	tmplSetup := `| {{- if eq .Flag.Archived true}}{{- if eq .Added true}} :warning:{{- end}}{{- end}}` +
+		` [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
 		`{{- if eq .Flag.Archived true}}` +
 		` (archived on {{.Flag.ArchivedDate | date "2006-01-02"}})` +
 		`{{- end}} | ` +
@@ -127,7 +130,7 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *l
 		delete(flagsRef.FlagsRemoved, flagKey)
 		flagAliases := uniqueAliases(flagsRef.FlagsAdded[flagKey])
 		idx, _ := find(flags, flagKey)
-		createComment, err := githubFlagComment(flags[idx], flagAliases, config)
+		createComment, err := githubFlagComment(flags[idx], flagAliases, true, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			log.Println(err)
@@ -141,7 +144,7 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *l
 	for _, flagKey := range removedKeys {
 		flagAliases := uniqueAliases(flagsRef.FlagsRemoved[flagKey])
 		idx, _ := find(flags, flagKey)
-		removedComment, err := githubFlagComment(flags[idx], flagAliases, config)
+		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			log.Println(err)
