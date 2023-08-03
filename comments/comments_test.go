@@ -176,7 +176,7 @@ func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :green_circle: 1 flag reference added or modified\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n <!-- flags:example-flag -->\n <!-- comment hash: 77f715c4d3584af227af5d5e661aad5e -->"
+	expected := "## LaunchDarkly flag references\n### :mag: 1 flag reference added or modified\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n <!-- flags:example-flag -->\n <!-- comment hash: 98132cdd9e1dd632faf0c76e28a4bed1 -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -186,7 +186,7 @@ func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :red_circle: 2 flag references removed\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag,sample-flag -->\n <!-- comment hash: 10e2cf9d20d151dd33a99dfde7f8ec5b -->"
+	expected := "## LaunchDarkly flag references\n### :x: 2 flag references removed\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag,sample-flag -->\n <!-- comment hash: f435824b364fb2975c40d11b9a3dd10e -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -197,7 +197,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :green_circle: 1 flag reference added or modified\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n### :red_circle: 1 flag reference removed\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: ef0ca0c51fa26dc61b10100ef1bf55eb -->"
+	expected := "## LaunchDarkly flag references\n### :mag: 1 flag reference added or modified\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n### :x: 1 flag reference removed\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: f8202009f99955ff5416771ef8358a24 -->"
 
 	assert.Equal(t, expected, comment)
 
