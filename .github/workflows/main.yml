@@ -16,7 +16,7 @@ jobs:
         id: find_flags
         with:
           project-key: demo-dan-042021-2
-          environment-key: developmentddd
+          environment-key: development
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           base-uri: https://app.launchdarkly.com
