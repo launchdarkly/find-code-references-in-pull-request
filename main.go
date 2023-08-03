@@ -41,7 +41,7 @@ func main() {
 	failExit(err)
 
 	if len(flags) == 0 {
-		log.Println("No flags found")
+		logInfo("No flags found")
 		os.Exit(0)
 	}
 
@@ -214,4 +214,8 @@ func failExit(err error) {
 
 func logError(message string) {
 	fmt.Printf("::error::%s\n", message)
+}
+
+func logInfo(message string) {
+	fmt.Printf("::info::%s\n", message)
 }
