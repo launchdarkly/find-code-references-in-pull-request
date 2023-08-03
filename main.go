@@ -41,7 +41,7 @@ func main() {
 	failExit(err)
 
 	if len(flags) == 0 {
-		gha.LogNotice("No flags found for project %s", config.LdProject)
+		gha.LogNotice("No flags found in project %s", config.LdProject)
 		os.Exit(0)
 	}
 
