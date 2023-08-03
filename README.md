@@ -37,6 +37,7 @@ jobs:
 | project-key | LaunchDarkly Project | `false` | default |
 | environment-key | LaunchDarkly environment for creating flag links | `false` | production |
 | placeholder-comment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | false |
+| include-archived-flags | Scan for archived flags | `false` | true |
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
 <!-- action-docs-inputs -->

@@ -14,8 +14,9 @@ import (
 func ptr[T any](t T) *T { return &t }
 
 type testFlagEnv struct {
-	Flag   ldapi.FeatureFlag
-	Config config.Config
+	Flag         ldapi.FeatureFlag
+	ArchivedFlag ldapi.FeatureFlag
+	Config       config.Config
 }
 
 func newTestAccEnv() *testFlagEnv {
@@ -24,9 +25,14 @@ func newTestAccEnv() *testFlagEnv {
 		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
 	}
+
+	archivedFlag := createFlag("archived-flag")
+	archivedFlag.Archived = true
+	archivedFlag.ArchivedDate = ptr(int64(1691072480000))
 	return &testFlagEnv{
-		Flag:   flag,
-		Config: config,
+		Flag:         flag,
+		ArchivedFlag: archivedFlag,
+		Config:       config,
 	}
 }
 
@@ -129,6 +135,8 @@ func TestGithubFlagComment(t *testing.T) {
 	acceptanceTestEnv := newTestAccEnv()
 	t.Run("Basic flag", acceptanceTestEnv.NoAliases)
 	t.Run("Flag with alias", acceptanceTestEnv.Alias)
+	t.Run("Archived flag added", acceptanceTestEnv.ArchivedAdded)
+	t.Run("Archived flag removed", acceptanceTestEnv.ArchivedRemoved)
 }
 
 func TestProcessFlags(t *testing.T) {
@@ -156,7 +164,7 @@ func TestBuildFlagComment(t *testing.T) {
 }
 
 func (e *testFlagEnv) NoAliases(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{}, &e.Config)
+	comment, err := githubFlagComment(e.Flag, []string{}, true, &e.Config)
 	require.NoError(t, err)
 
 	expected := "| [example flag](https://example.com/test) | `example-flag` | |"
@@ -164,10 +172,26 @@ func (e *testFlagEnv) NoAliases(t *testing.T) {
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, &e.Config)
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, true, &e.Config)
 	require.NoError(t, err)
 
 	expected := "| [example flag](https://example.com/test) | `example-flag` | `exampleFlag`, `ExampleFlag` |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) ArchivedAdded(t *testing.T) {
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, true, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| :warning: [archived flag](https://example.com/test) (archived on 2023-08-03) | `archived-flag` | |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) ArchivedRemoved(t *testing.T) {
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, false, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| [archived flag](https://example.com/test) (archived on 2023-08-03) | `archived-flag` | |"
 	assert.Equal(t, expected, comment)
 }
 
