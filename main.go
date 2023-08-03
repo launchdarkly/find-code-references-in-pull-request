@@ -41,7 +41,7 @@ func main() {
 	failExit(err)
 
 	if len(flags) == 0 {
-		logInfo("No flags found")
+		gha.LogNotice("No flags found for project %s", config.LdProject)
 		os.Exit(0)
 	}
 
@@ -206,16 +206,8 @@ func setOutputs(flagsRef lflags.FlagsRef) {
 
 func failExit(err error) {
 	if err != nil {
-		logError(err.Error())
+		gha.LogError(err.Error())
 		log.Println(err)
 		os.Exit(1)
 	}
-}
-
-func logError(message string) {
-	fmt.Printf("::error::%s\n", message)
-}
-
-func logInfo(message string) {
-	fmt.Printf("::info::%s\n", message)
 }
