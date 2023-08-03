@@ -9,6 +9,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/cr-flags/config"
 	"github.com/launchdarkly/cr-flags/internal/version"
+	"github.com/pkg/errors"
 )
 
 func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
@@ -51,9 +52,19 @@ func getFlags(config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error
 		return []ldapi.FeatureFlag{}, err
 	}
 	defer resp.Body.Close()
+	decoder := json.NewDecoder(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		var r interface{}
+		if err := decoder.Decode(&r); err != nil {
+			return []ldapi.FeatureFlag{}, errors.Wrapf(err, "unexpected status code: %d. unable to parse response", resp.StatusCode)
+		}
+		err := fmt.Errorf("unexpected status code: %d with response: %#v", resp.StatusCode, r)
+		return []ldapi.FeatureFlag{}, err
+	}
 
 	flags := ldapi.FeatureFlags{}
-	err = json.NewDecoder(resp.Body).Decode(&flags)
+	err = decoder.Decode(&flags)
 	if err != nil {
 		return []ldapi.FeatureFlag{}, err
 	}

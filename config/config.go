@@ -41,10 +41,14 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	if config.LdProject == "" {
 		return nil, errors.New("`project-key` is required")
 	}
-	config.LdEnvironment = os.Getenv("INPUT_ENVIRONMENT-KEY")
-	if len(config.LdEnvironment) == 0 {
+	if envKey := os.Getenv("INPUT_ENVIRONMENT-KEY"); len(envKey) == 0 {
 		return nil, errors.New("`environment-key` is required")
+	} else if strings.Contains(envKey, ",") {
+		return nil, errors.New("only one `environment-key` is allowed")
+	} else {
+		config.LdEnvironment = envKey
 	}
+
 	config.LdInstance = os.Getenv("INPUT_BASE-URI")
 	if config.LdInstance == "" {
 		return nil, errors.New("`base-uri` is required.")

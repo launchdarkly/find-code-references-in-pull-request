@@ -16,3 +16,15 @@ func SetOutput(name, value string) error {
 	_, err = fmt.Fprintf(f, "%s=%s\n", name, value)
 	return err
 }
+
+func LogNotice(format string, a ...any) {
+	fmt.Printf("::notice::%s\n", fmt.Sprintf(format, a...))
+}
+
+func LogWarning(format string, a ...any) {
+	fmt.Printf("::warning::%s\n", fmt.Sprintf(format, a...))
+}
+
+func LogError(format string, a ...any) {
+	fmt.Printf("::error::%s\n", fmt.Sprintf(format, a...))
+}
