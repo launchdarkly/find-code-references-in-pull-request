@@ -43,7 +43,11 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, config *config.
 	}
 	var commentBody bytes.Buffer
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` + "`" + `{{.Flag.Key}}` + "` |" +
+	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
+		`{{- if eq .Flag.Archived true}}` +
+		` (archived on {{.Flag.ArchivedDate | date "2006-01-02"}})` +
+		`{{- end}} | ` +
+		"`" + `{{.Flag.Key}}` + "` |" +
 		`{{- if ne (len .Aliases) 0}}` +
 		`{{range $i, $e := .Aliases }}` + `{{if $i}},{{end}}` + " `" + `{{$e}}` + "`" + `{{end}}` +
 		`{{- end}} |`

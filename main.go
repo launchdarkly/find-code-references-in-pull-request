@@ -37,8 +37,7 @@ func main() {
 		failExit(err)
 	}
 
-	// Query for flags
-	flags, err := ldclient.GetFlags(config)
+	flags, err := ldclient.GetAllFlags(config)
 	failExit(err)
 
 	if len(flags) == 0 {
