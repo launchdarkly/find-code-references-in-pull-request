@@ -81,7 +81,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, exist
 
 	numFlagsAdded := len(flagsRef.FlagsAdded)
 	if numFlagsAdded > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("### :green_circle: %s added or modified\n", pluralize("flag reference", numFlagsAdded)))
+		commentStr = append(commentStr, fmt.Sprintf("### :mag: %s added or modified\n", pluralize("flag reference", numFlagsAdded)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsAdded...)
 		commentStr = append(commentStr, "\n")
@@ -89,7 +89,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, exist
 
 	numFlagsRemoved := len(flagsRef.FlagsRemoved)
 	if numFlagsRemoved > 0 {
-		commentStr = append(commentStr, fmt.Sprintf("### :red_circle: %s removed\n", pluralize("flag reference", numFlagsRemoved)))
+		commentStr = append(commentStr, fmt.Sprintf("### :x: %s removed\n", pluralize("flag reference", numFlagsRemoved)))
 		commentStr = append(commentStr, tableHeader)
 		commentStr = append(commentStr, buildComment.CommentsRemoved...)
 	}
