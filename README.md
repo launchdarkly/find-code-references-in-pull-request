@@ -1,11 +1,15 @@
 # Code References PR Commenter
 
-Add this action for Pull Requests to receive a comment whenever a LaunchDarkly Feature Flag is referenced in any of the code changes.
+Add the Code References PR Commenter action for pull requests (PRs) to receive a comment whenever a you reference a LaunchDarkly feature flag in any of the code changes.
 
-<img src="https://github.com/launchdarkly/cr-flags/raw/main/images/example-comment.png?raw=true" alt="Example comment" width="100%">
+Here's how a PR comment appears:
+
+<img src="https://github.com/launchdarkly/cr-flags/raw/main/images/example-comment.png?raw=true" alt="An example code references PR comment" width="100%">
 
 ## Configuration
-PR Commenter has full support for Code Reference Aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file it will use the aliases defined there.
+PR Commenter has full support for code reference aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file, it will use the aliases defined there.
+
+Here's how to set up the action:
 
 ```yaml
 on: pull_request
@@ -36,7 +40,7 @@ jobs:
 | access-token | LaunchDarkly access token | `true` |  |
 | project-key | LaunchDarkly Project | `false` | default |
 | environment-key | LaunchDarkly environment for creating flag links | `false` | production |
-| placeholder-comment | Comment even if no flags are found. If flags are found in later commits this comment will be updated. | `false` | false |
+| placeholder-comment | Comment when no flags are found. If flags are found in later commits, this comment will be updated. | `false` | false |
 | include-archived-flags | Scan for archived flags | `false` | true |
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
@@ -47,10 +51,10 @@ jobs:
 
 | parameter | description |
 | --- | --- |
-| any-modified | Returns true if any flags have been added or modified in pull request |
-| modified-flags | Space-separated list of flags added or modified in pull request |
-| modified-flags-count | Number of flags added or modified in pull request |
-| any-removed | Returns true if any flags have been removed in pull request |
-| removed-flags | Space-separated list of flags removed in pull request |
-| removed-flags-count | Number of flags removed in pull request |
+| any-modified | Returns true if any flags have been added or modified in PR |
+| modified-flags | Space-separated list of flags added or modified in PR |
+| modified-flags-count | Number of flags added or modified in PR |
+| any-removed | Returns true if any flags have been removed in PR |
+| removed-flags | Space-separated list of flags removed in PR |
+| removed-flags-count | Number of flags removed in PR |
 <!-- action-docs-outputs -->
