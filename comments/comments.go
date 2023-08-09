@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	sprig "github.com/Masterminds/sprig/v3"
 
@@ -23,6 +24,7 @@ import (
 
 type Comment struct {
 	Flag       ldapi.FeatureFlag
+	ArchivedAt time.Time
 	Added      bool
 	Aliases    []string
 	ChangeType string
@@ -44,11 +46,14 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added bool, con
 		LDInstance: config.LdInstance,
 	}
 	var commentBody bytes.Buffer
+	if flag.ArchivedDate != nil {
+		commentTemplate.ArchivedAt = time.UnixMilli(*flag.ArchivedDate)
+	}
 	// All whitespace for template is required to be there or it will not render properly nested.
 	tmplSetup := `| {{- if eq .Flag.Archived true}}{{- if eq .Added true}} :warning:{{- end}}{{- end}}` +
 		` [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
 		`{{- if eq .Flag.Archived true}}` +
-		` (archived on {{.Flag.ArchivedDate | date "2006-01-02"}})` +
+		` (archived on {{.ArchivedAt | date "2006-01-02"}})` +
 		`{{- end}} | ` +
 		"`" + `{{.Flag.Key}}` + "` |" +
 		`{{- if ne (len .Aliases) 0}}` +
