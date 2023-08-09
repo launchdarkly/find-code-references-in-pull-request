@@ -1,6 +1,6 @@
 # action.yml
 name: 'Find Flags'
-description: 'Find LaunchDarkly Flags in your Pull Request'
+description: 'Find LaunchDarkly Flags in your PR'
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -26,7 +26,7 @@ inputs:
     required: false
     default: 'production'
   placeholder-comment:
-    description: 'Comment even if no flags are found. If flags are found in later commits this comment will be updated.'
+    description: 'Comment when no flags are found. If flags are found in later commits, this comment will be updated.'
     required: false
     default: 'false'
   include-archived-flags:
@@ -44,14 +44,14 @@ inputs:
 
 outputs:
   any-modified:
-    description: Returns true if any flags have been added or modified in pull request
+    description: Returns true if any flags have been added or modified in PR
   modified-flags:
-    description: Space-separated list of flags added or modified in pull request
+    description: Space-separated list of flags added or modified in PR
   modified-flags-count:
-    description: Number of flags added or modified in pull request
+    description: Number of flags added or modified in PR
   any-removed:
-    description: Returns true if any flags have been removed in pull request
+    description: Returns true if any flags have been removed in PR
   removed-flags:
-    description: Space-separated list of flags removed in pull request
+    description: Space-separated list of flags removed in PR
   removed-flags-count:
-    description: Number of flags removed in pull request
+    description: Number of flags removed in PR
