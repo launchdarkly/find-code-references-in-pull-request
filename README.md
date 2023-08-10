@@ -9,7 +9,7 @@ Adds a comment to pull requests (PRs) whenever a feature flag reference is found
 
 This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with read access for the designated `project-key`. Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
 
-In order to add a comment to a PR, the `github-token` used requires `write` permission for PRs. Permissions for the workflow may also be specified with:
+In order to add a comment to a PR, the `repo-token` used requires `write` permission for PRs. Permissions for the workflow may also be specified with:
 
 ```yaml
 permissions:
@@ -93,11 +93,11 @@ This action does not currently support monorepos / searching for flags across La
 
 | parameter | description | required | default |
 | --- | --- | --- | --- |
-| repo-token | Token to use to authorize comments on PR. Typically the GITHUB_TOKEN secret. | `true` |  |
+| repo-token | Token to use to authorize comments on PR. Typically the `GITHUB_TOKEN` secret or equivalent `github.token`. | `true` |  |
 | access-token | LaunchDarkly access token | `true` |  |
-| project-key | LaunchDarkly Project | `false` | default |
-| environment-key | LaunchDarkly environment for creating flag links | `false` | production |
-| placeholder-comment | Comment when no flags are found. If flags are found in later commits, this comment will be updated. | `false` | false |
+| project-key | LaunchDarkly project key | `false` | default |
+| environment-key | LaunchDarkly environment key for creating flag links | `false` | production |
+| placeholder-comment | Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated. | `false` | false |
 | include-archived-flags | Scan for archived flags | `false` | true |
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
