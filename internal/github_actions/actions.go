@@ -5,6 +5,12 @@ import (
 	"os"
 )
 
+func SetOutputOrLogError(name, value string) {
+	if err := SetOutput(name, value); err != nil {
+		LogError("Failed to set outputs.%s\n", name)
+	}
+}
+
 func SetOutput(name, value string) error {
 	output := os.Getenv("GITHUB_OUTPUT")
 
