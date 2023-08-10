@@ -86,7 +86,7 @@ More information on aliases can be found at [launchdarkly/ld-find-code-refs](htt
 
 ### Monorepos
 
-This action does not currently support monorepos / searching for flags across LaunchDarkly projects.
+This action does not support monorepos or searching for flags across LaunchDarkly projects.
 
 <!-- action-docs-inputs -->
 ### Inputs
