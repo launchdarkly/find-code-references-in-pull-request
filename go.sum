@@ -179,8 +179,8 @@ github.com/launchdarkly/api-client-go/v7 v7.1.1 h1:3VBkFt9xHljMw5KDlVFDUogxfH78Y
 github.com/launchdarkly/api-client-go/v7 v7.1.1/go.mod h1:GVl1inKsWoKX3yLgdqrjxWw8k4ih0HlSmdnrhi5NNDs=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f h1:jfiPiz2hE/7mHv2NOS4cm07sSJCsKlbxmR7pzPhhvpU=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f/go.mod h1:CHbYdMs8UjvNnS2fatlQvi4UYnBTRYGxRHc/0kQupSQ=
-github.com/launchdarkly/ld-find-code-refs/v2 v2.10.1-0.20230808125804-68b13f09c742 h1:5Q6QLoM8bNQn5TeQ7SPuJyr+vZNocbJ4uVlMl0dh0ec=
-github.com/launchdarkly/ld-find-code-refs/v2 v2.10.1-0.20230808125804-68b13f09c742/go.mod h1:eydjFkict7+Sg7jDIhg1Qgp8SzEfBSbBjABSYb097cA=
+github.com/launchdarkly/ld-find-code-refs/v2 v2.11.0 h1:6mN0vGwr6QXTy2xth83ToRwN/Uq9QW5gvbSm585fVRU=
+github.com/launchdarkly/ld-find-code-refs/v2 v2.11.0/go.mod h1:eydjFkict7+Sg7jDIhg1Qgp8SzEfBSbBjABSYb097cA=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mattn/go-colorable v0.1.12 h1:jF+Du6AlPIjs2BiUiQlKOX0rt3SujHxPnksPKZbaA40=
