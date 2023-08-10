@@ -23,7 +23,7 @@ Basic:
 on: pull_request
 
 jobs:
-  find_flags:
+  find-flags:
     runs-on: ubuntu-latest
     name: Find LaunchDarkly feature flags in PR
     steps:
@@ -46,7 +46,7 @@ Use outputs in workflow:
 on: pull_request
 
 jobs:
-  find_flags:
+  find-flags:
     runs-on: ubuntu-latest
     name: Find LaunchDarkly feature flags in PR
     steps:
