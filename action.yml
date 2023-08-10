@@ -1,6 +1,6 @@
 # action.yml
-name: 'Find Flags'
-description: 'Find LaunchDarkly Flags in your PR'
+name: 'LaunchDarkly Code References in Pull Request'
+description: 'Find references to feature flags in your pull request'
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -12,33 +12,33 @@ runs:
     GITHUB_TOKEN: ${{ inputs.repo-token }}
 inputs:
   repo-token:
-      description: 'Token to use to authorize comments on PR. Typically the GITHUB_TOKEN secret.'
+      description: 'Token to use to authorize comments on PR. Typically the `GITHUB_TOKEN` secret or equivalent `github.token`.'
       required: true
   access-token:
-    description: 'LaunchDarkly access token'
+    description: LaunchDarkly access token
     required: true
   project-key:
-    description: 'LaunchDarkly Project'
+    description: LaunchDarkly project key
     required: false
     default: 'default'
   environment-key:
-    description: 'LaunchDarkly environment for creating flag links'
+    description: LaunchDarkly environment key for creating flag links
     required: false
     default: 'production'
   placeholder-comment:
-    description: 'Comment when no flags are found. If flags are found in later commits, this comment will be updated.'
+    description: Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated.
     required: false
     default: 'false'
   include-archived-flags:
-    description: 'Scan for archived flags'
+    description: Scan for archived flags
     required: false
     default: 'true'
   max-flags:
-    description: 'Maximum number of flags to find per PR'
+    description: Maximum number of flags to find per PR
     required: false
     default: '5'
   base-uri:
-    description: 'The base URI for the LaunchDarkly server. Most users should use the default value.'
+    description: The base URI for the LaunchDarkly server. Most users should use the default value.
     required: false
     default: 'https://app.launchdarkly.com'
 

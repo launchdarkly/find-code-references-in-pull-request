@@ -1,19 +1,19 @@
 # Run test file with command:
 #   act pull_request -e testdata/act/pull-request.json
 
-name: Test Find Flags
+name: Test find flags
 on: pull_request
 
 jobs:
-  find_flags:
+  find-feature-flags:
     runs-on: ubuntu-latest
     name: Test Find Flags
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Find LaunchDarkly Feature Flags
+      - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
-        id: find_flags
+        id: find-flags
         with:
           project-key: demo-dan-042021-2
           environment-key: development
@@ -23,28 +23,28 @@ jobs:
           max-flags: 200
       - name: Find flags summary
         run: |
-          echo "flags addded or modified ${{ steps.find_flags.outputs.modified-flags-count }}"
-          echo "flags removed ${{ steps.find_flags.outputs.removed-flags-count }}"
+          echo "flags addded or modified ${{ steps.find-flags.outputs.modified-flags-count }}"
+          echo "flags removed ${{ steps.find-flags.outputs.removed-flags-count }}"
       - name: Added or modified flags
-        if: steps.find_flags.outputs.any-modified == 'true'
+        if: steps.find-flags.outputs.any-modified == 'true'
         run: |
-          for flag in ${{ steps.find_flags.outputs.modified-flags }}; do
+          for flag in ${{ steps.find-flags.outputs.modified-flags }}; do
             echo "$flag was added or modified"
           done
       - name: Removed flags
-        if: steps.find_flags.outputs.any-removed == 'true'
+        if: steps.find-flags.outputs.any-removed == 'true'
         run: |
-          for flag in ${{ steps.find_flags.outputs.removed-flags }}; do
+          for flag in ${{ steps.find-flags.outputs.removed-flags }}; do
             echo "$flag was removed"
           done
       - name: Add label
-        if: steps.find_flags.outputs.any-modified == 'true' || steps.find_flags.outputs.any-removed == 'true'
+        if: steps.find-flags.outputs.any-modified == 'true' || steps.find-flags.outputs.any-removed == 'true'
         run: gh pr edit $PR_NUMBER --add-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
       - name: Remove label
-        if: steps.find_flags.outputs.any-modified == 'false' && steps.find_flags.outputs.any-removed == 'false'
+        if: steps.find-flags.outputs.any-modified == 'false' && steps.find-flags.outputs.any-removed == 'false'
         run: gh pr edit $PR_NUMBER --remove-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
