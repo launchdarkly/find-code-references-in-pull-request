@@ -84,6 +84,10 @@ This action has full support for code reference aliases. If the project has an e
 
 More information on aliases can be found at [launchdarkly/ld-find-code-refs](https://github.com/launchdarkly/ld-find-code-refs/blob/main/docs/ALIASES.md).
 
+### Monorepos
+
+This action does not currently support monorepos / searching for flags across LaunchDarkly projects.
+
 <!-- action-docs-inputs -->
 ### Inputs
 
