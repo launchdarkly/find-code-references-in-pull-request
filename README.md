@@ -1,4 +1,4 @@
-# Find Code References in Pull Request
+# LaunchDarkly Find Code References in Pull Request GitHub Action
 
 Adds a comment to pull requests (PRs) whenever a feature flag reference is found in a PR diff.
 
