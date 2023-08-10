@@ -1,6 +1,6 @@
 # LaunchDarkly Find Code References in Pull Request GitHub Action
 
-Adds a comment to pull requests (PRs) whenever a feature flag reference is found in a PR diff.
+Adds a comment to a pull request (PR) whenever a feature flag reference is found in a PR diff.
 
 <!-- TODO update this link when repo name changes -->
 <img src="https://github.com/launchdarkly/cr-flags/raw/main/images/example-comment.png?raw=true" alt="An example code references PR comment" width="100%">
