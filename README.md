@@ -1,23 +1,31 @@
-# Code References PR Commenter
+# Find Code References in Pull Request
 
-Add the Code References PR Commenter action for pull requests (PRs) to receive a comment whenever a you reference a LaunchDarkly feature flag in any of the code changes.
+Adds a comment to pull requests (PRs) whenever a feature flag reference is found in a PR diff.
 
-Here's how a PR comment appears:
-
+<!-- TODO update this link when repo name changes -->
 <img src="https://github.com/launchdarkly/cr-flags/raw/main/images/example-comment.png?raw=true" alt="An example code references PR comment" width="100%">
 
-## Configuration
-PR Commenter has full support for code reference aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file, it will use the aliases defined there.
+## Permissions
 
-Here's how to set up the action:
+In order to add a comment to a PR, the `github-token` used requires `write` permission for PRs. Permissions for the workflow may also be specified with:
 
+```yaml
+permissions:
+  pull-requests: write
+```
+
+## Usage
+
+Basic:
+
+<!-- TODO update example repo name changes -->
 ```yaml
 on: pull_request
 
 jobs:
   find_flags:
     runs-on: ubuntu-latest
-    name: Find LaunchDarkly feature flags
+    name: Find LaunchDarkly feature flags in PR
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -30,6 +38,49 @@ jobs:
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+Use outputs in workflow:
+
+<!-- TODO update example repo name changes -->
+```yaml
+on: pull_request
+
+jobs:
+  find_flags:
+    runs-on: ubuntu-latest
+    name: Find LaunchDarkly feature flags in PR
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Find flags
+        uses: launchdarkly/cr-flags@v0.6.0
+        id: find_flags
+        with:
+          project-key: default
+          environmet-key: production
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Add or remove labels on PRs if any flags have changed
+      - name: Add label
+        if: steps.find_flags.outputs.any-modified == 'true' || steps.find_flags.outputs.any-removed == 'true'
+        run: gh pr edit $PR_NUMBER --add-label ld-flags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Remove label
+        if: steps.find_flags.outputs.any-modified == 'false' && steps.find_flags.outputs.any-removed == 'false'
+        run: gh pr edit $PR_NUMBER --remove-label ld-flags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+```
+
+### Flag aliases
+
+This actions has full support for code reference aliases. If the project has an existing `.launchdarkly/coderefs.yaml` file, it will use the aliases defined there.
+
+More information on aliases can be found at [launchdarkly/ld-find-code-refs](https://github.com/launchdarkly/ld-find-code-refs/blob/main/docs/ALIASES.md).
 
 <!-- action-docs-inputs -->
 ### Inputs
