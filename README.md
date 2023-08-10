@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Find flags
         uses: launchdarkly/cr-flags@v0.6.0
-        id: find_flags
+        id: find-flags
         with:
           project-key: default
           environmet-key: production
@@ -48,7 +48,7 @@ Use outputs in workflow:
 on: pull_request
 
 jobs:
-  find-flags:
+  find-feature-flags:
     runs-on: ubuntu-latest
     name: Find LaunchDarkly feature flags in PR
     steps:
@@ -56,7 +56,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Find flags
         uses: launchdarkly/cr-flags@v0.6.0
-        id: find_flags
+        id: find-flags
         with:
           project-key: default
           environmet-key: production
@@ -65,13 +65,13 @@ jobs:
 
       # Add or remove labels on PRs if any flags have changed
       - name: Add label
-        if: steps.find_flags.outputs.any-modified == 'true' || steps.find_flags.outputs.any-removed == 'true'
+        if: steps.find-flags.outputs.any-modified == 'true' || steps.find-flags.outputs.any-removed == 'true'
         run: gh pr edit $PR_NUMBER --add-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
       - name: Remove label
-        if: steps.find_flags.outputs.any-modified == 'false' && steps.find_flags.outputs.any-removed == 'false'
+        if: steps.find-flags.outputs.any-modified == 'false' && steps.find-flags.outputs.any-removed == 'false'
         run: gh pr edit $PR_NUMBER --remove-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
