@@ -9,7 +9,7 @@ Adds a comment to a pull request (PR) whenever a feature flag reference is found
 
 This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with read access for the designated `project-key`. Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
 
-In order to add a comment to a PR, the `repo-token` used requires `write` permission for PRs. Permissions for the workflow may also be specified with:
+To add a comment to a PR, the `repo-token` used requires `write` permission for PRs. You can also specify permissions for the workflow with:
 
 ```yaml
 permissions:
