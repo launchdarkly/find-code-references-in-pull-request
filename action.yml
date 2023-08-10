@@ -55,3 +55,9 @@ outputs:
     description: Space-separated list of flags removed in PR
   removed-flags-count:
     description: Number of flags removed in PR
+  any-Changed:
+    description: Returns true if any flags have been changed in PR
+  changed-flags:
+    description: Space-separated list of flags changed in PR
+  changed-flags-count:
+    description: Number of flags changed in PR
