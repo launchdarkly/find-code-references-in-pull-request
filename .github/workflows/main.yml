@@ -1,7 +1,7 @@
 # Run test file with command:
 #   act pull_request -e testdata/act/pull-request.json
 
-name: Test Find Flags
+name: Test find flags
 on: pull_request
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Find LaunchDarkly Feature Flags
+      - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
         with:

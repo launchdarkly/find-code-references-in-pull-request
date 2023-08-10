@@ -27,7 +27,7 @@ on: pull_request
 jobs:
   find-flags:
     runs-on: ubuntu-latest
-    name: Find LaunchDarkly feature flags in PR
+    name: Find LaunchDarkly feature flags in diff
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -50,7 +50,7 @@ on: pull_request
 jobs:
   find-feature-flags:
     runs-on: ubuntu-latest
-    name: Find LaunchDarkly feature flags in PR
+    name: Find LaunchDarkly feature flags in diff
     steps:
       - name: Checkout
         uses: actions/checkout@v3
