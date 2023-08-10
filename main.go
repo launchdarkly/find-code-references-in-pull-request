@@ -168,40 +168,31 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 }
 
 func setOutputs(flagsRef lflags.FlagsRef) {
-	flagsAddedCount := len(flagsRef.FlagsAdded)
-
-	if err := gha.SetOutput("any-modified", fmt.Sprintf("%t", flagsAddedCount > 0)); err != nil {
-		log.Println("Failed to set outputs.any-modified")
-	}
-	if err := gha.SetOutput("modified-flags-count", fmt.Sprintf("%d", flagsAddedCount)); err != nil {
-		log.Println("Failed to set outputs.modified-flags-count")
-	}
-	flagKeysAdded := make([]string, 0, len(flagsRef.FlagsAdded))
+	flagsModified := make([]string, 0, len(flagsRef.FlagsAdded))
 	for k := range flagsRef.FlagsAdded {
-		flagKeysAdded = append(flagKeysAdded, k)
+		flagsModified = append(flagsModified, k)
 	}
-	sort.Strings(flagKeysAdded)
-	if err := gha.SetOutput("modified-flags", strings.Join(flagKeysAdded, " ")); err != nil {
-		log.Println("Failed to set outputs.modified-flags")
-	}
+	setOutputsForChangedFlags("modified", flagsModified)
 
-	flagsRemovedCount := len(flagsRef.FlagsRemoved)
-
-	if err := gha.SetOutput("any-removed", fmt.Sprintf("%t", flagsRemovedCount > 0)); err != nil {
-		log.Println("Failed to set outputs.any-removed")
-	}
-	if err := gha.SetOutput("removed-flags-count", fmt.Sprintf("%d", flagsRemovedCount)); err != nil {
-		log.Println("Failed to set outputs.removed-flags-count")
-	}
-
-	flagKeysRemoved := make([]string, 0, len(flagsRef.FlagsRemoved))
+	flagsRemoved := make([]string, 0, len(flagsRef.FlagsRemoved))
 	for k := range flagsRef.FlagsRemoved {
-		flagKeysRemoved = append(flagKeysRemoved, k)
+		flagsRemoved = append(flagsRemoved, k)
 	}
-	sort.Strings(flagKeysRemoved)
-	if err := gha.SetOutput("removed-flags", strings.Join(flagKeysRemoved, " ")); err != nil {
-		log.Println("Failed to set outputs.removed-flags")
-	}
+	setOutputsForChangedFlags("removed", flagsModified)
+
+	allChangedFlags := make([]string, 0, len(flagsModified)+len(flagsRemoved))
+	allChangedFlags = append(allChangedFlags, flagsModified...)
+	allChangedFlags = append(allChangedFlags, flagsRemoved...)
+	setOutputsForChangedFlags("changed", allChangedFlags)
+}
+
+func setOutputsForChangedFlags(modifier string, changedFlags []string) {
+	count := len(changedFlags)
+	gha.SetOutputOrLogError(fmt.Sprintf("any-%s", modifier), fmt.Sprintf("%t", count > 0))
+	gha.SetOutputOrLogError(fmt.Sprintf("%s-flags-count", modifier), fmt.Sprintf("%d", count))
+
+	sort.Strings(changedFlags)
+	gha.SetOutputOrLogError(fmt.Sprintf("%s-flags", modifier), strings.Join(changedFlags, " "))
 }
 
 func failExit(err error) {

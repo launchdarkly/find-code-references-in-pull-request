@@ -65,13 +65,13 @@ jobs:
 
       # Add or remove labels on PRs if any flags have changed
       - name: Add label
-        if: steps.find-flags.outputs.any-modified == 'true' || steps.find-flags.outputs.any-removed == 'true'
+        if: steps.find-flags.outputs.any-changed == 'true'
         run: gh pr edit $PR_NUMBER --add-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
       - name: Remove label
-        if: steps.find-flags.outputs.any-modified == 'false' && steps.find-flags.outputs.any-removed == 'false'
+        if: steps.find-flags.outputs.any-changed == 'false'
         run: gh pr edit $PR_NUMBER --remove-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,4 +114,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | any-removed | Returns true if any flags have been removed in PR |
 | removed-flags | Space-separated list of flags removed in PR |
 | removed-flags-count | Number of flags removed in PR |
+| any-Changed | Returns true if any flags have been changed in PR |
+| changed-flags | Space-separated list of flags changed in PR |
+| changed-flags-count | Number of flags changed in PR |
 <!-- action-docs-outputs -->
