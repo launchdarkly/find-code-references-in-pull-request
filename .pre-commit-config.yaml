@@ -19,7 +19,7 @@ repos:
   hooks:
   - id: github-action-docs
     name: github-action-docs
-    entry: make github-action-docs
+    entry: make docs
     types: [yaml]
     pass_filenames: false
     language: system
