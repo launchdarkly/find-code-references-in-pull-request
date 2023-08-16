@@ -15,6 +15,15 @@ repos:
   hooks:
     - id: go-unit-tests
 
+- repo: local
+  hooks:
+  - id: github-action-docs
+    name: github-action-docs
+    entry: make docs
+    types: [yaml]
+    pass_filenames: false
+    language: system
+
 # Repo doesn't have right permissions?
 # - repo: https://github.com/launchdarkly/pre-commit-go
 #   rev: v0.11.0

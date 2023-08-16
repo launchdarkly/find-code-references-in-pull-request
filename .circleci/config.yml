@@ -66,6 +66,18 @@ jobs:
 
     <<: *build_steps
 
+  github-actions-docs:
+    docker:
+      - image: cimg/node:18.8.0
+    steps:
+      - checkout
+      - run: sudo apt-get update
+      - run: sudo apt-get install python3-pip
+      - run: sudo pip install pre-commit
+      - run: pre-commit install
+      - run: npm install action-docs
+      - run: pre-commit run -a github-action-docs
+
 workflows:
   version: 2
   test:
@@ -74,3 +86,6 @@ workflows:
           filters:
             tags:
               only: /.*/
+  docs:
+    jobs:
+      - github-actions-docs
