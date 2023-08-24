@@ -5,7 +5,7 @@
 ## Submitting bug reports and feature requests
 
 <!--TODO update link when repo name changes -->
-The LaunchDarkly team monitors the [issue tracker](https://github.com/launchdarkly/cr-flags/issues) in the repository. Bug reports and feature requests specific to this action should be filed in this issue tracker. The team will respond to all newly filed issues within two business days.
+The LaunchDarkly team monitors the [issue tracker](https://github.com/launchdarkly/find-code-references-in-pull-request/issues) in the repository. Bug reports and feature requests specific to this action should be filed in this issue tracker. The team will respond to all newly filed issues within two business days.
 
 ## Submitting pull requests
 

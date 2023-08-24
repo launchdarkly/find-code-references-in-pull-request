@@ -17,9 +17,9 @@ import (
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v13"
-	"github.com/launchdarkly/cr-flags/config"
-	lcr "github.com/launchdarkly/cr-flags/config"
-	lflags "github.com/launchdarkly/cr-flags/flags"
+	"github.com/launchdarkly/find-code-references-in-pull-request/config"
+	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
+	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 )
 
 type Comment struct {

@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	lflags "github.com/launchdarkly/cr-flags/flags"
-	"github.com/launchdarkly/cr-flags/ignore"
+	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	"github.com/launchdarkly/find-code-references-in-pull-request/ignore"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 )

@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
-	lcr "github.com/launchdarkly/cr-flags/config"
-	"github.com/launchdarkly/cr-flags/internal/version"
+	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
 	"github.com/pkg/errors"
 )
 

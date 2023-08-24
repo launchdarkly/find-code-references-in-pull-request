@@ -1,4 +1,4 @@
-module github.com/launchdarkly/cr-flags
+module github.com/launchdarkly/find-code-references-in-pull-request
 
 go 1.20
 
