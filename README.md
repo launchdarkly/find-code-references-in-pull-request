@@ -36,7 +36,7 @@ jobs:
         id: find-flags
         with:
           project-key: default
-          environmet-key: production
+          environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -59,7 +59,7 @@ jobs:
         id: find-flags
         with:
           project-key: default
-          environmet-key: production
+          environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
