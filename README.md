@@ -52,6 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Find LaunchDarkly feature flags in diff
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Find flags
         uses: launchdarkly/find-code-references-in-pull-request@v1.0.0
         id: find-flags
