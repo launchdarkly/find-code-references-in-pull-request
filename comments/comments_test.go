@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
-	"github.com/launchdarkly/cr-flags/config"
-	lflags "github.com/launchdarkly/cr-flags/flags"
+	"github.com/launchdarkly/find-code-references-in-pull-request/config"
+	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

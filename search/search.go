@@ -9,7 +9,7 @@ import (
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 
-	lcr "github.com/launchdarkly/cr-flags/config"
+	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	"github.com/spf13/viper"
 )
 

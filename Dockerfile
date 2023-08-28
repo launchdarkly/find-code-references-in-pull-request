@@ -15,4 +15,4 @@ RUN go build .
 
 
 
-ENTRYPOINT ["/app/cr-flags"]
+ENTRYPOINT ["/app/find-code-references-in-pull-request"]
