@@ -38,13 +38,13 @@ jobs:
             echo "$flag was removed"
           done
       - name: Add label
-        if: steps.find-flags.outputs.any-changed == 'true'
+        if: ${{ steps.find-flags.outputs.any-changed == 'true' && github.actor != 'dependabot[bot]' }}
         run: gh pr edit $PR_NUMBER --add-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
       - name: Remove label
-        if: steps.find-flags.outputs.any-changed == 'false'
+        if: ${{ steps.find-flags.outputs.any-changed == 'false' && github.actor != 'dependabot[bot]' }}
         run: gh pr edit $PR_NUMBER --remove-label ld-flags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
