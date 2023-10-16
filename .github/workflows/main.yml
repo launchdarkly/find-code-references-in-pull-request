@@ -10,7 +10,7 @@ jobs:
     name: Test Find Flags
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
