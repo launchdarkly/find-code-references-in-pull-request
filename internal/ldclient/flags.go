@@ -24,7 +24,7 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 	flags = append(flags, activeFlags...)
 
 	if config.IncludeArchivedFlags {
-		params.Add("archived", "true")
+		params.Add("filter", "state:archived")
 		archivedFlags, err := getFlags(config, params)
 		if err != nil {
 			return []ldapi.FeatureFlag{}, err
