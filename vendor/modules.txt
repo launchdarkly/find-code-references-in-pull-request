@@ -59,7 +59,7 @@ github.com/iancoleman/strcase
 # github.com/imdario/mergo v0.3.15
 ## explicit; go 1.13
 github.com/imdario/mergo
-# github.com/jstemmer/go-junit-report/v2 v2.0.0
+# github.com/jstemmer/go-junit-report/v2 v2.1.0
 ## explicit; go 1.13
 github.com/jstemmer/go-junit-report/v2
 github.com/jstemmer/go-junit-report/v2/gtr
@@ -67,6 +67,7 @@ github.com/jstemmer/go-junit-report/v2/internal/gojunitreport
 github.com/jstemmer/go-junit-report/v2/junit
 github.com/jstemmer/go-junit-report/v2/parser/gotest
 github.com/jstemmer/go-junit-report/v2/parser/gotest/internal/collector
+github.com/jstemmer/go-junit-report/v2/parser/gotest/internal/reader
 # github.com/kyoh86/richgo v0.3.12
 ## explicit; go 1.17
 github.com/kyoh86/richgo
