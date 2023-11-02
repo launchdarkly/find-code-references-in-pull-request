@@ -17,6 +17,7 @@ import (
 	ldiff "github.com/launchdarkly/find-code-references-in-pull-request/diff"
 	e "github.com/launchdarkly/find-code-references-in-pull-request/errors"
 	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/extinctions"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	ldclient "github.com/launchdarkly/find-code-references-in-pull-request/internal/ldclient"
 	"github.com/launchdarkly/find-code-references-in-pull-request/search"
@@ -48,12 +49,17 @@ func main() {
 	opts, err := getOptions(config)
 	failExit(err)
 
+	flagKeys := make([]string, 0, len(flags))
+	for _, flag := range flags {
+		flagKeys = append(flagKeys, flag.Key)
+	}
+
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
 	diffMap := ldiff.PreprocessDiffs(opts.Dir, multiFiles)
 
-	matcher, err := search.GetMatcher(opts, flags, diffMap)
+	matcher, err := search.GetMatcher(opts, flagKeys, diffMap)
 	failExit(err)
 
 	builder := lflags.NewReferenceBuilder(config.MaxFlags)
@@ -61,6 +67,10 @@ func main() {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
 	flagsRef := builder.Build()
+
+	// Check extinctions
+	extinctFlags, err := extinctions.CheckExtinctions(opts, flagsRef.FlagsRemoved)
+	flagsRef.FlagsExtinct = extinctFlags
 
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)

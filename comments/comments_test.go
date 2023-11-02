@@ -164,7 +164,7 @@ func TestBuildFlagComment(t *testing.T) {
 }
 
 func (e *testFlagEnv) NoAliases(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{}, true, &e.Config)
+	comment, err := githubFlagComment(e.Flag, []string{}, true, false, &e.Config)
 	require.NoError(t, err)
 
 	expected := "| [example flag](https://example.com/test) | `example-flag` | |"
@@ -172,7 +172,7 @@ func (e *testFlagEnv) NoAliases(t *testing.T) {
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, true, &e.Config)
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, true, false, &e.Config)
 	require.NoError(t, err)
 
 	expected := "| [example flag](https://example.com/test) | `example-flag` | `exampleFlag`, `ExampleFlag` |"
@@ -180,7 +180,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 }
 
 func (e *testFlagEnv) ArchivedAdded(t *testing.T) {
-	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, true, &e.Config)
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, true, false, &e.Config)
 	require.NoError(t, err)
 
 	expected := "| :warning: [archived flag](https://example.com/test) (archived on 2023-08-03) | `archived-flag` | |"
@@ -188,7 +188,7 @@ func (e *testFlagEnv) ArchivedAdded(t *testing.T) {
 }
 
 func (e *testFlagEnv) ArchivedRemoved(t *testing.T) {
-	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, false, &e.Config)
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, false, false, &e.Config)
 	require.NoError(t, err)
 
 	expected := "| [archived flag](https://example.com/test) (archived on 2023-08-03) | `archived-flag` | |"

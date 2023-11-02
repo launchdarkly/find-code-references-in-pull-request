@@ -5,6 +5,7 @@ type FlagAliasMap = map[string][]string
 type FlagsRef struct {
 	FlagsAdded   FlagAliasMap
 	FlagsRemoved FlagAliasMap
+	FlagsExtinct map[string]struct{}
 }
 
 func (fr FlagsRef) Found() bool {
