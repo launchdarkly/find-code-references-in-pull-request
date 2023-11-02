@@ -24,6 +24,7 @@ type Config struct {
 	MaxFlags             int
 	PlaceholderComment   bool
 	IncludeArchivedFlags bool
+	CheckExtinctions     bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -78,6 +79,12 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	if includeArchivedFlags, err := strconv.ParseBool(os.Getenv("INPUT_INCLUDE-ARCHIVED-FLAGS")); err == nil {
 		// ignore error - default is true
 		config.IncludeArchivedFlags = includeArchivedFlags
+	}
+
+	config.CheckExtinctions = true
+	if checkExtinctions, err := strconv.ParseBool(os.Getenv("INPUT_CHECK-EXTINCTIONS")); err == nil {
+		// ignore error - default is true
+		config.CheckExtinctions = checkExtinctions
 	}
 
 	config.GHClient = getGithubClient(ctx)

@@ -41,6 +41,10 @@ inputs:
     description: The base URI for the LaunchDarkly server. Most users should use the default value.
     required: false
     default: 'https://app.launchdarkly.com'
+  check-extinctions:
+    description: Check if removed flags still exist in codebase
+    required: false
+    default: 'true'
 
 outputs:
   any-modified:
