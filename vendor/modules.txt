@@ -7,7 +7,7 @@ github.com/Masterminds/semver/v3
 # github.com/Masterminds/sprig/v3 v3.2.3
 ## explicit; go 1.13
 github.com/Masterminds/sprig/v3
-# github.com/bmatcuk/doublestar/v4 v4.6.0
+# github.com/bmatcuk/doublestar/v4 v4.6.1
 ## explicit; go 1.16
 github.com/bmatcuk/doublestar/v4
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -16,7 +16,7 @@ github.com/davecgh/go-spew/spew
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
 github.com/fsnotify/fsnotify
-# github.com/go-git/go-git/v5 v5.9.0
+# github.com/go-git/go-git/v5 v5.10.0
 ## explicit; go 1.19
 github.com/go-git/go-git/v5/plumbing
 github.com/go-git/go-git/v5/plumbing/hash
@@ -86,7 +86,7 @@ github.com/launchdarkly/api-client-go/v7
 # github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f
 ## explicit
 github.com/launchdarkly/json-patch
-# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.4
+# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.5-0.20231102191707-538975ae8017
 ## explicit; go 1.20
 github.com/launchdarkly/ld-find-code-refs/v2/aliases
 github.com/launchdarkly/ld-find-code-refs/v2/flags

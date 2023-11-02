@@ -17,7 +17,7 @@ require (
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/kyoh86/richgo v0.3.12
 	github.com/launchdarkly/api-client-go/v13 v13.0.0
-	github.com/launchdarkly/ld-find-code-refs/v2 v2.11.4
+	github.com/launchdarkly/ld-find-code-refs/v2 v2.11.5-0.20231102191707-538975ae8017
 )
 
 require (
@@ -33,10 +33,10 @@ require (
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.6.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/go-git/go-git/v5 v5.9.0 // indirect
+	github.com/go-git/go-git/v5 v5.10.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
