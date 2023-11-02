@@ -53,7 +53,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 	}
 	// All whitespace for template is required to be there or it will not render properly nested.
 	tmplSetup := `| {{- if eq .Flag.Archived true}}{{- if eq .Added true}} :warning:{{- end}}{{- end}}` +
-		`{{- if eq .Extinct true}} :white_check_mark:{{- end}}` +
+		`{{- if eq .Extinct true}} :skull:{{- end}}` +
 		` [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
 		`{{- if eq .Flag.Archived true}}` +
 		` (archived on {{.ArchivedAt | date "2006-01-02"}})` +
