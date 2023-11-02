@@ -8,11 +8,12 @@ import (
 	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 	"github.com/launchdarkly/find-code-references-in-pull-request/ignore"
 	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/util/diff_util"
+	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 )
 
-func PreprocessDiffs(dir string, multiFiles []*diff.FileDiff) DiffFileMap {
+func PreprocessDiffs(dir string, multiFiles []*diff.FileDiff) aliases.FileContentsMap {
 	diffMap := make(map[string][]byte, len(multiFiles))
 
 	for _, parsedDiff := range multiFiles {

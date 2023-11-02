@@ -4,16 +4,16 @@ import (
 	"strings"
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
+	laliases "github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
-	ldiff "github.com/launchdarkly/find-code-references-in-pull-request/diff"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/aliases"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 )
 
-func GetMatcher(config *lcr.Config, opts options.Options, flags []ldapi.FeatureFlag, diffContents ldiff.DiffFileMap) (matcher lsearch.Matcher, err error) {
+func GetMatcher(config *lcr.Config, opts options.Options, flags []ldapi.FeatureFlag, diffContents laliases.FileContentsMap) (matcher lsearch.Matcher, err error) {
 	flagKeys := make([]string, 0, len(flags))
 	for _, flag := range flags {
 		flagKeys = append(flagKeys, flag.Key)
