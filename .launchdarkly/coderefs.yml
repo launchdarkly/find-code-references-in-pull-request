@@ -2,3 +2,8 @@ aliases:
   - type: camelcase
   - type: snakecase
   - type: kebabcase
+  - type: filepattern
+    paths:
+      - testdata/aliases
+    patterns:
+      - \s*const\s*(\w+)\s*=\s*useFlagValue\(\s*'FLAG_KEY'
