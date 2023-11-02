@@ -48,21 +48,17 @@ func main() {
 	opts, err := getOptions(config)
 	failExit(err)
 
-	matcher, err := search.GetMatcher(config, opts, flags)
-	failExit(err)
-
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
+	diffMap := ldiff.PreprocessDiffs(config.Workspace, multiFiles)
+
+	matcher, err := search.GetMatcher(config, opts, flags, diffMap)
+	failExit(err)
+
 	builder := lflags.NewReferenceBuilder(config.MaxFlags)
-	for _, parsedDiff := range multiFiles {
-		getPath := ldiff.CheckDiff(parsedDiff, config.Workspace)
-		if getPath.Skip {
-			continue
-		}
-		for _, hunk := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(matcher, hunk, builder)
-		}
+	for _, contents := range diffMap {
+		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
 	flagsRef := builder.Build()
 

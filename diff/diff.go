@@ -12,9 +12,25 @@ import (
 	"github.com/sourcegraph/go-diff/diff"
 )
 
-type DiffPaths struct {
-	FileToParse string
-	Skip        bool
+func PreprocessDiffs(dir string, multiFiles []*diff.FileDiff) DiffFileMap {
+	diffMap := make(map[string][]byte, len(multiFiles))
+
+	for _, parsedDiff := range multiFiles {
+		getPath := CheckDiff(parsedDiff, dir)
+		if getPath.Skip {
+			continue
+		}
+
+		_, ok := diffMap[getPath.FileToParse]
+		if !ok {
+			diffMap[getPath.FileToParse] = make([]byte, 0)
+		}
+		for _, hunk := range parsedDiff.Hunks {
+			diffMap[getPath.FileToParse] = append(diffMap[getPath.FileToParse], hunk.Body...)
+		}
+	}
+
+	return diffMap
 }
 
 func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
@@ -51,8 +67,8 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, builder *lflags.ReferenceBuilder) {
-	diffLines := strings.Split(string(hunk.Body), "\n")
+func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *lflags.ReferenceBuilder) {
+	diffLines := strings.Split(string(contents), "\n")
 	for _, line := range diffLines {
 		op := diff_util.LineOperation(line)
 		if op == diff_util.OperationEqual {

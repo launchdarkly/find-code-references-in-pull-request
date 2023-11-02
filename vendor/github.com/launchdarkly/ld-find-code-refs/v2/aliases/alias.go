@@ -62,7 +62,7 @@ func generateAlias(a options.Alias, flag, dir string, allFileContents map[string
 	case options.DotCase:
 		ret = []string{strcase.ToDelimited(flag, '.')}
 	case options.FilePattern:
-		ret, err = generateAliasesFromFilePattern(a, flag, dir, allFileContents)
+		ret, err = GenerateAliasesFromFilePattern(a, flag, dir, allFileContents)
 	case options.Command:
 		ret, err = generateAliasesFromCommand(a, flag, dir)
 	}
@@ -70,7 +70,7 @@ func generateAlias(a options.Alias, flag, dir string, allFileContents map[string
 	return ret, err
 }
 
-func generateAliasesFromFilePattern(a options.Alias, flag, dir string, allFileContents map[string][]byte) ([]string, error) {
+func GenerateAliasesFromFilePattern(a options.Alias, flag, dir string, allFileContents map[string][]byte) ([]string, error) {
 	ret := []string{}
 	// Concatenate the contents of all files into a single byte array to be matched by specified patterns
 	fileContents := []byte{}
