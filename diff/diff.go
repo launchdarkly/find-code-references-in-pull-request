@@ -22,10 +22,10 @@ func PreprocessDiffs(dir string, multiFiles []*diff.FileDiff) aliases.FileConten
 			continue
 		}
 
-		_, ok := diffMap[getPath.FileToParse]
-		if !ok {
+		if _, ok := diffMap[getPath.FileToParse]; !ok {
 			diffMap[getPath.FileToParse] = make([]byte, 0)
 		}
+
 		for _, hunk := range parsedDiff.Hunks {
 			diffMap[getPath.FileToParse] = append(diffMap[getPath.FileToParse], hunk.Body...)
 		}
