@@ -1,0 +1,1 @@
+const myRandomAlias = useFlagValue('beta-ui')
