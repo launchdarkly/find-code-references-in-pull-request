@@ -228,7 +228,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 }
 
 func (e *testProcessor) Basic(t *testing.T) {
-	e.FlagsRef.FlagsAdded["example-flag"] = []string{""}
+	e.FlagsRef.FlagsAdded["example-flag"] = []string{}
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
 		CommentsAdded: []string{"| [example flag](https://example.com/test) | `example-flag` | |"},
@@ -237,8 +237,8 @@ func (e *testProcessor) Basic(t *testing.T) {
 }
 
 func (e *testProcessor) Multi(t *testing.T) {
-	e.FlagsRef.FlagsAdded["example-flag"] = []string{""}
-	e.FlagsRef.FlagsAdded["second-flag"] = []string{""}
+	e.FlagsRef.FlagsAdded["example-flag"] = []string{}
+	e.FlagsRef.FlagsAdded["second-flag"] = []string{}
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
 		CommentsAdded: []string{
