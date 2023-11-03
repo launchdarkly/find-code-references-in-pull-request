@@ -24,6 +24,7 @@ type Config struct {
 	MaxFlags             int
 	PlaceholderComment   bool
 	IncludeArchivedFlags bool
+	Monorepo             bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -79,6 +80,12 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		// ignore error - default is true
 		config.IncludeArchivedFlags = includeArchivedFlags
 	}
+
+	monorepo, err := strconv.ParseBool(os.Getenv("INPUT_MONOREPO"))
+	if err != nil {
+		return nil, errors.New("invalid value for `monorepo`")
+	}
+	config.Monorepo = monorepo
 
 	config.GHClient = getGithubClient(ctx)
 	return &config, nil

@@ -101,6 +101,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | include-archived-flags | Scan for archived flags | `false` | true |
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
+| monorepo | (Experimental) Enable using monorepo project configuration. Do not set a project key when using this option. | `false` | false |
 <!-- action-docs-inputs -->
 
 <!-- action-docs-outputs -->

@@ -41,6 +41,10 @@ inputs:
     description: The base URI for the LaunchDarkly server. Most users should use the default value.
     required: false
     default: 'https://app.launchdarkly.com'
+  monorepo:
+    description: '(Experimental) Enable using monorepo project configuration. Do not set a project key when using this option.'
+    required: false
+    default: 'false'
 
 outputs:
   any-modified:
