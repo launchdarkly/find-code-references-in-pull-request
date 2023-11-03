@@ -105,8 +105,9 @@ func TestCheckDiff(t *testing.T) {
 				NewName:  tc.newName,
 				Hunks:    []*diff.Hunk{hunk},
 			}
-			results := CheckDiff(&diff, "../testdata")
-			assert.Equal(t, &DiffPaths{FileToParse: "../testdata/" + tc.fileName, Skip: tc.skip}, results, "")
+			filePath, ignore := checkDiffFile(&diff, "../testdata")
+			assert.Equal(t, tc.fileName, filePath)
+			assert.Equal(t, tc.skip, ignore)
 		})
 	}
 }
