@@ -1,4 +1,4 @@
-package ldapi
+package ldclient
 
 import (
 	"encoding/json"
@@ -13,9 +13,11 @@ import (
 )
 
 func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
+	client := NewLDClient(config.LdInstance, config.ApiToken)
+
 	params := url.Values{}
 	params.Add("env", config.LdEnvironment)
-	activeFlags, err := getFlags(config, params)
+	activeFlags, err := client.getFlags(config.LdProject, params)
 	if err != nil {
 		return []ldapi.FeatureFlag{}, err
 	}
@@ -25,7 +27,7 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 
 	if config.IncludeArchivedFlags {
 		params.Add("filter", "state:archived")
-		archivedFlags, err := getFlags(config, params)
+		archivedFlags, err := client.getFlags(config.LdProject, params)
 		if err != nil {
 			return []ldapi.FeatureFlag{}, err
 		}
@@ -35,21 +37,20 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 	return flags, nil
 }
 
-func getFlags(config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error) {
-	url := fmt.Sprintf("%s/api/v2/flags/%s", config.LdInstance, config.LdProject)
-	client := &http.Client{}
+func (c LDClient) getFlags(project string, params url.Values) ([]ldapi.FeatureFlag, error) {
+	url := fmt.Sprintf("%s/api/v2/flags/%s", c.instance, project)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return []ldapi.FeatureFlag{}, err
+		return nil, err
 	}
 	req.URL.RawQuery = params.Encode()
-	req.Header.Add("Authorization", config.ApiToken)
+	req.Header.Add("Authorization", c.apiToken)
 	req.Header.Add("LD-API-Version", "20220603")
 	req.Header.Add("User-Agent", fmt.Sprintf("find-code-references-pr/%s", version.Version))
 
-	resp, err := client.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
-		return []ldapi.FeatureFlag{}, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
@@ -60,13 +61,12 @@ func getFlags(config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error
 			return []ldapi.FeatureFlag{}, errors.Wrapf(err, "unexpected status code: %d. unable to parse response", resp.StatusCode)
 		}
 		err := fmt.Errorf("unexpected status code: %d with response: %#v", resp.StatusCode, r)
-		return []ldapi.FeatureFlag{}, err
+		return nil, err
 	}
 
 	flags := ldapi.FeatureFlags{}
-	err = decoder.Decode(&flags)
-	if err != nil {
-		return []ldapi.FeatureFlag{}, err
+	if err := decoder.Decode(&flags); err != nil {
+		return nil, err
 	}
 
 	return flags.Items, nil
