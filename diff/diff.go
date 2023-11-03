@@ -83,10 +83,10 @@ const (
 )
 
 func operation(row string) Operation {
-	if strings.HasPrefix(row, "+") {
+	if strings.HasPrefix(row, Add.String()) {
 		return Add
 	}
-	if strings.HasPrefix(row, "-") {
+	if strings.HasPrefix(row, Delete.String()) {
 		return Delete
 	}
 
