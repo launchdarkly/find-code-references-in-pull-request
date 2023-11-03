@@ -1,8 +1,6 @@
 package flags
 
-type FlagAliasMap = map[string]AliasSet
-
-type AliasSet = map[string]bool
+type FlagAliasMap = map[string][]string
 
 type FlagsRef struct {
 	FlagsAdded   FlagAliasMap

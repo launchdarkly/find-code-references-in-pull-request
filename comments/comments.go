@@ -131,9 +131,7 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *l
 	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
 	for _, flagKey := range addedKeys {
-		// If flag is in both added and removed then it is being modified
-		delete(flagsRef.FlagsRemoved, flagKey)
-		flagAliases := uniqueAliases(flagsRef.FlagsAdded[flagKey])
+		flagAliases := flagsRef.FlagsAdded[flagKey]
 		idx, _ := find(flags, flagKey)
 		createComment, err := githubFlagComment(flags[idx], flagAliases, true, config)
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
@@ -147,7 +145,7 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *l
 	}
 	sort.Strings(removedKeys)
 	for _, flagKey := range removedKeys {
-		flagAliases := uniqueAliases(flagsRef.FlagsRemoved[flagKey])
+		flagAliases := flagsRef.FlagsRemoved[flagKey]
 		idx, _ := find(flags, flagKey)
 		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
@@ -182,16 +180,6 @@ func uniqueFlagKeys(a, b lflags.FlagAliasMap) []string {
 	}
 
 	return allKeys
-}
-
-func uniqueAliases(aliases lflags.AliasSet) []string {
-	flagAliases := make([]string, 0, len(aliases))
-	for alias := range aliases {
-		if len(strings.TrimSpace(alias)) > 0 {
-			flagAliases = append(flagAliases, alias)
-		}
-	}
-	return flagAliases
 }
 
 func pluralize(str string, strLength int) string {

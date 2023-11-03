@@ -7,6 +7,7 @@ import (
 
 	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 	"github.com/launchdarkly/find-code-references-in-pull-request/ignore"
+	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/util/diff_util"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 )
@@ -50,61 +51,22 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 	return &diffPaths
 }
 
-func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, flagsRef lflags.FlagsRef, maxFlags int) {
-	flagMap := map[Operation]lflags.FlagAliasMap{
-		Add:    flagsRef.FlagsAdded,
-		Delete: flagsRef.FlagsRemoved,
-	}
+func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, builder *lflags.ReferenceBuilder) {
 	diffLines := strings.Split(string(hunk.Body), "\n")
 	for _, line := range diffLines {
-		if flagsRef.Count() >= maxFlags {
-			break
-		}
-
-		op := operation(line)
-		if op == Equal {
+		op := diff_util.LineOperation(line)
+		if op == diff_util.OperationEqual {
 			continue
 		}
 
 		// only one for now
 		elementMatcher := matcher.Elements[0]
 		for _, flagKey := range elementMatcher.FindMatches(line) {
-			if _, ok := flagMap[op][flagKey]; !ok {
-				flagMap[op][flagKey] = make(lflags.AliasSet)
-			}
-			if aliasMatches := matcher.FindAliases(line, flagKey); len(aliasMatches) > 0 {
-				if _, ok := flagMap[op][flagKey]; !ok {
-					flagMap[op][flagKey] = make(lflags.AliasSet)
-				}
-				for _, alias := range aliasMatches {
-					flagMap[op][flagKey][alias] = true
-				}
-			}
+			aliasMatches := elementMatcher.FindAliases(line, flagKey)
+			builder.AddReference(flagKey, op, aliasMatches)
+		}
+		if builder.MaxReferences() {
+			break
 		}
 	}
-	flagsRef.FlagsAdded = flagMap[Add]
-	flagsRef.FlagsRemoved = flagMap[Delete]
-}
-
-// Operation defines the operation of a diff item.
-type Operation int
-
-const (
-	// Equal item represents an equals diff.
-	Equal Operation = iota
-	// Add item represents an insert diff.
-	Add
-	// Delete item represents a delete diff.
-	Delete
-)
-
-func operation(row string) Operation {
-	if strings.HasPrefix(row, "+") {
-		return Add
-	}
-	if strings.HasPrefix(row, "-") {
-		return Delete
-	}
-
-	return Equal
 }
