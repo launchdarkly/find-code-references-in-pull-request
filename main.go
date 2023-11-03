@@ -59,13 +59,15 @@ func main() {
 		FlagsRemoved: make(lflags.FlagAliasMap),
 	}
 
+	builder := lflags.NewReferenceBuilder(config.MaxFlags)
+
 	for _, parsedDiff := range multiFiles {
 		getPath := ldiff.CheckDiff(parsedDiff, config.Workspace)
 		if getPath.Skip {
 			continue
 		}
 		for _, hunk := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(matcher, hunk, flagsRef, config.MaxFlags)
+			ldiff.ProcessDiffs(matcher, hunk, builder)
 		}
 	}
 
