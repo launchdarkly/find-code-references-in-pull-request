@@ -14,9 +14,10 @@ import (
 func ptr[T any](t T) *T { return &t }
 
 type testFlagEnv struct {
-	Flag         ldapi.FeatureFlag
-	ArchivedFlag ldapi.FeatureFlag
-	Config       config.Config
+	Flag           ldapi.FeatureFlag
+	ArchivedFlag   ldapi.FeatureFlag
+	DeprecatedFlag ldapi.FeatureFlag
+	Config         config.Config
 }
 
 func newTestAccEnv() *testFlagEnv {
@@ -30,10 +31,16 @@ func newTestAccEnv() *testFlagEnv {
 	archivedFlag := createFlag("archived-flag")
 	archivedFlag.Archived = true
 	archivedFlag.ArchivedDate = ptr(int64(1691072480000))
+
+	deprecatedFlag := createFlag("deprecated-flag")
+	deprecatedFlag.Deprecated = true
+	deprecatedFlag.DeprecatedDate = ptr(int64(1691072480000))
+
 	return &testFlagEnv{
-		Flag:         flag,
-		ArchivedFlag: archivedFlag,
-		Config:       config,
+		Flag:           flag,
+		ArchivedFlag:   archivedFlag,
+		DeprecatedFlag: deprecatedFlag,
+		Config:         config,
 	}
 }
 
@@ -140,6 +147,9 @@ func TestGithubFlagComment(t *testing.T) {
 	t.Run("Archived flag removed", acceptanceTestEnv.ArchivedRemoved)
 	t.Run("Extinct flag", acceptanceTestEnv.ExtinctFlag)
 	t.Run("Extinct and Archived flag", acceptanceTestEnv.ExtinctAndArchivedFlag)
+
+	t.Run("Deprecated flag added", acceptanceTestEnv.DeprecatedAdded)
+	t.Run("Deprecated flag removed", acceptanceTestEnv.DeprecatedRemoved)
 }
 
 func TestProcessFlags(t *testing.T) {
@@ -211,6 +221,22 @@ func (e *testFlagEnv) ExtinctAndArchivedFlag(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :white_check_mark: all references removed<br> :information_source: archived on 2023-08-03 |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) DeprecatedAdded(t *testing.T) {
+	comment, err := githubFlagComment(e.DeprecatedFlag, []string{}, true, false, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| [deprecated flag](https://example.com/test) | `deprecated-flag` | | :warning: deprecated on 2023-08-03 |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) DeprecatedRemoved(t *testing.T) {
+	comment, err := githubFlagComment(e.DeprecatedFlag, []string{}, false, false, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| [deprecated flag](https://example.com/test) | `deprecated-flag` | | :information_source: deprecated on 2023-08-03 |"
 	assert.Equal(t, expected, comment)
 }
 
