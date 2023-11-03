@@ -61,7 +61,7 @@ func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, builder *lflags.Refe
 		// only one for now
 		elementMatcher := matcher.Elements[0]
 		for _, flagKey := range elementMatcher.FindMatches(line) {
-			aliasMatches := matcher.FindAliases(line, flagKey)
+			aliasMatches := elementMatcher.FindAliases(line, flagKey)
 			builder.AddReference(flagKey, op.String(), aliasMatches)
 		}
 		if builder.MaxReferences() {
