@@ -1,8 +1,11 @@
 package flags
 
 import (
+	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 )
 
 type ReferenceBuilder struct {
@@ -25,13 +28,17 @@ func (b *ReferenceBuilder) MaxReferences() bool {
 	return len(b.foundFlags) >= b.max
 }
 
-func (b *ReferenceBuilder) AddReference(flagKey string, op string, aliases []string) {
-	if op == "+" {
+func (b *ReferenceBuilder) AddReference(flagKey string, op utils.Operation, aliases []string) error {
+	switch op {
+	case utils.OperationAdd:
 		b.AddedFlag(flagKey, aliases)
-	} else if op == "-" {
+	case utils.OperationDelete:
 		b.RemovedFlag(flagKey, aliases)
+	default:
+		return fmt.Errorf("invalid operation=%s", op.String())
 	}
-	// ignore
+
+	return nil
 }
 
 func (b *ReferenceBuilder) AddedFlag(flagKey string, aliases []string) {

@@ -7,6 +7,7 @@ import (
 
 	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 	"github.com/launchdarkly/find-code-references-in-pull-request/ignore"
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 )
@@ -53,8 +54,8 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, builder *lflags.ReferenceBuilder) {
 	diffLines := strings.Split(string(hunk.Body), "\n")
 	for _, line := range diffLines {
-		op := operation(line)
-		if op == Equal {
+		op := utils.LineOperation(line)
+		if op == utils.OperationEqual {
 			continue
 		}
 
@@ -62,46 +63,10 @@ func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, builder *lflags.Refe
 		elementMatcher := matcher.Elements[0]
 		for _, flagKey := range elementMatcher.FindMatches(line) {
 			aliasMatches := elementMatcher.FindAliases(line, flagKey)
-			builder.AddReference(flagKey, op.String(), aliasMatches)
+			builder.AddReference(flagKey, op, aliasMatches)
 		}
 		if builder.MaxReferences() {
 			break
 		}
 	}
-}
-
-// Operation defines the operation of a diff item.
-type Operation int
-
-const (
-	// Equal item represents an equals diff.
-	Equal Operation = iota
-	// Add item represents an insert diff.
-	Add
-	// Delete item represents a delete diff.
-	Delete
-)
-
-func operation(row string) Operation {
-	if strings.HasPrefix(row, Add.String()) {
-		return Add
-	}
-	if strings.HasPrefix(row, Delete.String()) {
-		return Delete
-	}
-
-	return Equal
-}
-
-func (o Operation) String() string {
-	switch o {
-	case Add:
-		return "+"
-	case Delete:
-		return "-"
-	case Equal:
-		return ""
-	}
-
-	return ""
 }
