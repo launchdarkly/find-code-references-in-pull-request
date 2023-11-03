@@ -54,13 +54,7 @@ func main() {
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
-	flagsRef := lflags.FlagsRef{
-		FlagsAdded:   make(lflags.FlagAliasMap),
-		FlagsRemoved: make(lflags.FlagAliasMap),
-	}
-
 	builder := lflags.NewReferenceBuilder(config.MaxFlags)
-
 	for _, parsedDiff := range multiFiles {
 		getPath := ldiff.CheckDiff(parsedDiff, config.Workspace)
 		if getPath.Skip {
@@ -70,6 +64,7 @@ func main() {
 			ldiff.ProcessDiffs(matcher, hunk, builder)
 		}
 	}
+	flagsRef := builder.Build()
 
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)
