@@ -4,13 +4,12 @@ import (
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 
-	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 )
 
 // diff contents is the removed contents from files that are in alias configuration
-func GenerateAliases(config *lcr.Config, opts options.Options, flagKeys []string, diffContents aliases.FileContentsMap) (map[string][]string, error) {
-	aliasesByFlagKey, err := aliases.GenerateAliases(flagKeys, opts.Aliases, config.Workspace)
+func GenerateAliases(opts options.Options, flagKeys []string, diffContents aliases.FileContentsMap) (map[string][]string, error) {
+	aliasesByFlagKey, err := aliases.GenerateAliases(flagKeys, opts.Aliases, opts.Dir)
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +17,7 @@ func GenerateAliases(config *lcr.Config, opts options.Options, flagKeys []string
 	filePatternAliases := getFilepatternAliases(opts.Aliases)
 	for _, flag := range flagKeys {
 		for _, alias := range filePatternAliases {
-			aliases, err := aliases.GenerateAliasesFromFilePattern(alias, flag, config.Workspace, diffContents)
+			aliases, err := aliases.GenerateAliasesFromFilePattern(alias, flag, opts.Dir, diffContents)
 			if err != nil {
 				// skip aliases that fail to generate
 				continue
