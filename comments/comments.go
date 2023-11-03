@@ -150,7 +150,7 @@ func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *l
 	for _, flagKey := range removedKeys {
 		flagAliases := flagsRef.FlagsRemoved[flagKey]
 		idx, _ := find(flags, flagKey)
-		_, extinct := flagsRef.FlagsExtinct[flagKey]
+		_, extinct := flagsRef.ExtinctFlags[flagKey]
 		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, extinct, config)
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {

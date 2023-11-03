@@ -9,9 +9,11 @@ import (
 
 func CheckExtinctions(opts options.Options, removedFlags lflags.FlagAliasMap) (map[string]struct{}, error) {
 	flags := make([]string, 0, len(removedFlags))
+	flagMap := make(map[string]struct{}, len(removedFlags))
 
 	for flagKey := range removedFlags {
 		flags = append(flags, flagKey)
+		flagMap[flagKey] = struct{}{}
 	}
 
 	matcher, err := search.GetMatcher(opts, flags, nil)
@@ -19,24 +21,23 @@ func CheckExtinctions(opts options.Options, removedFlags lflags.FlagAliasMap) (m
 		return nil, err
 	}
 
-	referenceHunks, err := lsearch.SearchForRefs(opts.Dir, matcher)
+	references, err := lsearch.SearchForRefs(opts.Dir, matcher)
 	if err != nil {
 		return nil, err
 	}
 
-	foundFlags := make(map[string]struct{}, len(removedFlags))
-	for _, reference := range referenceHunks {
-		for _, hunk := range reference.Hunks {
-			foundFlags[hunk.FlagKey] = struct{}{}
+check:
+	for _, ref := range references {
+		for _, hunk := range ref.Hunks {
+			if _, ok := flagMap[hunk.FlagKey]; ok {
+				delete(flagMap, hunk.FlagKey)
+			}
+			if len(flagMap) == 0 {
+				break check
+			}
 		}
 	}
 
-	extinctFlags := make(map[string]struct{}, len(removedFlags))
-	for flagKey := range removedFlags {
-		if _, ok := foundFlags[flagKey]; !ok {
-			extinctFlags[flagKey] = struct{}{}
-		}
-	}
-
-	return extinctFlags, nil
+	// remaining flags are extinct
+	return flagMap, nil
 }

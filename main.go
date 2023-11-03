@@ -68,9 +68,11 @@ func main() {
 	}
 	flagsRef := builder.Build()
 
-	// Check extinctions
 	extinctFlags, err := extinctions.CheckExtinctions(opts, flagsRef.FlagsRemoved)
-	flagsRef.FlagsExtinct = extinctFlags
+	if err != nil {
+		gha.LogWarning("Error checking for extinct flags")
+	}
+	flagsRef.ExtinctFlags = extinctFlags
 
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)
