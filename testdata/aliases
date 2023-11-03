@@ -1,1 +1,2 @@
 const myRandomAlias = useFlagValue('beta-ui')
+const showLiveTiles = useFlagValue('show-widgets')
