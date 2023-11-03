@@ -7,7 +7,7 @@ import (
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 )
 
-// diff contents is the removed contents from files that are in alias configuration
+// Generate aliases, making sure to identify aliases in the removed diff contents
 func GenerateAliases(opts options.Options, flagKeys []string, diffContents aliases.FileContentsMap) (map[string][]string, error) {
 	aliasesByFlagKey, err := aliases.GenerateAliases(flagKeys, opts.Aliases, opts.Dir)
 	if err != nil {
