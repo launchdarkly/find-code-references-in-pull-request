@@ -7,13 +7,6 @@ type FlagsRef struct {
 	FlagsRemoved FlagAliasMap
 }
 
-func NewFlagsRef() FlagsRef {
-	return FlagsRef{
-		FlagsAdded:   make(FlagAliasMap),
-		FlagsRemoved: make(FlagAliasMap),
-	}
-}
-
 func (fr FlagsRef) Found() bool {
 	return fr.Count() > 0
 }
