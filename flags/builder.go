@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
+	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/util/diff_util"
 )
 
 type ReferenceBuilder struct {
@@ -28,11 +28,11 @@ func (b *ReferenceBuilder) MaxReferences() bool {
 	return len(b.foundFlags) >= b.max
 }
 
-func (b *ReferenceBuilder) AddReference(flagKey string, op utils.Operation, aliases []string) error {
+func (b *ReferenceBuilder) AddReference(flagKey string, op diff_util.Operation, aliases []string) error {
 	switch op {
-	case utils.OperationAdd:
+	case diff_util.OperationAdd:
 		b.AddedFlag(flagKey, aliases)
-	case utils.OperationDelete:
+	case diff_util.OperationDelete:
 		b.RemovedFlag(flagKey, aliases)
 	default:
 		return fmt.Errorf("invalid operation=%s", op.String())

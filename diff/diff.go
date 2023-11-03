@@ -7,7 +7,7 @@ import (
 
 	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 	"github.com/launchdarkly/find-code-references-in-pull-request/ignore"
-	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
+	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/util/diff_util"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 )
@@ -54,8 +54,8 @@ func CheckDiff(parsedDiff *diff.FileDiff, workspace string) *DiffPaths {
 func ProcessDiffs(matcher lsearch.Matcher, hunk *diff.Hunk, builder *lflags.ReferenceBuilder) {
 	diffLines := strings.Split(string(hunk.Body), "\n")
 	for _, line := range diffLines {
-		op := utils.LineOperation(line)
-		if op == utils.OperationEqual {
+		op := diff_util.LineOperation(line)
+		if op == diff_util.OperationEqual {
 			continue
 		}
 
