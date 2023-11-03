@@ -7,37 +7,24 @@ import (
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 )
 
-func CheckExtinctions(opts options.Options, removedFlags lflags.FlagAliasMap) (map[string]struct{}, error) {
-	flags := make([]string, 0, len(removedFlags))
-	flagMap := make(map[string]struct{}, len(removedFlags))
-
-	for flagKey := range removedFlags {
-		flags = append(flags, flagKey)
-		flagMap[flagKey] = struct{}{}
-	}
+func CheckExtinctions(opts options.Options, builder *lflags.ReferenceBuilder) error {
+	flags := make([]string, 0, len(builder.RemovedFlagKeys()))
 
 	matcher, err := search.GetMatcher(opts, flags, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	references, err := lsearch.SearchForRefs(opts.Dir, matcher)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-check:
 	for _, ref := range references {
 		for _, hunk := range ref.Hunks {
-			if _, ok := flagMap[hunk.FlagKey]; ok {
-				delete(flagMap, hunk.FlagKey)
-			}
-			if len(flagMap) == 0 {
-				break check
-			}
+			builder.ExistingFlag(hunk.FlagKey)
 		}
 	}
 
-	// remaining flags are extinct
-	return flagMap, nil
+	return nil
 }

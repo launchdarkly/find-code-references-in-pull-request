@@ -66,13 +66,11 @@ func main() {
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
-	flagsRef := builder.Build()
 
-	extinctFlags, err := extinctions.CheckExtinctions(opts, flagsRef.FlagsRemoved)
-	if err != nil {
+	if err := extinctions.CheckExtinctions(opts, builder); err != nil {
 		gha.LogWarning("Error checking for extinct flags")
 	}
-	flagsRef.ExtinctFlags = extinctFlags
+	flagsRef := builder.Build()
 
 	// Add comment
 	existingComment := checkExistingComments(event, config, ctx)

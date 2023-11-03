@@ -9,18 +9,20 @@ import (
 )
 
 type ReferenceBuilder struct {
-	max          int // maximum number of flags to find
-	flagsAdded   map[string][]string
-	flagsRemoved map[string][]string
-	foundFlags   map[string]struct{}
+	max           int // maximum number of flags to find
+	flagsAdded    map[string][]string
+	flagsRemoved  map[string][]string
+	existingFlags map[string]struct{} // TODO rename this
+	foundFlags    map[string]struct{}
 }
 
 func NewReferenceBuilder(max int) *ReferenceBuilder {
 	return &ReferenceBuilder{
-		flagsAdded:   make(map[string][]string),
-		flagsRemoved: make(map[string][]string),
-		foundFlags:   make(map[string]struct{}),
-		max:          max,
+		flagsAdded:    make(map[string][]string),
+		flagsRemoved:  make(map[string][]string),
+		foundFlags:    make(map[string]struct{}),
+		existingFlags: make(map[string]struct{}),
+		max:           max,
 	}
 }
 
@@ -41,6 +43,11 @@ func (b *ReferenceBuilder) AddReference(flagKey string, op diff_util.Operation, 
 	return nil
 }
 
+// TODO rename
+func (b *ReferenceBuilder) ExistingFlag(flagKey string) {
+	b.existingFlags[flagKey] = struct{}{}
+}
+
 func (b *ReferenceBuilder) AddedFlag(flagKey string, aliases []string) {
 	b.foundFlags[flagKey] = struct{}{}
 	if _, ok := b.flagsAdded[flagKey]; !ok {
@@ -57,9 +64,18 @@ func (b *ReferenceBuilder) RemovedFlag(flagKey string, aliases []string) {
 	b.flagsRemoved[flagKey] = append(b.flagsRemoved[flagKey], aliases...)
 }
 
+func (b *ReferenceBuilder) RemovedFlagKeys() []string {
+	keys := make([]string, 0, len(b.flagsRemoved))
+	for k := range b.flagsRemoved {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 func (b *ReferenceBuilder) Build() FlagsRef {
 	added := make(map[string][]string, len(b.flagsAdded))
 	removed := make(map[string][]string, len(b.flagsRemoved))
+	extinctions := make(map[string]struct{}, len(b.flagsRemoved))
 
 	for flagKey := range b.foundFlags {
 		if aliases, ok := b.flagsAdded[flagKey]; ok {
@@ -73,12 +89,16 @@ func (b *ReferenceBuilder) Build() FlagsRef {
 			aliases := uniqueStrs(aliases)
 			sort.Strings(aliases)
 			removed[flagKey] = aliases
+			if _, ok := b.existingFlags[flagKey]; !ok {
+				extinctions[flagKey] = struct{}{}
+			}
 		}
 	}
 
 	return FlagsRef{
 		FlagsAdded:   added,
 		FlagsRemoved: removed,
+		ExtinctFlags: extinctions,
 	}
 }
 
