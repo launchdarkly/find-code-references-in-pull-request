@@ -19,15 +19,15 @@ func CheckExtinctions(opts options.Options, removedFlags lflags.FlagAliasMap) (m
 		return nil, err
 	}
 
-	hunksRep, err := lsearch.SearchForRefs(opts.Dir, matcher)
+	referenceHunks, err := lsearch.SearchForRefs(opts.Dir, matcher)
 	if err != nil {
 		return nil, err
 	}
 
 	foundFlags := make(map[string]struct{}, len(removedFlags))
-	for _, hunk := range hunksRep {
-		for _, h := range hunk.Hunks {
-			foundFlags[h.FlagKey] = struct{}{}
+	for _, reference := range referenceHunks {
+		for _, hunk := range reference.Hunks {
+			foundFlags[hunk.FlagKey] = struct{}{}
 		}
 	}
 
