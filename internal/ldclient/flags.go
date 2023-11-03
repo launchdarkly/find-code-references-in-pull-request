@@ -9,6 +9,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
+	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/pkg/errors"
 )
 
@@ -19,7 +20,7 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 	params.Add("env", config.LdEnvironment)
 	activeFlags, err := client.getFlags(config.LdProject, params)
 	if err != nil {
-		return []ldapi.FeatureFlag{}, err
+		return nil, err
 	}
 
 	flags := make([]ldapi.FeatureFlag, 0, len(activeFlags))
@@ -29,9 +30,38 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 		params.Add("filter", "state:archived")
 		archivedFlags, err := client.getFlags(config.LdProject, params)
 		if err != nil {
-			return []ldapi.FeatureFlag{}, err
+			return nil, err
 		}
 		flags = append(flags, archivedFlags...)
+	}
+
+	return flags, nil
+}
+
+func GetMultiProjectFlags(config *lcr.Config, opts options.Options) (map[string][]ldapi.FeatureFlag, error) {
+	client := NewLDClient(config.LdInstance, config.ApiToken)
+
+	flags := make(map[string][]ldapi.FeatureFlag, len(opts.Projects))
+
+	for _, project := range opts.Projects {
+		params := url.Values{}
+		params.Add("env", config.LdEnvironment) // TODO figure out how to handle for multi-project
+		activeFlags, err := client.getFlags(project.Key, params)
+		if err != nil {
+			return nil, err
+		}
+
+		projectFlags := activeFlags
+
+		if config.IncludeArchivedFlags {
+			params.Add("filter", "state:archived")
+			archivedFlags, err := client.getFlags(config.LdProject, params)
+			if err != nil {
+				return nil, err
+			}
+			projectFlags = append(projectFlags, archivedFlags...)
+		}
+		flags[project.Key] = projectFlags
 	}
 
 	return flags, nil
