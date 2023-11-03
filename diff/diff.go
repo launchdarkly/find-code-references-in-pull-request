@@ -99,6 +99,8 @@ func (o Operation) String() string {
 		return "+"
 	case Delete:
 		return "-"
+	case Equal:
+		return ""
 	}
 
 	return ""
