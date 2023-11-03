@@ -17,6 +17,7 @@ func NewReferenceBuilder(max int) *ReferenceBuilder {
 		flagsAdded:   make(map[string][]string),
 		flagsRemoved: make(map[string][]string),
 		foundFlags:   make(map[string]struct{}),
+		max:          max,
 	}
 }
 

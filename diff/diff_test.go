@@ -111,7 +111,7 @@ func TestCheckDiff(t *testing.T) {
 	}
 }
 
-func TestProcessDiffs(t *testing.T) {
+func TestProcessDiffs_BuildReferences(t *testing.T) {
 	cases := []struct {
 		name       string
 		sampleBody string
@@ -172,7 +172,7 @@ func TestProcessDiffs(t *testing.T) {
 			name: "modified flag",
 			expected: lflags.FlagsRef{
 				FlagsAdded:   lflags.FlagAliasMap{"example-flag": []string{}},
-				FlagsRemoved: lflags.FlagAliasMap{"example-flag": []string{}},
+				FlagsRemoved: lflags.FlagAliasMap{},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
