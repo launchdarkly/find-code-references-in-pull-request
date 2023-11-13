@@ -41,7 +41,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 	commentTemplate := Comment{
 		Flag:       flag,
 		Added:      added,
-		Extinct:    extinct,
+		Extinct:    config.CheckExtinctions && extinct,
 		Aliases:    aliases,
 		Primary:    flag.Environments[config.LdEnvironment],
 		LDInstance: config.LdInstance,
