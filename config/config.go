@@ -36,8 +36,13 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		fmt.Printf("::add-mask::%s\n", repoToken)
 	}
 
-	// set config
-	var config Config
+	// init config with defaults
+	config := Config{
+		MaxFlags:             5,
+		IncludeArchivedFlags: true,
+		CheckExtinctions:     true,
+	}
+
 	config.LdProject = os.Getenv("INPUT_PROJECT-KEY")
 	if config.LdProject == "" {
 		return nil, errors.New("`project-key` is required")
@@ -75,13 +80,11 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		config.PlaceholderComment = placholderComment
 	}
 
-	config.IncludeArchivedFlags = true
 	if includeArchivedFlags, err := strconv.ParseBool(os.Getenv("INPUT_INCLUDE-ARCHIVED-FLAGS")); err == nil {
 		// ignore error - default is true
 		config.IncludeArchivedFlags = includeArchivedFlags
 	}
 
-	config.CheckExtinctions = true
 	if checkExtinctions, err := strconv.ParseBool(os.Getenv("INPUT_CHECK-EXTINCTIONS")); err == nil {
 		// ignore error - default is true
 		config.CheckExtinctions = checkExtinctions
