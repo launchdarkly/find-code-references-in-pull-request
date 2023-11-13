@@ -52,16 +52,13 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 		commentTemplate.ArchivedAt = time.UnixMilli(*flag.ArchivedDate)
 	}
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| {{- if eq .Flag.Archived true}}{{- if eq .Added true}} :warning:{{- end}}{{- end}}` +
-		`{{- if eq .Extinct true}} :skull:{{- end}}` +
-		` [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
-		`{{- if eq .Flag.Archived true}}` +
-		` (archived on {{.ArchivedAt | date "2006-01-02"}})` +
-		`{{- end}} | ` +
+	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` +
 		"`" + `{{.Flag.Key}}` + "` |" +
 		`{{- if ne (len .Aliases) 0}}` +
 		`{{range $i, $e := .Aliases }}` + `{{if $i}},{{end}}` + " `" + `{{$e}}` + "`" + `{{end}}` +
-		`{{- end}} |`
+		`{{- end}} | ` +
+		`{{- if eq .Extinct true}} :white_check_mark: all references removed{{- end}} ` +
+		`{{- if eq .Flag.Archived true}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}}{{- end}} |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
@@ -89,7 +86,7 @@ type FlagComments struct {
 }
 
 func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, existingComment *github.IssueComment) string {
-	tableHeader := "| Name | Key | Aliases found |\n| --- | --- | --- |"
+	tableHeader := "| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |"
 
 	var commentStr []string
 	commentStr = append(commentStr, "## LaunchDarkly flag references")
