@@ -22,8 +22,9 @@ type testFlagEnv struct {
 func newTestAccEnv() *testFlagEnv {
 	flag := createFlag("example-flag")
 	config := config.Config{
-		LdEnvironment: "production",
-		LdInstance:    "https://example.com/",
+		LdEnvironment:    "production",
+		LdInstance:       "https://example.com/",
+		CheckExtinctions: true,
 	}
 
 	archivedFlag := createFlag("archived-flag")
