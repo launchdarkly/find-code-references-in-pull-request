@@ -6,7 +6,7 @@ import (
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/find-code-references-in-pull-request/config"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,8 +22,9 @@ type testFlagEnv struct {
 func newTestAccEnv() *testFlagEnv {
 	flag := createFlag("example-flag")
 	config := config.Config{
-		LdEnvironment: "production",
-		LdInstance:    "https://example.com/",
+		LdEnvironment:    "production",
+		LdInstance:       "https://example.com/",
+		CheckExtinctions: true,
 	}
 
 	archivedFlag := createFlag("archived-flag")
@@ -61,7 +62,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 
 type testCommentBuilder struct {
 	Comments FlagComments
-	FlagsRef lflags.FlagsRef
+	FlagsRef refs.ReferenceSummary
 }
 
 func newCommentBuilderAccEnv() *testCommentBuilder {
@@ -69,9 +70,9 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 		CommentsAdded:   []string{},
 		CommentsRemoved: []string{},
 	}
-	flagsAdded := make(lflags.FlagAliasMap)
-	flagsRemoved := make(lflags.FlagAliasMap)
-	flagsRef := lflags.FlagsRef{
+	flagsAdded := make(refs.FlagAliasMap)
+	flagsRemoved := make(refs.FlagAliasMap)
+	flagsRef := refs.ReferenceSummary{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -84,16 +85,16 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 
 type testProcessor struct {
 	Flags    []ldapi.FeatureFlag
-	FlagsRef lflags.FlagsRef
+	FlagsRef refs.ReferenceSummary
 	Config   config.Config
 }
 
 func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flags := []ldapi.FeatureFlag{flag}
-	flagsAdded := make(lflags.FlagAliasMap)
-	flagsRemoved := make(lflags.FlagAliasMap)
-	flagsRef := lflags.FlagsRef{
+	flagsAdded := make(refs.FlagAliasMap)
+	flagsRemoved := make(refs.FlagAliasMap)
+	flagsRef := refs.ReferenceSummary{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -113,9 +114,9 @@ func newProcessMultipleFlagsFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flag2 := createFlag("second-flag")
 	flags := []ldapi.FeatureFlag{flag, flag2}
-	flagsAdded := make(lflags.FlagAliasMap)
-	flagsRemoved := make(lflags.FlagAliasMap)
-	flagsRef := lflags.FlagsRef{
+	flagsAdded := make(refs.FlagAliasMap)
+	flagsRemoved := make(refs.FlagAliasMap)
+	flagsRef := refs.ReferenceSummary{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -137,6 +138,8 @@ func TestGithubFlagComment(t *testing.T) {
 	t.Run("Flag with alias", acceptanceTestEnv.Alias)
 	t.Run("Archived flag added", acceptanceTestEnv.ArchivedAdded)
 	t.Run("Archived flag removed", acceptanceTestEnv.ArchivedRemoved)
+	t.Run("Extinct flag", acceptanceTestEnv.ExtinctFlag)
+	t.Run("Extinct and Archived flag", acceptanceTestEnv.ExtinctAndArchivedFlag)
 }
 
 func TestProcessFlags(t *testing.T) {
@@ -164,34 +167,50 @@ func TestBuildFlagComment(t *testing.T) {
 }
 
 func (e *testFlagEnv) NoAliases(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{}, true, &e.Config)
+	comment, err := githubFlagComment(e.Flag, []string{}, true, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [example flag](https://example.com/test) | `example-flag` | |"
+	expected := "| [example flag](https://example.com/test) | `example-flag` | | |"
 	assert.Equal(t, expected, comment)
 }
 
 func (e *testFlagEnv) Alias(t *testing.T) {
-	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, true, &e.Config)
+	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, true, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [example flag](https://example.com/test) | `example-flag` | `exampleFlag`, `ExampleFlag` |"
+	expected := "| [example flag](https://example.com/test) | `example-flag` | `exampleFlag`, `ExampleFlag` | |"
 	assert.Equal(t, expected, comment)
 }
 
 func (e *testFlagEnv) ArchivedAdded(t *testing.T) {
-	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, true, &e.Config)
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, true, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| :warning: [archived flag](https://example.com/test) (archived on 2023-08-03) | `archived-flag` | |"
+	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :warning: archived on 2023-08-03 |"
 	assert.Equal(t, expected, comment)
 }
 
 func (e *testFlagEnv) ArchivedRemoved(t *testing.T) {
-	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, false, &e.Config)
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, false, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [archived flag](https://example.com/test) (archived on 2023-08-03) | `archived-flag` | |"
+	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :information_source: archived on 2023-08-03 |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) ExtinctFlag(t *testing.T) {
+	comment, err := githubFlagComment(e.Flag, []string{}, false, true, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| [example flag](https://example.com/test) | `example-flag` | | :white_check_mark: all references removed |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) ExtinctAndArchivedFlag(t *testing.T) {
+	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, false, true, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :white_check_mark: all references removed<br> :information_source: archived on 2023-08-03 |"
 	assert.Equal(t, expected, comment)
 }
 
@@ -200,7 +219,7 @@ func (e *testCommentBuilder) AddedOnly(t *testing.T) {
 	e.Comments.CommentsAdded = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :mag: 1 flag added or modified\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n <!-- flags:example-flag -->\n <!-- comment hash: c449ce18623b2038f1ae2f02c46869cd -->"
+	expected := "## LaunchDarkly flag references\n### :mag: 1 flag added or modified\n\n| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |\ncomment1\ncomment2\n\n\n <!-- flags:example-flag -->\n <!-- comment hash: 58e2fd003e576dfd9e59d82b7fb20ca4 -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -210,7 +229,7 @@ func (e *testCommentBuilder) RemovedOnly(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :x: 2 flags removed\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag,sample-flag -->\n <!-- comment hash: 9ab2cb5c0fcfcce9002cf0935f5f4ad5 -->"
+	expected := "## LaunchDarkly flag references\n### :x: 2 flags removed\n\n| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag,sample-flag -->\n <!-- comment hash: acdd50c762ddfa84720067a3b272a032 -->"
 	assert.Equal(t, expected, comment)
 }
 
@@ -221,7 +240,7 @@ func (e *testCommentBuilder) AddedAndRemoved(t *testing.T) {
 	e.Comments.CommentsRemoved = []string{"comment1", "comment2"}
 	comment := BuildFlagComment(e.Comments, e.FlagsRef, nil)
 
-	expected := "## LaunchDarkly flag references\n### :mag: 1 flag added or modified\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n\n\n### :x: 1 flag removed\n\n| Name | Key | Aliases found |\n| --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: 7e6314b3b27a97ed6f8979304650af54 -->"
+	expected := "## LaunchDarkly flag references\n### :mag: 1 flag added or modified\n\n| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |\ncomment1\ncomment2\n\n\n### :x: 1 flag removed\n\n| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |\ncomment1\ncomment2\n <!-- flags:example-flag -->\n <!-- comment hash: 4f891355662b901597e6563a11c15332 -->"
 
 	assert.Equal(t, expected, comment)
 
@@ -231,7 +250,7 @@ func (e *testProcessor) Basic(t *testing.T) {
 	e.FlagsRef.FlagsAdded["example-flag"] = []string{}
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
-		CommentsAdded: []string{"| [example flag](https://example.com/test) | `example-flag` | |"},
+		CommentsAdded: []string{"| [example flag](https://example.com/test) | `example-flag` | | |"},
 	}
 	assert.Equal(t, expected, processor)
 }
@@ -242,8 +261,8 @@ func (e *testProcessor) Multi(t *testing.T) {
 	processor := ProcessFlags(e.FlagsRef, e.Flags, &e.Config)
 	expected := FlagComments{
 		CommentsAdded: []string{
-			"| [example flag](https://example.com/test) | `example-flag` | |",
-			"| [second flag](https://example.com/test) | `second-flag` | |",
+			"| [example flag](https://example.com/test) | `example-flag` | | |",
+			"| [second flag](https://example.com/test) | `second-flag` | | |",
 		},
 	}
 	assert.Equal(t, expected, processor)

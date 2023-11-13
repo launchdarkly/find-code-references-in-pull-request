@@ -5,7 +5,7 @@ import (
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/find-code-references-in-pull-request/config"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +38,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 type testProcessor struct {
 	Flags   ldapi.FeatureFlags
 	Config  config.Config
-	Builder *lflags.ReferenceBuilder
+	Builder *refs.ReferenceSummaryBuilder
 }
 
 func (t testProcessor) flagKeys() []string {
@@ -55,7 +55,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
 	flags.Items = append(flags.Items, flag2)
-	builder := lflags.NewReferenceBuilder(5)
+	builder := refs.NewReferenceSummaryBuilder(5, false)
 	config := config.Config{
 		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
@@ -117,15 +117,15 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 	cases := []struct {
 		name       string
 		sampleBody string
-		expected   lflags.FlagsRef
+		expected   refs.ReferenceSummary
 		aliases    map[string][]string
 		delimiters string
 	}{
 		{
 			name: "add flag",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{"example-flag": []string{}},
-				FlagsRemoved: lflags.FlagAliasMap{},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{}},
+				FlagsRemoved: refs.FlagAliasMap{},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -139,9 +139,9 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "remove flag",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{},
-				FlagsRemoved: lflags.FlagAliasMap{"example-flag": []string{}},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{},
+				FlagsRemoved: refs.FlagAliasMap{"example-flag": []string{}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -155,9 +155,9 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "add and remove flag",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{"sample-flag": []string{}},
-				FlagsRemoved: lflags.FlagAliasMap{"example-flag": []string{}},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{"sample-flag": []string{}},
+				FlagsRemoved: refs.FlagAliasMap{"example-flag": []string{}},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -172,9 +172,9 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "modified flag",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{"example-flag": []string{}},
-				FlagsRemoved: lflags.FlagAliasMap{},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{}},
+				FlagsRemoved: refs.FlagAliasMap{},
 			},
 			aliases: map[string][]string{},
 			sampleBody: `
@@ -190,9 +190,9 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "alias flag",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{"example-flag": []string{"exampleFlag"}},
-				FlagsRemoved: lflags.FlagAliasMap{},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{"exampleFlag"}},
+				FlagsRemoved: refs.FlagAliasMap{},
 			},
 			aliases: map[string][]string{"example-flag": {"exampleFlag"}},
 			sampleBody: `
@@ -205,9 +205,9 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "require delimiters - no matches",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{},
-				FlagsRemoved: lflags.FlagAliasMap{},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{},
+				FlagsRemoved: refs.FlagAliasMap{},
 			},
 			delimiters: "'\"",
 			aliases:    map[string][]string{},
@@ -220,9 +220,9 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "require delimiters - match",
-			expected: lflags.FlagsRef{
-				FlagsAdded:   lflags.FlagAliasMap{"example-flag": []string{}},
-				FlagsRemoved: lflags.FlagAliasMap{},
+			expected: refs.ReferenceSummary{
+				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{}},
+				FlagsRemoved: refs.FlagAliasMap{},
 			},
 			delimiters: "'\"",
 			aliases:    map[string][]string{},

@@ -101,6 +101,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | include-archived-flags | Scan for archived flags | `false` | true |
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
+| check-extinctions | Check if removed flags still exist in codebase | `false` | true |
 <!-- action-docs-inputs -->
 
 <!-- action-docs-outputs -->
@@ -117,4 +118,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | any-changed | Returns true if any flags have been changed in PR |
 | changed-flags | Space-separated list of flags changed in PR |
 | changed-flags-count | Number of flags changed in PR |
+| any-extinct | Returns true if any flags have been removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true. |
+| extinct-flags | Space-separated list of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true. |
+| extinct-flags-count | Number of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true. |
 <!-- action-docs-outputs -->

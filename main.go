@@ -16,9 +16,10 @@ import (
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	ldiff "github.com/launchdarkly/find-code-references-in-pull-request/diff"
 	e "github.com/launchdarkly/find-code-references-in-pull-request/errors"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/extinctions"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	ldclient "github.com/launchdarkly/find-code-references-in-pull-request/internal/ldclient"
+	references "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	"github.com/launchdarkly/find-code-references-in-pull-request/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -48,17 +49,29 @@ func main() {
 	opts, err := getOptions(config)
 	failExit(err)
 
+	flagKeys := make([]string, 0, len(flags))
+	for _, flag := range flags {
+		flagKeys = append(flagKeys, flag.Key)
+	}
+
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
 	diffMap := ldiff.PreprocessDiffs(opts.Dir, multiFiles)
 
-	matcher, err := search.GetMatcher(opts, flags, diffMap)
+	matcher, err := search.GetMatcher(opts, flagKeys, diffMap)
 	failExit(err)
 
-	builder := lflags.NewReferenceBuilder(config.MaxFlags)
+	builder := references.NewReferenceSummaryBuilder(config.MaxFlags, config.CheckExtinctions)
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
+	}
+
+	if config.CheckExtinctions {
+		if err := extinctions.CheckExtinctions(opts, builder); err != nil {
+			gha.LogWarning("Error checking for extinct flags")
+			log.Println(err)
+		}
 	}
 	flagsRef := builder.Build()
 
@@ -75,7 +88,7 @@ func main() {
 	}
 
 	// Set outputs
-	setOutputs(flagsRef)
+	setOutputs(config, flagsRef)
 
 	failExit(err)
 }
@@ -95,13 +108,13 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	return nil
 }
 
-func postGithubComment(ctx context.Context, flagsRef lflags.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
+func postGithubComment(ctx context.Context, flagsRef references.ReferenceSummary, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
 	var existingCommentId int64
 	if existingComment != nil {
 		existingCommentId = existingComment.GetID()
 	}
 
-	if flagsRef.Found() {
+	if flagsRef.AnyFound() {
 		if existingCommentId > 0 {
 			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo, existingCommentId, &comment)
 			return err
@@ -161,22 +174,21 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 	return options.GetOptions()
 }
 
-func setOutputs(flagsRef lflags.FlagsRef) {
-	flagsModified := make([]string, 0, len(flagsRef.FlagsAdded))
-	for k := range flagsRef.FlagsAdded {
-		flagsModified = append(flagsModified, k)
-	}
+func setOutputs(config *lcr.Config, flagsRef references.ReferenceSummary) {
+	flagsModified := flagsRef.AddedKeys()
 	setOutputsForChangedFlags("modified", flagsModified)
 
-	flagsRemoved := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for k := range flagsRef.FlagsRemoved {
-		flagsRemoved = append(flagsRemoved, k)
+	flagsRemoved := flagsRef.RemovedKeys()
+	setOutputsForChangedFlags("removed", flagsRemoved)
+
+	if config.CheckExtinctions {
+		setOutputsForChangedFlags("extinct", flagsRef.ExtinctKeys())
 	}
-	setOutputsForChangedFlags("removed", flagsModified)
 
 	allChangedFlags := make([]string, 0, len(flagsModified)+len(flagsRemoved))
 	allChangedFlags = append(allChangedFlags, flagsModified...)
 	allChangedFlags = append(allChangedFlags, flagsRemoved...)
+	sort.Strings(allChangedFlags)
 	setOutputsForChangedFlags("changed", allChangedFlags)
 }
 

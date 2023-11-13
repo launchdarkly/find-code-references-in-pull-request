@@ -17,15 +17,15 @@ import (
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v13"
-	"github.com/launchdarkly/find-code-references-in-pull-request/config"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
 type Comment struct {
 	Flag       ldapi.FeatureFlag
 	ArchivedAt time.Time
 	Added      bool
+	Extinct    bool
 	Aliases    []string
 	ChangeType string
 	Primary    ldapi.FeatureFlagConfig
@@ -37,10 +37,11 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added bool, config *config.Config) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *lcr.Config) (string, error) {
 	commentTemplate := Comment{
 		Flag:       flag,
 		Added:      added,
+		Extinct:    config.CheckExtinctions && extinct,
 		Aliases:    aliases,
 		Primary:    flag.Environments[config.LdEnvironment],
 		LDInstance: config.LdInstance,
@@ -50,15 +51,13 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added bool, con
 		commentTemplate.ArchivedAt = time.UnixMilli(*flag.ArchivedDate)
 	}
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| {{- if eq .Flag.Archived true}}{{- if eq .Added true}} :warning:{{- end}}{{- end}}` +
-		` [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}})` +
-		`{{- if eq .Flag.Archived true}}` +
-		` (archived on {{.ArchivedAt | date "2006-01-02"}})` +
-		`{{- end}} | ` +
+	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` +
 		"`" + `{{.Flag.Key}}` + "` |" +
 		`{{- if ne (len .Aliases) 0}}` +
 		`{{range $i, $e := .Aliases }}` + `{{if $i}},{{end}}` + " `" + `{{$e}}` + "`" + `{{end}}` +
-		`{{- end}} |`
+		`{{- end}} | ` +
+		`{{- if eq .Extinct true}} :white_check_mark: all references removed{{- end}} ` +
+		`{{- if eq .Flag.Archived true}}{{- if eq .Extinct true}}<br>{{end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}}{{- end}} |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
@@ -85,8 +84,8 @@ type FlagComments struct {
 	CommentsRemoved []string
 }
 
-func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, existingComment *github.IssueComment) string {
-	tableHeader := "| Name | Key | Aliases found |\n| --- | --- | --- |"
+func BuildFlagComment(buildComment FlagComments, flagsRef refs.ReferenceSummary, existingComment *github.IssueComment) string {
+	tableHeader := "| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |"
 
 	var commentStr []string
 	commentStr = append(commentStr, "## LaunchDarkly flag references")
@@ -122,36 +121,32 @@ func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, exist
 	return postedComments
 }
 
-func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
-	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
-	for key := range flagsRef.FlagsAdded {
-		addedKeys = append(addedKeys, key)
-	}
-	// sort keys so hashing can work for checking if comment already exists
-	sort.Strings(addedKeys)
-	for _, flagKey := range addedKeys {
+
+	for _, flagKey := range flagsRef.AddedKeys() {
 		flagAliases := flagsRef.FlagsAdded[flagKey]
 		idx, _ := find(flags, flagKey)
-		createComment, err := githubFlagComment(flags[idx], flagAliases, true, config)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
+		createComment, err := githubFlagComment(flags[idx], flagAliases, true, false, config)
 		if err != nil {
 			log.Println(err)
 		}
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 	}
-	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for key := range flagsRef.FlagsRemoved {
-		removedKeys = append(removedKeys, key)
-	}
-	sort.Strings(removedKeys)
-	for _, flagKey := range removedKeys {
+
+	for _, flagKey := range flagsRef.RemovedKeys() {
 		flagAliases := flagsRef.FlagsRemoved[flagKey]
 		idx, _ := find(flags, flagKey)
-		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, config)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
+		extinct := false
+		if flagsRef.ExtinctFlags != nil {
+			_, e := flagsRef.ExtinctFlags[flagKey]
+			extinct = e
+		}
+		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, extinct, config)
 		if err != nil {
 			log.Println(err)
 		}
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 	}
 
 	return buildComment
@@ -166,7 +161,7 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	return -1, false
 }
 
-func uniqueFlagKeys(a, b lflags.FlagAliasMap) []string {
+func uniqueFlagKeys(a, b refs.FlagAliasMap) []string {
 	maxKeys := len(a) + len(b)
 	allKeys := make([]string, 0, maxKeys)
 	for k := range a {
