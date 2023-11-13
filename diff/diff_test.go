@@ -67,7 +67,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	}
 }
 
-func TestCheckDiff(t *testing.T) {
+func Test_checkDiffFile(t *testing.T) {
 	cases := []struct {
 		name     string
 		fileName string
@@ -106,7 +106,8 @@ func TestCheckDiff(t *testing.T) {
 				Hunks:    []*diff.Hunk{hunk},
 			}
 			filePath, ignore := checkDiffFile(&diff, "../testdata")
-			assert.Equal(t, tc.fileName, filePath)
+			expectedFilePath := "../testdata/" + tc.fileName
+			assert.Equal(t, expectedFilePath, filePath)
 			assert.Equal(t, tc.skip, ignore)
 		})
 	}
