@@ -45,7 +45,9 @@ func (b *ReferenceSummaryBuilder) AddReference(flagKey string, op diff_util.Oper
 
 // Flag found in HEAD ref
 func (b *ReferenceSummaryBuilder) ExistingFlag(flagKey string) {
-	b.existingFlags[flagKey] = struct{}{}
+	if _, ok := b.existingFlags[flagKey]; !ok {
+		b.existingFlags[flagKey] = struct{}{}
+	}
 }
 
 // Flag and aliases found in added diff
