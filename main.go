@@ -67,9 +67,11 @@ func main() {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
 
-	if err := extinctions.CheckExtinctions(opts, builder); err != nil {
-		gha.LogWarning("Error checking for extinct flags")
-		log.Println(err)
+	if config.CheckExtinctions {
+		if err := extinctions.CheckExtinctions(opts, builder); err != nil {
+			gha.LogWarning("Error checking for extinct flags")
+			log.Println(err)
+		}
 	}
 	flagsRef := builder.Build()
 
