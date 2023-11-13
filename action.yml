@@ -34,7 +34,7 @@ inputs:
     required: false
     default: 'true'
   max-flags:
-    description: Maximum number of flags to find per PR
+    description: Maximum number of flags to find per PR. Set to `-1` to find all changed flags.
     required: false
     default: '5'
   base-uri:

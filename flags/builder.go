@@ -25,7 +25,10 @@ func NewReferenceBuilder(max int) *ReferenceBuilder {
 }
 
 func (b *ReferenceBuilder) MaxReferences() bool {
-	return len(b.foundFlags) >= b.max
+	if b.max > 0 {
+		return len(b.foundFlags) >= b.max
+	}
+	return false
 }
 
 func (b *ReferenceBuilder) AddReference(flagKey string, op diff_util.Operation, aliases []string) error {

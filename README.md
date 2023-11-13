@@ -99,7 +99,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | environment-key | LaunchDarkly environment key for creating flag links | `false` | production |
 | placeholder-comment | Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated. | `false` | false |
 | include-archived-flags | Scan for archived flags | `false` | true |
-| max-flags | Maximum number of flags to find per PR | `false` | 5 |
+| max-flags | Maximum number of flags to find per PR. Set to `-1` to find all changed flags. | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
 <!-- action-docs-inputs -->
 

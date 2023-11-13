@@ -68,6 +68,9 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		return nil, err
 	}
 	config.MaxFlags = int(maxFlags)
+	if config.MaxFlags == 0 || config.MaxFlags < -1 {
+		return nil, errors.New("`max-flags` must be a positive integer or -1 to search for all changed flags")
+	}
 
 	if placholderComment, err := strconv.ParseBool(os.Getenv("INPUT_PLACEHOLDER-COMMENT")); err == nil {
 		// ignore error - default is false
