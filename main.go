@@ -16,10 +16,10 @@ import (
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	ldiff "github.com/launchdarkly/find-code-references-in-pull-request/diff"
 	e "github.com/launchdarkly/find-code-references-in-pull-request/errors"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/extinctions"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	ldclient "github.com/launchdarkly/find-code-references-in-pull-request/internal/ldclient"
+	references "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	"github.com/launchdarkly/find-code-references-in-pull-request/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	"github.com/sourcegraph/go-diff/diff"
@@ -62,7 +62,7 @@ func main() {
 	matcher, err := search.GetMatcher(opts, flagKeys, diffMap)
 	failExit(err)
 
-	builder := lflags.NewReferenceBuilder(config.MaxFlags)
+	builder := references.NewReferenceBuilder(config.MaxFlags)
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
@@ -106,7 +106,7 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	return nil
 }
 
-func postGithubComment(ctx context.Context, flagsRef lflags.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
+func postGithubComment(ctx context.Context, flagsRef references.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
 	var existingCommentId int64
 	if existingComment != nil {
 		existingCommentId = existingComment.GetID()
@@ -172,7 +172,7 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 	return options.GetOptions()
 }
 
-func setOutputs(flagsRef lflags.FlagsRef) {
+func setOutputs(flagsRef references.FlagsRef) {
 	flagsModified := make([]string, 0, len(flagsRef.FlagsAdded))
 	for k := range flagsRef.FlagsAdded {
 		flagsModified = append(flagsModified, k)

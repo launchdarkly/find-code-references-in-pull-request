@@ -6,7 +6,7 @@ import (
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	"github.com/launchdarkly/find-code-references-in-pull-request/config"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,7 +61,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 
 type testCommentBuilder struct {
 	Comments FlagComments
-	FlagsRef lflags.FlagsRef
+	FlagsRef refs.FlagsRef
 }
 
 func newCommentBuilderAccEnv() *testCommentBuilder {
@@ -69,9 +69,9 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 		CommentsAdded:   []string{},
 		CommentsRemoved: []string{},
 	}
-	flagsAdded := make(lflags.FlagAliasMap)
-	flagsRemoved := make(lflags.FlagAliasMap)
-	flagsRef := lflags.FlagsRef{
+	flagsAdded := make(refs.FlagAliasMap)
+	flagsRemoved := make(refs.FlagAliasMap)
+	flagsRef := refs.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -84,16 +84,16 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 
 type testProcessor struct {
 	Flags    []ldapi.FeatureFlag
-	FlagsRef lflags.FlagsRef
+	FlagsRef refs.FlagsRef
 	Config   config.Config
 }
 
 func newProcessFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flags := []ldapi.FeatureFlag{flag}
-	flagsAdded := make(lflags.FlagAliasMap)
-	flagsRemoved := make(lflags.FlagAliasMap)
-	flagsRef := lflags.FlagsRef{
+	flagsAdded := make(refs.FlagAliasMap)
+	flagsRemoved := make(refs.FlagAliasMap)
+	flagsRef := refs.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -113,9 +113,9 @@ func newProcessMultipleFlagsFlagAccEnv() *testProcessor {
 	flag := createFlag("example-flag")
 	flag2 := createFlag("second-flag")
 	flags := []ldapi.FeatureFlag{flag, flag2}
-	flagsAdded := make(lflags.FlagAliasMap)
-	flagsRemoved := make(lflags.FlagAliasMap)
-	flagsRef := lflags.FlagsRef{
+	flagsAdded := make(refs.FlagAliasMap)
+	flagsRemoved := make(refs.FlagAliasMap)
+	flagsRef := refs.FlagsRef{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}

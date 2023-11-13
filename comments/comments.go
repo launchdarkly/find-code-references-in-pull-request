@@ -18,7 +18,7 @@ import (
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
-	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
 type Comment struct {
@@ -84,7 +84,7 @@ type FlagComments struct {
 	CommentsRemoved []string
 }
 
-func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, existingComment *github.IssueComment) string {
+func BuildFlagComment(buildComment FlagComments, flagsRef refs.FlagsRef, existingComment *github.IssueComment) string {
 	tableHeader := "| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |"
 
 	var commentStr []string
@@ -121,7 +121,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef lflags.FlagsRef, exist
 	return postedComments
 }
 
-func ProcessFlags(flagsRef lflags.FlagsRef, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef refs.FlagsRef, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {
@@ -166,7 +166,7 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	return -1, false
 }
 
-func uniqueFlagKeys(a, b lflags.FlagAliasMap) []string {
+func uniqueFlagKeys(a, b refs.FlagAliasMap) []string {
 	maxKeys := len(a) + len(b)
 	allKeys := make([]string, 0, maxKeys)
 	for k := range a {

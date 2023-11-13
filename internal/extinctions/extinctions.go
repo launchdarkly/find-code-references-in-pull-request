@@ -1,13 +1,13 @@
 package extinctions
 
 import (
-	"github.com/launchdarkly/find-code-references-in-pull-request/flags"
+	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	"github.com/launchdarkly/find-code-references-in-pull-request/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	ld_search "github.com/launchdarkly/ld-find-code-refs/v2/search"
 )
 
-func CheckExtinctions(opts options.Options, builder *flags.ReferenceBuilder) error {
+func CheckExtinctions(opts options.Options, builder *refs.ReferenceBuilder) error {
 	flagKeys := make([]string, 0, len(builder.RemovedFlagKeys()))
 
 	matcher, err := search.GetMatcher(opts, flagKeys, nil)
