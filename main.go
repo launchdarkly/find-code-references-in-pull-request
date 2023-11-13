@@ -114,7 +114,7 @@ func postGithubComment(ctx context.Context, flagsRef references.ReferenceSummary
 		existingCommentId = existingComment.GetID()
 	}
 
-	if flagsRef.Found() {
+	if flagsRef.AnyFound() {
 		if existingCommentId > 0 {
 			_, _, err := config.GHClient.Issues.EditComment(ctx, config.Owner, config.Repo, existingCommentId, &comment)
 			return err

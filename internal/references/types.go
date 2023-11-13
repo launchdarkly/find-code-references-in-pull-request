@@ -10,12 +10,8 @@ type ReferenceSummary struct {
 	ExtinctFlags map[string]struct{}
 }
 
-func (fr ReferenceSummary) Found() bool {
-	return fr.Count() > 0
-}
-
-func (fr ReferenceSummary) Count() int {
-	return len(fr.FlagsAdded) + len(fr.FlagsRemoved)
+func (fr ReferenceSummary) AnyFound() bool {
+	return len(fr.FlagsAdded)+len(fr.FlagsRemoved) > 0
 }
 
 // returns a sorted list of all added flag keys
