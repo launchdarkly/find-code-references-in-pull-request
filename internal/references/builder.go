@@ -50,9 +50,15 @@ func (b *ReferenceSummaryBuilder) ExistingFlag(flagKey string) {
 	}
 }
 
+func (b *ReferenceSummaryBuilder) foundFlag(flagKey string) {
+	if _, ok := b.foundFlags[flagKey]; !ok {
+		b.foundFlags[flagKey] = struct{}{}
+	}
+}
+
 // Flag and aliases found in added diff
 func (b *ReferenceSummaryBuilder) AddedFlag(flagKey string, aliases []string) {
-	b.foundFlags[flagKey] = struct{}{}
+	b.foundFlag(flagKey)
 	if _, ok := b.flagsAdded[flagKey]; !ok {
 		b.flagsAdded[flagKey] = make([]string, 0, len(aliases))
 	}
@@ -61,7 +67,7 @@ func (b *ReferenceSummaryBuilder) AddedFlag(flagKey string, aliases []string) {
 
 // Flag and aliases found in removed diff
 func (b *ReferenceSummaryBuilder) RemovedFlag(flagKey string, aliases []string) {
-	b.foundFlags[flagKey] = struct{}{}
+	b.foundFlag(flagKey)
 	if _, ok := b.flagsRemoved[flagKey]; !ok {
 		b.flagsRemoved[flagKey] = make([]string, 0, len(aliases))
 	}
