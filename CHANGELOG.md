@@ -10,6 +10,7 @@
 
 ### Added
 - Indicate if a removed flag has all references removed
+  - Output `any-extinct`, `extinct-flags-count`, `extinct-flags`
 
 ### Changed
 - Update the comment design
@@ -17,6 +18,7 @@
 
 ### Fixed
 - Detect aliases for removed flags
+- Wrong output set for `any-removed`, `removed-flags-count`, `removed-flags`
 
 ## 1.0.1
 
