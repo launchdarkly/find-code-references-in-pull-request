@@ -39,7 +39,7 @@ func (fr ReferenceSummary) ExtinctKeys() []string {
 
 func (fr ReferenceSummary) sortedKeys(keys map[string][]string) []string {
 	sortedKeys := make([]string, 0, len(keys))
-	for k := range fr.ExtinctFlags {
+	for k := range keys {
 		sortedKeys = append(sortedKeys, k)
 	}
 	sort.Strings(sortedKeys)
