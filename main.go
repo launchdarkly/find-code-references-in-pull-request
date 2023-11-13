@@ -62,7 +62,7 @@ func main() {
 	matcher, err := search.GetMatcher(opts, flagKeys, diffMap)
 	failExit(err)
 
-	builder := references.NewReferenceBuilder(config.MaxFlags)
+	builder := references.NewReferenceSummaryBuilder(config.MaxFlags)
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
@@ -106,7 +106,7 @@ func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, c
 	return nil
 }
 
-func postGithubComment(ctx context.Context, flagsRef references.FlagsRef, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
+func postGithubComment(ctx context.Context, flagsRef references.ReferenceSummary, config *lcr.Config, existingComment *github.IssueComment, prNumber int, comment github.IssueComment) error {
 	var existingCommentId int64
 	if existingComment != nil {
 		existingCommentId = existingComment.GetID()
@@ -172,7 +172,7 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 	return options.GetOptions()
 }
 
-func setOutputs(flagsRef references.FlagsRef) {
+func setOutputs(flagsRef references.ReferenceSummary) {
 	flagsModified := make([]string, 0, len(flagsRef.FlagsAdded))
 	for k := range flagsRef.FlagsAdded {
 		flagsModified = append(flagsModified, k)

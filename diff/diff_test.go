@@ -38,7 +38,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 type testProcessor struct {
 	Flags   ldapi.FeatureFlags
 	Config  config.Config
-	Builder *refs.ReferenceBuilder
+	Builder *refs.ReferenceSummaryBuilder
 }
 
 func (t testProcessor) flagKeys() []string {
@@ -55,7 +55,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
 	flags.Items = append(flags.Items, flag2)
-	builder := refs.NewReferenceBuilder(5)
+	builder := refs.NewReferenceSummaryBuilder(5)
 	config := config.Config{
 		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
@@ -117,13 +117,13 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 	cases := []struct {
 		name       string
 		sampleBody string
-		expected   refs.FlagsRef
+		expected   refs.ReferenceSummary
 		aliases    map[string][]string
 		delimiters string
 	}{
 		{
 			name: "add flag",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{}},
 				FlagsRemoved: refs.FlagAliasMap{},
 			},
@@ -139,7 +139,7 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "remove flag",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{},
 				FlagsRemoved: refs.FlagAliasMap{"example-flag": []string{}},
 			},
@@ -155,7 +155,7 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "add and remove flag",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{"sample-flag": []string{}},
 				FlagsRemoved: refs.FlagAliasMap{"example-flag": []string{}},
 			},
@@ -172,7 +172,7 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "modified flag",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{}},
 				FlagsRemoved: refs.FlagAliasMap{},
 			},
@@ -190,7 +190,7 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "alias flag",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{"exampleFlag"}},
 				FlagsRemoved: refs.FlagAliasMap{},
 			},
@@ -205,7 +205,7 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "require delimiters - no matches",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{},
 				FlagsRemoved: refs.FlagAliasMap{},
 			},
@@ -220,7 +220,7 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		},
 		{
 			name: "require delimiters - match",
-			expected: refs.FlagsRef{
+			expected: refs.ReferenceSummary{
 				FlagsAdded:   refs.FlagAliasMap{"example-flag": []string{}},
 				FlagsRemoved: refs.FlagAliasMap{},
 			},

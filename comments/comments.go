@@ -84,7 +84,7 @@ type FlagComments struct {
 	CommentsRemoved []string
 }
 
-func BuildFlagComment(buildComment FlagComments, flagsRef refs.FlagsRef, existingComment *github.IssueComment) string {
+func BuildFlagComment(buildComment FlagComments, flagsRef refs.ReferenceSummary, existingComment *github.IssueComment) string {
 	tableHeader := "| Name | Key | Aliases found | Info |\n| --- | --- | --- | --- |"
 
 	var commentStr []string
@@ -121,7 +121,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef refs.FlagsRef, existin
 	return postedComments
 }
 
-func ProcessFlags(flagsRef refs.FlagsRef, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
+func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
 	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
 	for key := range flagsRef.FlagsAdded {

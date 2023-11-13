@@ -7,7 +7,7 @@ import (
 	ld_search "github.com/launchdarkly/ld-find-code-refs/v2/search"
 )
 
-func CheckExtinctions(opts options.Options, builder *refs.ReferenceBuilder) error {
+func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilder) error {
 	flagKeys := make([]string, 0, len(builder.RemovedFlagKeys()))
 
 	matcher, err := search.GetMatcher(opts, flagKeys, nil)

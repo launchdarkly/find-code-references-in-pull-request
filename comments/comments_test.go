@@ -61,7 +61,7 @@ func createFlag(key string) ldapi.FeatureFlag {
 
 type testCommentBuilder struct {
 	Comments FlagComments
-	FlagsRef refs.FlagsRef
+	FlagsRef refs.ReferenceSummary
 }
 
 func newCommentBuilderAccEnv() *testCommentBuilder {
@@ -71,7 +71,7 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 	}
 	flagsAdded := make(refs.FlagAliasMap)
 	flagsRemoved := make(refs.FlagAliasMap)
-	flagsRef := refs.FlagsRef{
+	flagsRef := refs.ReferenceSummary{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -84,7 +84,7 @@ func newCommentBuilderAccEnv() *testCommentBuilder {
 
 type testProcessor struct {
 	Flags    []ldapi.FeatureFlag
-	FlagsRef refs.FlagsRef
+	FlagsRef refs.ReferenceSummary
 	Config   config.Config
 }
 
@@ -93,7 +93,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	flags := []ldapi.FeatureFlag{flag}
 	flagsAdded := make(refs.FlagAliasMap)
 	flagsRemoved := make(refs.FlagAliasMap)
-	flagsRef := refs.FlagsRef{
+	flagsRef := refs.ReferenceSummary{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
@@ -115,7 +115,7 @@ func newProcessMultipleFlagsFlagAccEnv() *testProcessor {
 	flags := []ldapi.FeatureFlag{flag, flag2}
 	flagsAdded := make(refs.FlagAliasMap)
 	flagsRemoved := make(refs.FlagAliasMap)
-	flagsRef := refs.FlagsRef{
+	flagsRef := refs.ReferenceSummary{
 		FlagsAdded:   flagsAdded,
 		FlagsRemoved: flagsRemoved,
 	}
