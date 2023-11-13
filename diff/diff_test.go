@@ -67,7 +67,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	}
 }
 
-func TestCheckDiff(t *testing.T) {
+func Test_checkDiffFile(t *testing.T) {
 	cases := []struct {
 		name     string
 		fileName string
@@ -105,8 +105,10 @@ func TestCheckDiff(t *testing.T) {
 				NewName:  tc.newName,
 				Hunks:    []*diff.Hunk{hunk},
 			}
-			results := CheckDiff(&diff, "../testdata")
-			assert.Equal(t, &DiffPaths{FileToParse: "../testdata/" + tc.fileName, Skip: tc.skip}, results, "")
+			filePath, ignore := checkDiffFile(&diff, "../testdata")
+			expectedFilePath := "../testdata/" + tc.fileName
+			assert.Equal(t, expectedFilePath, filePath)
+			assert.Equal(t, tc.skip, ignore)
 		})
 	}
 }
@@ -236,20 +238,12 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 	for _, tc := range cases {
 		processor := newProcessFlagAccEnv()
 		t.Run(tc.name, func(t *testing.T) {
-			hunk := &diff.Hunk{
-				NewLines:      1,
-				NewStartLine:  1,
-				OrigLines:     0,
-				OrigStartLine: 0,
-				StartPosition: 1,
-				Body:          []byte(tc.sampleBody),
-			}
 			elements := []lsearch.ElementMatcher{}
 			elements = append(elements, lsearch.NewElementMatcher("default", "", tc.delimiters, processor.flagKeys(), tc.aliases))
 			matcher := lsearch.Matcher{
 				Elements: elements,
 			}
-			ProcessDiffs(matcher, hunk, processor.Builder)
+			ProcessDiffs(matcher, []byte(tc.sampleBody), processor.Builder)
 			flagsRef := processor.Builder.Build()
 			assert.Equal(t, tc.expected, flagsRef)
 		})

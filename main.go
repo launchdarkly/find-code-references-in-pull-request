@@ -48,21 +48,17 @@ func main() {
 	opts, err := getOptions(config)
 	failExit(err)
 
-	matcher, err := search.GetMatcher(config, opts, flags)
-	failExit(err)
-
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
+	diffMap := ldiff.PreprocessDiffs(opts.Dir, multiFiles)
+
+	matcher, err := search.GetMatcher(opts, flags, diffMap)
+	failExit(err)
+
 	builder := lflags.NewReferenceBuilder(config.MaxFlags)
-	for _, parsedDiff := range multiFiles {
-		getPath := ldiff.CheckDiff(parsedDiff, config.Workspace)
-		if getPath.Skip {
-			continue
-		}
-		for _, hunk := range parsedDiff.Hunks {
-			ldiff.ProcessDiffs(matcher, hunk, builder)
-		}
+	for _, contents := range diffMap {
+		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
 	flagsRef := builder.Build()
 
@@ -152,6 +148,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 	return diff.ParseMultiFileDiff([]byte(raw))
 }
 
+// Get options from config. Note: dir will be set to workspace
 func getOptions(config *lcr.Config) (options.Options, error) {
 	// Needed for ld-find-code-refs to work as a library
 	viper.Set("dir", config.Workspace)

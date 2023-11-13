@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/util/diff_util"
+	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/utils/diff_util"
 )
 
 type ReferenceBuilder struct {
