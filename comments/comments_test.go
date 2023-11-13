@@ -137,6 +137,7 @@ func TestGithubFlagComment(t *testing.T) {
 	t.Run("Flag with alias", acceptanceTestEnv.Alias)
 	t.Run("Archived flag added", acceptanceTestEnv.ArchivedAdded)
 	t.Run("Archived flag removed", acceptanceTestEnv.ArchivedRemoved)
+	t.Run("Extinct flag", acceptanceTestEnv.ExtinctFlag)
 }
 
 func TestProcessFlags(t *testing.T) {
@@ -192,6 +193,14 @@ func (e *testFlagEnv) ArchivedRemoved(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :information_source: archived on 2023-08-03 |"
+	assert.Equal(t, expected, comment)
+}
+
+func (e *testFlagEnv) ExtinctFlag(t *testing.T) {
+	comment, err := githubFlagComment(e.Flag, []string{}, false, true, &e.Config)
+	require.NoError(t, err)
+
+	expected := "| [example flag](https://example.com/test) | `example-flag` | | :white_check_mark: all references removed |"
 	assert.Equal(t, expected, comment)
 }
 
