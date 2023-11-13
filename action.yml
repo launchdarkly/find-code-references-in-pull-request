@@ -66,8 +66,8 @@ outputs:
   changed-flags-count:
     description: Number of flags changed in PR
   any-extinct:
-    description: Returns true if any flags have been removed in PR and no longer exist in codebase. Only returned if check-extinctions is true.
+    description: Returns true if any flags have been removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true.
   extinct-flags:
-    description: Space-separated list of flags removed in PR and no longer exist in codebase. Only returned if check-extinctions is true.
+    description: Space-separated list of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true.
   extinct-flags-count:
-    description: Number of flags removed in PR and no longer exist in codebase. Only returned if check-extinctions is true.
+    description: Number of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true.
