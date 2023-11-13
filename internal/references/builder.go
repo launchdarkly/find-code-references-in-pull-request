@@ -9,20 +9,22 @@ import (
 )
 
 type ReferenceSummaryBuilder struct {
-	max              int // maximum number of flags to find
-	flagsAdded       map[string][]string
-	flagsRemoved     map[string][]string
-	flagsFoundAtHead map[string]struct{}
-	foundFlags       map[string]struct{}
+	max                int  // maximum number of flags to find
+	includeExtinctions bool // include extinctions in summary
+	flagsAdded         map[string][]string
+	flagsRemoved       map[string][]string
+	flagsFoundAtHead   map[string]struct{}
+	foundFlags         map[string]struct{}
 }
 
-func NewReferenceSummaryBuilder(max int) *ReferenceSummaryBuilder {
+func NewReferenceSummaryBuilder(max int, includeExtinctions bool) *ReferenceSummaryBuilder {
 	return &ReferenceSummaryBuilder{
-		flagsAdded:       make(map[string][]string),
-		flagsRemoved:     make(map[string][]string),
-		foundFlags:       make(map[string]struct{}),
-		flagsFoundAtHead: make(map[string]struct{}),
-		max:              max,
+		flagsAdded:         make(map[string][]string),
+		flagsRemoved:       make(map[string][]string),
+		foundFlags:         make(map[string]struct{}),
+		flagsFoundAtHead:   make(map[string]struct{}),
+		max:                max,
+		includeExtinctions: includeExtinctions,
 	}
 }
 
@@ -107,11 +109,16 @@ func (b *ReferenceSummaryBuilder) Build() ReferenceSummary {
 		}
 	}
 
-	return ReferenceSummary{
+	summary := ReferenceSummary{
 		FlagsAdded:   added,
 		FlagsRemoved: removed,
-		ExtinctFlags: extinctions,
 	}
+
+	if b.includeExtinctions {
+		summary.ExtinctFlags = extinctions
+	}
+
+	return summary
 }
 
 // get slice with unique, non-empty strings

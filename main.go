@@ -62,7 +62,7 @@ func main() {
 	matcher, err := search.GetMatcher(opts, flagKeys, diffMap)
 	failExit(err)
 
-	builder := references.NewReferenceSummaryBuilder(config.MaxFlags)
+	builder := references.NewReferenceSummaryBuilder(config.MaxFlags, config.CheckExtinctions)
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}

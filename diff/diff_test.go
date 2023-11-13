@@ -55,7 +55,7 @@ func newProcessFlagAccEnv() *testProcessor {
 	flags := ldapi.FeatureFlags{}
 	flags.Items = append(flags.Items, flag)
 	flags.Items = append(flags.Items, flag2)
-	builder := refs.NewReferenceSummaryBuilder(5)
+	builder := refs.NewReferenceSummaryBuilder(5, false)
 	config := config.Config{
 		LdEnvironment: "production",
 		LdInstance:    "https://example.com/",
