@@ -88,7 +88,7 @@ func main() {
 	}
 
 	// Set outputs
-	setOutputs(flagsRef)
+	setOutputs(config, flagsRef)
 
 	failExit(err)
 }
@@ -174,22 +174,21 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 	return options.GetOptions()
 }
 
-func setOutputs(flagsRef references.ReferenceSummary) {
-	flagsModified := make([]string, 0, len(flagsRef.FlagsAdded))
-	for k := range flagsRef.FlagsAdded {
-		flagsModified = append(flagsModified, k)
-	}
+func setOutputs(config *lcr.Config, flagsRef references.ReferenceSummary) {
+	flagsModified := flagsRef.AddedKeys()
 	setOutputsForChangedFlags("modified", flagsModified)
 
-	flagsRemoved := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for k := range flagsRef.FlagsRemoved {
-		flagsRemoved = append(flagsRemoved, k)
+	flagsRemoved := flagsRef.RemovedKeys()
+	setOutputsForChangedFlags("removed", flagsRemoved)
+
+	if config.CheckExtinctions {
+		setOutputsForChangedFlags("extinct", flagsRef.ExtinctKeys())
 	}
-	setOutputsForChangedFlags("removed", flagsModified)
 
 	allChangedFlags := make([]string, 0, len(flagsModified)+len(flagsRemoved))
 	allChangedFlags = append(allChangedFlags, flagsModified...)
 	allChangedFlags = append(allChangedFlags, flagsRemoved...)
+	sort.Strings(allChangedFlags)
 	setOutputsForChangedFlags("changed", allChangedFlags)
 }
 

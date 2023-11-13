@@ -28,12 +28,24 @@ func (fr ReferenceSummary) RemovedKeys() []string {
 	return fr.sortedKeys(fr.FlagsRemoved)
 }
 
+// returns a sorted list of all extinct flag keys
+func (fr ReferenceSummary) ExtinctKeys() []string {
+	if fr.ExtinctFlags == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(fr.ExtinctFlags))
+	for k := range fr.ExtinctFlags {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 func (fr ReferenceSummary) sortedKeys(keys map[string][]string) []string {
 	sortedKeys := make([]string, 0, len(keys))
-	for k := range keys {
+	for k := range fr.ExtinctFlags {
 		sortedKeys = append(sortedKeys, k)
 	}
-	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(sortedKeys)
 	return sortedKeys
 }
