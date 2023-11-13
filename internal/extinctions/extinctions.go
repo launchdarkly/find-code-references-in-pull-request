@@ -22,7 +22,7 @@ func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilde
 
 	for _, ref := range references {
 		for _, hunk := range ref.Hunks {
-			builder.ExistingFlag(hunk.FlagKey)
+			builder.AddHeadFlag(hunk.FlagKey)
 		}
 	}
 

@@ -9,20 +9,20 @@ import (
 )
 
 type ReferenceSummaryBuilder struct {
-	max           int // maximum number of flags to find
-	flagsAdded    map[string][]string
-	flagsRemoved  map[string][]string
-	existingFlags map[string]struct{} // TODO rename this
-	foundFlags    map[string]struct{}
+	max              int // maximum number of flags to find
+	flagsAdded       map[string][]string
+	flagsRemoved     map[string][]string
+	flagsFoundAtHead map[string]struct{}
+	foundFlags       map[string]struct{}
 }
 
 func NewReferenceSummaryBuilder(max int) *ReferenceSummaryBuilder {
 	return &ReferenceSummaryBuilder{
-		flagsAdded:    make(map[string][]string),
-		flagsRemoved:  make(map[string][]string),
-		foundFlags:    make(map[string]struct{}),
-		existingFlags: make(map[string]struct{}),
-		max:           max,
+		flagsAdded:       make(map[string][]string),
+		flagsRemoved:     make(map[string][]string),
+		foundFlags:       make(map[string]struct{}),
+		flagsFoundAtHead: make(map[string]struct{}),
+		max:              max,
 	}
 }
 
@@ -30,12 +30,13 @@ func (b *ReferenceSummaryBuilder) MaxReferences() bool {
 	return len(b.foundFlags) >= b.max
 }
 
+// Add a found flag in diff by operation
 func (b *ReferenceSummaryBuilder) AddReference(flagKey string, op diff_util.Operation, aliases []string) error {
 	switch op {
 	case diff_util.OperationAdd:
-		b.AddedFlag(flagKey, aliases)
+		b.addedFlag(flagKey, aliases)
 	case diff_util.OperationDelete:
-		b.RemovedFlag(flagKey, aliases)
+		b.removedFlag(flagKey, aliases)
 	default:
 		return fmt.Errorf("invalid operation=%s", op.String())
 	}
@@ -44,9 +45,9 @@ func (b *ReferenceSummaryBuilder) AddReference(flagKey string, op diff_util.Oper
 }
 
 // Flag found in HEAD ref
-func (b *ReferenceSummaryBuilder) ExistingFlag(flagKey string) {
-	if _, ok := b.existingFlags[flagKey]; !ok {
-		b.existingFlags[flagKey] = struct{}{}
+func (b *ReferenceSummaryBuilder) AddHeadFlag(flagKey string) {
+	if _, ok := b.flagsFoundAtHead[flagKey]; !ok {
+		b.flagsFoundAtHead[flagKey] = struct{}{}
 	}
 }
 
@@ -57,7 +58,7 @@ func (b *ReferenceSummaryBuilder) foundFlag(flagKey string) {
 }
 
 // Flag and aliases found in added diff
-func (b *ReferenceSummaryBuilder) AddedFlag(flagKey string, aliases []string) {
+func (b *ReferenceSummaryBuilder) addedFlag(flagKey string, aliases []string) {
 	b.foundFlag(flagKey)
 	if _, ok := b.flagsAdded[flagKey]; !ok {
 		b.flagsAdded[flagKey] = make([]string, 0, len(aliases))
@@ -66,7 +67,7 @@ func (b *ReferenceSummaryBuilder) AddedFlag(flagKey string, aliases []string) {
 }
 
 // Flag and aliases found in removed diff
-func (b *ReferenceSummaryBuilder) RemovedFlag(flagKey string, aliases []string) {
+func (b *ReferenceSummaryBuilder) removedFlag(flagKey string, aliases []string) {
 	b.foundFlag(flagKey)
 	if _, ok := b.flagsRemoved[flagKey]; !ok {
 		b.flagsRemoved[flagKey] = make([]string, 0, len(aliases))
@@ -100,7 +101,7 @@ func (b *ReferenceSummaryBuilder) Build() ReferenceSummary {
 			aliases := uniqueStrs(aliases)
 			sort.Strings(aliases)
 			removed[flagKey] = aliases
-			if _, ok := b.existingFlags[flagKey]; !ok {
+			if _, ok := b.flagsFoundAtHead[flagKey]; !ok {
 				extinctions[flagKey] = struct{}{}
 			}
 		}
