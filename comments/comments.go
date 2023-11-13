@@ -123,27 +123,18 @@ func BuildFlagComment(buildComment FlagComments, flagsRef refs.ReferenceSummary,
 
 func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, config *lcr.Config) FlagComments {
 	buildComment := FlagComments{}
-	addedKeys := make([]string, 0, len(flagsRef.FlagsAdded))
-	for key := range flagsRef.FlagsAdded {
-		addedKeys = append(addedKeys, key)
-	}
-	// sort keys so hashing can work for checking if comment already exists
-	sort.Strings(addedKeys)
-	for _, flagKey := range addedKeys {
+
+	for _, flagKey := range flagsRef.AddedKeys() {
 		flagAliases := flagsRef.FlagsAdded[flagKey]
 		idx, _ := find(flags, flagKey)
 		createComment, err := githubFlagComment(flags[idx], flagAliases, true, false, config)
-		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 		if err != nil {
 			log.Println(err)
 		}
+		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 	}
-	removedKeys := make([]string, 0, len(flagsRef.FlagsRemoved))
-	for key := range flagsRef.FlagsRemoved {
-		removedKeys = append(removedKeys, key)
-	}
-	sort.Strings(removedKeys)
-	for _, flagKey := range removedKeys {
+
+	for _, flagKey := range flagsRef.RemovedKeys() {
 		flagAliases := flagsRef.FlagsRemoved[flagKey]
 		idx, _ := find(flags, flagKey)
 		extinct := false
@@ -152,10 +143,10 @@ func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, con
 			extinct = e
 		}
 		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, extinct, config)
-		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 		if err != nil {
 			log.Println(err)
 		}
+		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 	}
 
 	return buildComment
