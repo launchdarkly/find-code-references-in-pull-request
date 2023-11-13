@@ -17,7 +17,6 @@ import (
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v13"
-	"github.com/launchdarkly/find-code-references-in-pull-request/config"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	lflags "github.com/launchdarkly/find-code-references-in-pull-request/flags"
 )
@@ -38,7 +37,7 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
-func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *config.Config) (string, error) {
+func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *lcr.Config) (string, error) {
 	commentTemplate := Comment{
 		Flag:       flag,
 		Added:      added,
