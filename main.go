@@ -69,6 +69,7 @@ func main() {
 
 	if err := extinctions.CheckExtinctions(opts, builder); err != nil {
 		gha.LogWarning("Error checking for extinct flags")
+		log.Println(err)
 	}
 	flagsRef := builder.Build()
 
