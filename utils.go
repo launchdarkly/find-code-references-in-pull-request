@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"os"
@@ -9,12 +8,10 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func clearJSONRepoOrgField(body []byte) []byte {
+func clearJSONRepoOrgField(byteString []byte) []byte {
 	// workaround for https://github.com/google/go-github/issues/131
 	var o map[string]interface{}
-	dec := json.NewDecoder(bytes.NewReader(body))
-	dec.UseNumber()
-	dec.Decode(&o)
+	_ = json.Unmarshal(byteString, &o)
 	if o != nil {
 		repo := o["repository"]
 		if repo != nil {
@@ -39,8 +36,9 @@ func parseEvent(path string) (*github.PullRequestEvent, error) {
 	if err != nil {
 		return nil, err
 	}
+	eventWithoutOrg := clearJSONRepoOrgField(eventJsonBytes)
 	var evt github.PullRequestEvent
-	err = json.Unmarshal(clearJSONRepoOrgField(eventJsonBytes), &evt)
+	err = json.Unmarshal(eventWithoutOrg, &evt)
 	if err != nil {
 		return nil, err
 	}
