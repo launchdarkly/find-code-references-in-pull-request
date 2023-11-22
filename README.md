@@ -20,7 +20,6 @@ permissions:
 
 Basic:
 
-<!-- TODO update example repo name changes -->
 ```yaml
 on: pull_request
 
@@ -32,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v1.0.0
+        uses: launchdarkly/find-code-references-in-pull-request@v1.1.0
         id: find-flags
         with:
           project-key: default
@@ -43,7 +42,6 @@ jobs:
 
 Use outputs in workflow:
 
-<!-- TODO update example repo name changes -->
 ```yaml
 on: pull_request
 
@@ -55,7 +53,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v1.0.0
+        uses: launchdarkly/find-code-references-in-pull-request@v1.1.0
         id: find-flags
         with:
           project-key: default
