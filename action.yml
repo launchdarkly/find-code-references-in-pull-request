@@ -45,6 +45,10 @@ inputs:
     description: Check if removed flags still exist in codebase
     required: false
     default: 'true'
+  check-extinctions-subfolder:
+    description: If set, subfolder path will be added to GITHUB_WORKSPACE. The extinctions check will happen only in that sub-path.
+    required: false
+    default: ''
 
 outputs:
   any-modified:

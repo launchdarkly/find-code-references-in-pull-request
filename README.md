@@ -100,6 +100,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | max-flags | Maximum number of flags to find per PR | `false` | 5 |
 | base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
 | check-extinctions | Check if removed flags still exist in codebase | `false` | true |
+| check-extinctions-subfolder | If set, subfolder path will be added to GITHUB_WORKSPACE. The extinctions check will happen only in that sub-path. | `false` |  |
 <!-- action-docs-inputs -->
 
 <!-- action-docs-outputs -->

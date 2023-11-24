@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"sort"
 	"strings"
 
@@ -28,7 +29,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	config, err := lcr.ValidateInputandParse(ctx)
+	config, err := lcr.ValidateInputAndParse(ctx)
 	failExit(err)
 
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
@@ -164,7 +165,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 // Get options from config. Note: dir will be set to workspace
 func getOptions(config *lcr.Config) (options.Options, error) {
 	// Needed for ld-find-code-refs to work as a library
-	viper.Set("dir", config.Workspace)
+	viper.Set("dir", path.Clean(config.Workspace+"/"+config.CheckExtinctionsSubfolder))
 	viper.Set("accessToken", config.ApiToken)
 
 	err := options.InitYAML()

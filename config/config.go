@@ -13,21 +13,22 @@ import (
 )
 
 type Config struct {
-	LdProject            string
-	LdEnvironment        string
-	LdInstance           string
-	Owner                string
-	Repo                 string
-	ApiToken             string
-	Workspace            string
-	GHClient             *github.Client
-	MaxFlags             int
-	PlaceholderComment   bool
-	IncludeArchivedFlags bool
-	CheckExtinctions     bool
+	LdProject                 string
+	LdEnvironment             string
+	LdInstance                string
+	Owner                     string
+	Repo                      string
+	ApiToken                  string
+	Workspace                 string
+	GHClient                  *github.Client
+	MaxFlags                  int
+	PlaceholderComment        bool
+	IncludeArchivedFlags      bool
+	CheckExtinctions          bool
+	CheckExtinctionsSubfolder string
 }
 
-func ValidateInputandParse(ctx context.Context) (*Config, error) {
+func ValidateInputAndParse(ctx context.Context) (*Config, error) {
 	// mask tokens
 	if accessToken := os.Getenv("INPUT_ACCESS-TOKEN"); len(accessToken) > 0 {
 		fmt.Printf("::add-mask::%s\n", accessToken)
@@ -89,6 +90,8 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		// ignore error - default is true
 		config.CheckExtinctions = checkExtinctions
 	}
+
+	config.CheckExtinctionsSubfolder = os.Getenv("INPUT_CHECK-EXTINCTIONS-SUBFOLDER")
 
 	config.GHClient = getGithubClient(ctx)
 	return &config, nil
