@@ -16,7 +16,7 @@ github.com/davecgh/go-spew/spew
 # github.com/fsnotify/fsnotify v1.7.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
-# github.com/go-git/go-git/v5 v5.10.0
+# github.com/go-git/go-git/v5 v5.11.0
 ## explicit; go 1.19
 github.com/go-git/go-git/v5/plumbing
 github.com/go-git/go-git/v5/plumbing/hash
@@ -35,7 +35,7 @@ github.com/google/uuid
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.7.4
+# github.com/hashicorp/go-retryablehttp v0.7.5
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/hcl v1.0.0
@@ -86,7 +86,7 @@ github.com/launchdarkly/api-client-go/v7
 # github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f
 ## explicit
 github.com/launchdarkly/json-patch
-# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.5-0.20231103194119-5133ae5a5429
+# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.5
 ## explicit; go 1.20
 github.com/launchdarkly/ld-find-code-refs/v2/aliases
 github.com/launchdarkly/ld-find-code-refs/v2/flags
@@ -174,7 +174,7 @@ github.com/spf13/cast
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/spf13/viper v1.18.1
+# github.com/spf13/viper v1.18.2
 ## explicit; go 1.18
 github.com/spf13/viper
 github.com/spf13/viper/internal/encoding
@@ -185,6 +185,7 @@ github.com/spf13/viper/internal/encoding/javaproperties
 github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
+github.com/spf13/viper/internal/features
 # github.com/stretchr/testify v1.8.4
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
@@ -201,7 +202,7 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.9.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# golang.org/x/crypto v0.16.0
+# golang.org/x/crypto v0.17.0
 ## explicit; go 1.18
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -235,7 +236,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.14.0
+# golang.org/x/tools v0.16.1
 ## explicit; go 1.18
 golang.org/x/tools/godoc/util
 golang.org/x/tools/godoc/vfs
