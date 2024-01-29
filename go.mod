@@ -17,7 +17,7 @@ require (
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/kyoh86/richgo v0.3.12
 	github.com/launchdarkly/api-client-go/v13 v13.0.0
-	github.com/launchdarkly/ld-find-code-refs/v2 v2.11.5
+	github.com/launchdarkly/ld-find-code-refs/v2 v2.11.6
 )
 
 require (
@@ -70,7 +70,7 @@ require (
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.16.1 // indirect
+	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
