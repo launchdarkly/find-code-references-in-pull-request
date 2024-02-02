@@ -9,13 +9,13 @@ import (
 func TestBuilder(t *testing.T) {
 	ref := ReferenceSummaryBuilder{
 		flagsAdded: map[string][]string{
-			"flag1": {"alias1", "alias2"},
-			"flag2": {"alias3"},
+			"flag1": {"alias1"},
+			"flag2": {"alias2"},
 		},
 		flagsRemoved: map[string][]string{
-			"flag2": {"alias3"},
-			"flag3": {"alias4"},
-			"flag4": {"alias5"},
+			"flag2": {},
+			"flag3": {"alias3"},
+			"flag4": {"alias4"},
 		},
 		flagsFoundAtHead: map[string]struct{}{
 			"flag3": {},
@@ -29,9 +29,7 @@ func TestBuilder(t *testing.T) {
 		includeExtinctions: true,
 	}
 
-	r := &ref
-
-	built := r.Build()
+	built := ref.Build()
 
 	assert.Len(t, built.FlagsAdded, 2)
 	assert.Len(t, built.FlagsRemoved, 2)
