@@ -164,7 +164,14 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 
 		return nil, err
 	}
-	return diff.ParseMultiFileDiff([]byte(raw))
+
+	multi, err := diff.ParseMultiFileDiff([]byte(raw))
+	if err != nil {
+		return nil, err
+	}
+	gha.Debug("Got %d diff files", len(multi))
+
+	return multi, nil
 }
 
 // Get options from config. Note: dir will be set to workspace

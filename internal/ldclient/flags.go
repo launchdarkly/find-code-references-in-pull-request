@@ -34,6 +34,7 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 		flags = append(flags, archivedFlags...)
 	}
 
+	gha.Debug("Fetched %d flags", len(flags))
 	return flags, nil
 }
 

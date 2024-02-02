@@ -3,6 +3,7 @@ package search
 import (
 	"strings"
 
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	laliases "github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
@@ -14,6 +15,10 @@ func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.F
 	aliasesByFlagKey, err := aliases.GenerateAliases(opts, flagKeys, diffContents)
 	if err != nil {
 		return lsearch.Matcher{}, err
+	}
+
+	for key, alias := range aliasesByFlagKey {
+		gha.Debug("Generated aliases for '%s':  %v", key, alias)
 	}
 
 	delimiters := strings.Join(lsearch.GetDelimiters(opts), "")
