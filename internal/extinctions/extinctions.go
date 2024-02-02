@@ -22,6 +22,7 @@ func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilde
 	}
 
 	gha.Debug("Searching for any remaining references to %d removed flags...", len(flagKeys))
+	gha.Debug("Searching dir %s", opts.Dir)
 	references, err := ld_search.SearchForRefs(opts.Dir, matcher)
 	if err != nil {
 		return err
