@@ -28,7 +28,7 @@ func MaskInput(input string) {
 }
 
 func Log(format string, a ...any) {
-	fmt.Printf(format, a...)
+	fmt.Println(fmt.Sprintf(format, a...))
 }
 
 func LogNotice(format string, a ...any) {
