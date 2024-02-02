@@ -76,6 +76,7 @@ func main() {
 	flagsRef := builder.Build()
 
 	// Add comment
+	gha.StartLogGroup("Processing comment...")
 	existingComment := checkExistingComments(event, config, ctx)
 	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
 	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
@@ -86,6 +87,7 @@ func main() {
 
 		err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 	}
+	gha.EndLogGroup()
 
 	// Set outputs
 	setOutputs(config, flagsRef)
@@ -148,6 +150,7 @@ func postGithubComment(ctx context.Context, flagsRef references.ReferenceSummary
 }
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
+	gha.LogDebug("Getting pull request diff...")
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, resp, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo, prNumber, rawOpts)
 	if err != nil {
@@ -175,6 +178,7 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 }
 
 func setOutputs(config *lcr.Config, flagsRef references.ReferenceSummary) {
+	gha.LogDebug("Setting outputs...")
 	flagsModified := flagsRef.AddedKeys()
 	setOutputsForChangedFlags("modified", flagsModified)
 

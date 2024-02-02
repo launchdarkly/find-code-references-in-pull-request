@@ -23,6 +23,14 @@ func SetOutput(name, value string) error {
 	return err
 }
 
+func MaskInput(input string) {
+	fmt.Printf("::add-mask::%s\n", input)
+}
+
+func Log(format string, a ...any) {
+	fmt.Printf(format, a...)
+}
+
 func LogNotice(format string, a ...any) {
 	fmt.Printf("::notice::%s\n", fmt.Sprintf(format, a...))
 }
@@ -33,4 +41,16 @@ func LogWarning(format string, a ...any) {
 
 func LogError(format string, a ...any) {
 	fmt.Printf("::error::%s\n", fmt.Sprintf(format, a...))
+}
+
+func LogDebug(format string, a ...any) {
+	fmt.Printf("::debug::%s\n", fmt.Sprintf(format, a...))
+}
+
+func StartLogGroup(format string, a ...any) {
+	fmt.Printf("::group::%s\n", fmt.Sprintf(format, a...))
+}
+
+func EndLogGroup() {
+	fmt.Println("::endgroup::")
 }

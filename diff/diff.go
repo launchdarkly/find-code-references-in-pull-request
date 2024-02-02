@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	i "github.com/launchdarkly/find-code-references-in-pull-request/ignore"
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/utils/diff_util"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
@@ -68,6 +69,8 @@ func checkDiffFile(parsedDiff *diff.FileDiff, workspace string) (filePath string
 }
 
 func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.ReferenceSummaryBuilder) {
+	gha.StartLogGroup("Scanning diff for references...")
+	defer gha.EndLogGroup()
 	diffLines := strings.Split(string(contents), "\n")
 	for _, line := range diffLines {
 		op := diff_util.LineOperation(line)

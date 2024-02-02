@@ -1,6 +1,7 @@
 package extinctions
 
 import (
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	"github.com/launchdarkly/find-code-references-in-pull-request/search"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
@@ -8,6 +9,8 @@ import (
 )
 
 func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilder) error {
+	gha.StartLogGroup("Checking for extinctions...")
+	defer gha.EndLogGroup()
 	flagKeys := make([]string, 0, len(builder.RemovedFlagKeys()))
 
 	matcher, err := search.GetMatcher(opts, flagKeys, nil)
@@ -15,6 +18,7 @@ func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilde
 		return err
 	}
 
+	gha.LogDebug("Searching for any remaining references to removed flags...")
 	references, err := ld_search.SearchForRefs(opts.Dir, matcher)
 	if err != nil {
 		return err
@@ -25,6 +29,5 @@ func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilde
 			builder.AddHeadFlag(hunk.FlagKey)
 		}
 	}
-
 	return nil
 }

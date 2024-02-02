@@ -8,11 +8,13 @@ import (
 
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
 	"github.com/pkg/errors"
 )
 
 func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
+	gha.LogDebug("Fetching all flags for project")
 	params := url.Values{}
 	params.Add("env", config.LdEnvironment)
 	activeFlags, err := getFlags(config, params)

@@ -4,16 +4,19 @@ import (
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
 	"github.com/launchdarkly/ld-find-code-refs/v2/options"
 
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 )
 
 // Generate aliases, making sure to identify aliases in the removed diff contents
 func GenerateAliases(opts options.Options, flagKeys []string, diffContents aliases.FileContentsMap) (map[string][]string, error) {
+	gha.Log("Generating aliases...")
 	aliasesByFlagKey, err := aliases.GenerateAliases(flagKeys, opts.Aliases, opts.Dir)
 	if err != nil {
 		return nil, err
 	}
 
+	gha.LogDebug("Generating aliases for removed files...")
 	filePatternAliases := getFilepatternAliases(opts.Aliases)
 	for _, flag := range flagKeys {
 		for _, alias := range filePatternAliases {
