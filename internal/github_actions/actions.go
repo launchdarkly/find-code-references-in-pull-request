@@ -2,16 +2,18 @@ package github_actions
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
-func SetOutputOrLogError(name, value string) {
-	if err := SetOutput(name, value); err != nil {
-		LogError("Failed to set outputs.%s\n", name)
+func SetOutput(name, value string) {
+	if err := setOutput(name, value); err != nil {
+		SetError("Failed to set outputs.%s\n", name)
 	}
 }
 
-func SetOutput(name, value string) error {
+func setOutput(name, value string) error {
+	Debug("setting output %s=%s", name, value)
 	output := os.Getenv("GITHUB_OUTPUT")
 
 	f, err := os.OpenFile(output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -28,22 +30,26 @@ func MaskInput(input string) {
 }
 
 func Log(format string, a ...any) {
-	fmt.Println(fmt.Sprintf(format, a...))
+	log.Println(fmt.Sprintf(format, a...))
 }
 
-func LogNotice(format string, a ...any) {
+func LogError(err error) {
+	log.Println(err)
+}
+
+func SetNotice(format string, a ...any) {
 	fmt.Printf("::notice::%s\n", fmt.Sprintf(format, a...))
 }
 
-func LogWarning(format string, a ...any) {
+func SetWarning(format string, a ...any) {
 	fmt.Printf("::warning::%s\n", fmt.Sprintf(format, a...))
 }
 
-func LogError(format string, a ...any) {
+func SetError(format string, a ...any) {
 	fmt.Printf("::error::%s\n", fmt.Sprintf(format, a...))
 }
 
-func LogDebug(format string, a ...any) {
+func Debug(format string, a ...any) {
 	fmt.Printf("::debug::%s\n", fmt.Sprintf(format, a...))
 }
 

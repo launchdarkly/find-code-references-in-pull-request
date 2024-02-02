@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"sort"
@@ -42,7 +41,7 @@ func main() {
 	failExit(err)
 
 	if len(flags) == 0 {
-		gha.LogNotice("No flags found in project %s", config.LdProject)
+		gha.SetNotice("No flags found in project %s", config.LdProject)
 		os.Exit(0)
 	}
 
@@ -73,8 +72,8 @@ func main() {
 
 	if config.CheckExtinctions {
 		if err := extinctions.CheckExtinctions(opts, builder); err != nil {
-			gha.LogWarning("Error checking for extinct flags")
-			log.Println(err)
+			gha.SetWarning("Error checking for extinct flags")
+			gha.LogError(err)
 		}
 	}
 	flagsRef := builder.Build()
@@ -102,7 +101,7 @@ func main() {
 func checkExistingComments(event *github.PullRequestEvent, config *lcr.Config, ctx context.Context) *github.IssueComment {
 	comments, _, err := config.GHClient.Issues.ListComments(ctx, config.Owner, config.Repo, *event.PullRequest.Number, nil)
 	if err != nil {
-		log.Println(err)
+		gha.LogError(err)
 	}
 
 	for _, comment := range comments {
@@ -154,7 +153,7 @@ func postGithubComment(ctx context.Context, flagsRef references.ReferenceSummary
 }
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
-	gha.LogDebug("Getting pull request diff...")
+	gha.Debug("Getting pull request diff...")
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, resp, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo, prNumber, rawOpts)
 	if err != nil {
@@ -174,15 +173,14 @@ func getOptions(config *lcr.Config) (options.Options, error) {
 	viper.Set("dir", config.Workspace)
 	viper.Set("accessToken", config.ApiToken)
 
-	err := options.InitYAML()
-	if err != nil {
-		log.Println(err)
+	if err := options.InitYAML(); err != nil {
+		gha.LogError(err)
 	}
 	return options.GetOptions()
 }
 
 func setOutputs(config *lcr.Config, flagsRef references.ReferenceSummary) {
-	gha.LogDebug("Setting outputs...")
+	gha.Debug("Setting outputs...")
 	flagsModified := flagsRef.AddedKeys()
 	setOutputsForChangedFlags("modified", flagsModified)
 
@@ -202,17 +200,17 @@ func setOutputs(config *lcr.Config, flagsRef references.ReferenceSummary) {
 
 func setOutputsForChangedFlags(modifier string, changedFlags []string) {
 	count := len(changedFlags)
-	gha.SetOutputOrLogError(fmt.Sprintf("any-%s", modifier), fmt.Sprintf("%t", count > 0))
-	gha.SetOutputOrLogError(fmt.Sprintf("%s-flags-count", modifier), fmt.Sprintf("%d", count))
+	gha.SetOutput(fmt.Sprintf("any-%s", modifier), fmt.Sprintf("%t", count > 0))
+	gha.SetOutput(fmt.Sprintf("%s-flags-count", modifier), fmt.Sprintf("%d", count))
 
 	sort.Strings(changedFlags)
-	gha.SetOutputOrLogError(fmt.Sprintf("%s-flags", modifier), strings.Join(changedFlags, " "))
+	gha.SetOutput(fmt.Sprintf("%s-flags", modifier), strings.Join(changedFlags, " "))
 }
 
 func failExit(err error) {
 	if err != nil {
-		gha.LogError(err.Error())
-		log.Println(err)
+		gha.LogError(err)
+		gha.SetError(err.Error())
 		os.Exit(1)
 	}
 }

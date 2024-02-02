@@ -14,7 +14,7 @@ import (
 )
 
 func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
-	gha.LogDebug("Fetching all flags for project")
+	gha.Debug("Fetching all flags for project")
 	params := url.Values{}
 	params.Add("env", config.LdEnvironment)
 	activeFlags, err := getFlags(config, params)
