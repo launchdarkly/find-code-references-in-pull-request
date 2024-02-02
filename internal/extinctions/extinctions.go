@@ -11,7 +11,7 @@ import (
 func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilder) error {
 	gha.StartLogGroup("Checking for extinctions...")
 	defer gha.EndLogGroup()
-	flagKeys := make([]string, 0, len(builder.RemovedFlagKeys()))
+	flagKeys := builder.RemovedFlagKeys()
 
 	matcher, err := search.GetMatcher(opts, flagKeys, nil)
 	if err != nil {
