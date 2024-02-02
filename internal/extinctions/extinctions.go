@@ -23,10 +23,11 @@ func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilde
 	if err != nil {
 		return err
 	}
+	gha.Debug("Found %d references to removed flags", len(references))
 
 	for _, ref := range references {
 		for _, hunk := range ref.Hunks {
-			gha.Debug("Found reference to removed flag %s in %s", hunk.FlagKey, ref.Path)
+			gha.Debug("Flag '%s' is not extinct", hunk.FlagKey)
 			builder.AddHeadFlag(hunk.FlagKey)
 		}
 	}

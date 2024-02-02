@@ -65,6 +65,7 @@ func main() {
 
 	builder := references.NewReferenceSummaryBuilder(config.MaxFlags, config.CheckExtinctions)
 	gha.StartLogGroup("Scanning diff for references...")
+	gha.Log("Searching for %d flags", len(flagKeys))
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
