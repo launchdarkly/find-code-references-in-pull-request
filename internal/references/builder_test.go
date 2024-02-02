@@ -62,4 +62,5 @@ func TestBuilder_RemovedFlagKeys(t *testing.T) {
 	keys := ref.RemovedFlagKeys()
 
 	assert.Len(t, keys, 3)
+	assert.Equal(t, keys, []string{"flag2", "flag3", "flag4"})
 }
