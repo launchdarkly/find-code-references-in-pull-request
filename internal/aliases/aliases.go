@@ -16,18 +16,20 @@ func GenerateAliases(opts options.Options, flagKeys []string, diffContents alias
 		return nil, err
 	}
 
-	gha.Debug("Generating aliases for removed files...")
-	filePatternAliases := getFilepatternAliases(opts.Aliases)
-	for _, flag := range flagKeys {
-		for _, alias := range filePatternAliases {
-			aliases, err := aliases.GenerateAliasesFromFilePattern(alias, flag, opts.Dir, diffContents)
-			if err != nil {
-				// skip aliases that fail to generate
-				continue
+	if len(diffContents) > 0 {
+		gha.Debug("Generating aliases for removed files...")
+		filePatternAliases := getFilepatternAliases(opts.Aliases)
+		for _, flag := range flagKeys {
+			for _, alias := range filePatternAliases {
+				aliases, err := aliases.GenerateAliasesFromFilePattern(alias, flag, opts.Dir, diffContents)
+				if err != nil {
+					// skip aliases that fail to generate
+					continue
+				}
+				aliasesByFlagKey[flag] = append(aliasesByFlagKey[flag], aliases...)
 			}
-			aliasesByFlagKey[flag] = append(aliasesByFlagKey[flag], aliases...)
+			aliasesByFlagKey[flag] = utils.Dedupe(aliasesByFlagKey[flag])
 		}
-		aliasesByFlagKey[flag] = utils.Dedupe(aliasesByFlagKey[flag])
 	}
 
 	gha.Log("Finished generating aliases...")
