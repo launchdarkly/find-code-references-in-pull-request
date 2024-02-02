@@ -69,8 +69,6 @@ func checkDiffFile(parsedDiff *diff.FileDiff, workspace string) (filePath string
 }
 
 func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.ReferenceSummaryBuilder) {
-	gha.StartLogGroup("Scanning diff for references...")
-	defer gha.EndLogGroup()
 	diffLines := strings.Split(string(contents), "\n")
 	for _, line := range diffLines {
 		op := diff_util.LineOperation(line)
@@ -82,6 +80,7 @@ func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.Refere
 		elementMatcher := matcher.Elements[0]
 		for _, flagKey := range elementMatcher.FindMatches(line) {
 			aliasMatches := elementMatcher.FindAliases(line, flagKey)
+			gha.LogDebug("Found (%s) reference to flag %s with aliases %v", op, flagKey, aliasMatches)
 			builder.AddReference(flagKey, op, aliasMatches)
 		}
 		if builder.MaxReferences() {

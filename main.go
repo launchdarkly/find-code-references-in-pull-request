@@ -63,9 +63,11 @@ func main() {
 	failExit(err)
 
 	builder := references.NewReferenceSummaryBuilder(config.MaxFlags, config.CheckExtinctions)
+	gha.StartLogGroup("Scanning diff for references...")
 	for _, contents := range diffMap {
 		ldiff.ProcessDiffs(matcher, contents, builder)
 	}
+	gha.EndLogGroup()
 
 	if config.CheckExtinctions {
 		if err := extinctions.CheckExtinctions(opts, builder); err != nil {
