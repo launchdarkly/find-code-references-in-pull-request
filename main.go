@@ -76,6 +76,8 @@ func main() {
 			gha.LogError(err)
 		}
 	}
+
+	gha.Log("Summarizing results")
 	flagsRef := builder.Build()
 
 	// Add comment
