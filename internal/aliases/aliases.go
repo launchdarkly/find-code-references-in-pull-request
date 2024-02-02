@@ -30,6 +30,7 @@ func GenerateAliases(opts options.Options, flagKeys []string, diffContents alias
 		aliasesByFlagKey[flag] = utils.Dedupe(aliasesByFlagKey[flag])
 	}
 
+	gha.Log("Finished generating aliases...")
 	return aliasesByFlagKey, nil
 }
 
