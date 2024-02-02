@@ -54,12 +54,14 @@ func main() {
 		flagKeys = append(flagKeys, flag.Key)
 	}
 
+	gha.StartLogGroup("Preprocessing diffs...")
 	multiFiles, err := getDiffs(ctx, config, *event.PullRequest.Number)
 	failExit(err)
 
 	diffMap := ldiff.PreprocessDiffs(opts.Dir, multiFiles)
 
 	matcher, err := search.GetMatcher(opts, flagKeys, diffMap)
+	gha.EndLogGroup()
 	failExit(err)
 
 	builder := references.NewReferenceSummaryBuilder(config.MaxFlags, config.CheckExtinctions)
