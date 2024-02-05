@@ -73,10 +73,13 @@ func readFiles(ctx context.Context, files chan<- file, workspace string) error {
 
 	readFile := func(path string, info os.FileInfo, err error) error {
 		// TODO
-		fmt.Printf("Reading file: %s", path)
-		if err != nil || ctx.Err() != nil {
+		fmt.Printf("Reading file: %s\n", path)
+		if err != nil {
+			return err
+		}
+		if err := ctx.Err(); err != nil {
 			// global context cancelled, don't read any more files
-			return nil
+			return err
 		}
 
 		isDir := info.IsDir()
