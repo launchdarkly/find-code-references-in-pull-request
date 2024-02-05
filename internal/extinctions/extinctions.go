@@ -20,6 +20,7 @@ func CheckExtinctions(opts options.Options, builder *refs.ReferenceSummaryBuilde
 	if err != nil {
 		return err
 	}
+	gha.Log("Matcher elements: %+v", matcher.Elements)
 
 	gha.Debug("Searching for any remaining references to %d removed flags...", len(flagKeys))
 	gha.Debug("Searching dir %s", opts.Dir)

@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -108,8 +109,11 @@ func (f file) toHunks(matcher Matcher) *ld.ReferenceHunksRep {
 		if elementSearch.Dir != "" {
 			matchDir := strings.HasPrefix(f.path, elementSearch.Dir)
 			if !matchDir {
+				fmt.Printf("Path %s does not match dir %s\n", f.path, elementSearch.Dir)
 				continue
 			}
+		} else {
+			fmt.Printf("No dir for project element %s\n", elementSearch.ProjKey)
 		}
 		filteredMatchers = append(filteredMatchers, elementSearch)
 	}

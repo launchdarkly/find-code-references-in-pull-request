@@ -28,7 +28,6 @@ func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.F
 	matcher := lsearch.Matcher{
 		Elements: elements,
 	}
-	gha.Log("Matcher elements: %+v", matcher.Elements)
 
 	return matcher, nil
 }
