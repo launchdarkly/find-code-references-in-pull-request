@@ -24,7 +24,7 @@ func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.F
 
 	delimiters := strings.Join(lsearch.GetDelimiters(opts), "")
 	elements := make([]lsearch.ElementMatcher, 0, 1)
-	elements = append(elements, lsearch.NewElementMatcher(opts.ProjKey, opts.Dir, delimiters, flagKeys, aliasesByFlagKey))
+	elements = append(elements, lsearch.NewElementMatcher(opts.ProjKey, "", delimiters, flagKeys, aliasesByFlagKey))
 	matcher := lsearch.Matcher{
 		Elements: elements,
 	}
