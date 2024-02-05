@@ -18,10 +18,14 @@ _Read more: [Example commands](https://github.com/nektos/act#example-commands)_
 
 ## Publishing a release
 
+Make sure [CHANGELOG.md](CHANGELOG.md) and [version](internal/version/version.go) are updated
+
 Follow instructions to [publish a release to the GitHub Marketplace](https://docs.github.com/en/actions/creating-actions/publishing-actions-in-github-marketplace#publishing-an-action).
 
 **Publishing** is a manual step even if automation is used to create a release.
 
 ### Versioning
 
-_Read more: [Semantic versioning](https://semver.org/)_
+We use [semantic versioning](https://semver.org/)_ AND a major version release tag for users of the action
+
+Example latest release of v1.1.1 will also be available at tag v1.

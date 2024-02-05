@@ -31,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v1.1.0
+        uses: launchdarkly/find-code-references-in-pull-request@v1
         id: find-flags
         with:
           project-key: default
@@ -53,7 +53,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v1.1.0
+        uses: launchdarkly/find-code-references-in-pull-request@v1
         id: find-flags
         with:
           project-key: default

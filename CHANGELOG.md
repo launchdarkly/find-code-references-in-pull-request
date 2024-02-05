@@ -6,6 +6,15 @@
 
 ### Fixed
 
+## 1.1.1
+
+### Changed
+
+- Update dependencies
+
+### Fixed
+- Incorrect scanning for extinctions of removed flags led to false positives
+
 ## 1.1.0
 
 ### Added
