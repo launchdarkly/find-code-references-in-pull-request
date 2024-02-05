@@ -20,7 +20,6 @@ func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.F
 	for key, alias := range aliasesByFlagKey {
 		gha.Debug("Generated aliases for '%s':  %v", key, alias)
 	}
-	gha.Log("MAP %+v", aliasesByFlagKey)
 
 	delimiters := strings.Join(lsearch.GetDelimiters(opts), "")
 	elements := make([]lsearch.ElementMatcher, 0, 1)
