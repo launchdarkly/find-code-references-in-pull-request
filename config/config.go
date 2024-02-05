@@ -3,13 +3,14 @@ package config
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
+
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 )
 
 type Config struct {
@@ -30,10 +31,10 @@ type Config struct {
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	// mask tokens
 	if accessToken := os.Getenv("INPUT_ACCESS-TOKEN"); len(accessToken) > 0 {
-		fmt.Printf("::add-mask::%s\n", accessToken)
+		gha.MaskInput(accessToken)
 	}
 	if repoToken := os.Getenv("INPUT_REPO-TOKEN"); len(repoToken) > 0 {
-		fmt.Printf("::add-mask::%s\n", repoToken)
+		gha.MaskInput(repoToken)
 	}
 
 	// init config with defaults

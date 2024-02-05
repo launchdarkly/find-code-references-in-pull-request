@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v13"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
@@ -113,7 +113,7 @@ func BuildFlagComment(buildComment FlagComments, flagsRef refs.ReferenceSummary,
 
 	hash := md5.Sum([]byte(postedComments))
 	if existingComment != nil && strings.Contains(*existingComment.Body, hex.EncodeToString(hash[:])) {
-		log.Println("comment already exists")
+		gha.Log("comment already exists")
 		return ""
 	}
 
@@ -129,7 +129,7 @@ func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, con
 		idx, _ := find(flags, flagKey)
 		createComment, err := githubFlagComment(flags[idx], flagAliases, true, false, config)
 		if err != nil {
-			log.Println(err)
+			gha.LogError(err)
 		}
 		buildComment.CommentsAdded = append(buildComment.CommentsAdded, createComment)
 	}
@@ -144,7 +144,7 @@ func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, con
 		}
 		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, extinct, config)
 		if err != nil {
-			log.Println(err)
+			gha.LogError(err)
 		}
 		buildComment.CommentsRemoved = append(buildComment.CommentsRemoved, removedComment)
 	}

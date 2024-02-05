@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	i "github.com/launchdarkly/find-code-references-in-pull-request/ignore"
+	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	diff_util "github.com/launchdarkly/find-code-references-in-pull-request/internal/utils/diff_util"
 	"github.com/launchdarkly/ld-find-code-refs/v2/aliases"
@@ -79,6 +80,7 @@ func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.Refere
 		elementMatcher := matcher.Elements[0]
 		for _, flagKey := range elementMatcher.FindMatches(line) {
 			aliasMatches := elementMatcher.FindAliases(line, flagKey)
+			gha.Debug("Found (%s) reference to flag %s with aliases %v", op, flagKey, aliasMatches)
 			builder.AddReference(flagKey, op, aliasMatches)
 		}
 		if builder.MaxReferences() {
