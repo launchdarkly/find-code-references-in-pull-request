@@ -26,4 +26,6 @@ Follow instructions to [publish a release to the GitHub Marketplace](https://doc
 
 ### Versioning
 
-_Read more: [Semantic versioning](https://semver.org/)_
+We use [semantic versioning](https://semver.org/)_ AND a major version release tag for users of the action
+
+Example latest release of v1.1.1 will also be available at tag v1.
