@@ -11,7 +11,7 @@ import (
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/aliases"
 )
 
-func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.FileContentsMap) (matcher lsearch.Matcher, err error) {
+func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.FileContentsMap) (lsearch.Matcher, error) {
 	aliasesByFlagKey, err := aliases.GenerateAliases(opts, flagKeys, diffContents)
 	if err != nil {
 		return lsearch.Matcher{}, err
@@ -24,7 +24,7 @@ func GetMatcher(opts options.Options, flagKeys []string, diffContents laliases.F
 	delimiters := strings.Join(lsearch.GetDelimiters(opts), "")
 	elements := make([]lsearch.ElementMatcher, 0, 1)
 	elements = append(elements, lsearch.NewElementMatcher(opts.ProjKey, opts.Dir, delimiters, flagKeys, aliasesByFlagKey))
-	matcher = lsearch.Matcher{
+	matcher := lsearch.Matcher{
 		Elements: elements,
 	}
 
