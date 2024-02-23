@@ -91,29 +91,22 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, change string) *ld
 	}
 
 	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
-	metadata := make(map[string]string, 6)
-
-	// maybe rename
-	metadata["contextMessage"] = change
-
-	if pr.Number != nil {
-		metadata["prNumber"] = strconv.Itoa(*pr.Number)
-	}
-
-	if pr.State != nil {
-		metadata["state"] = *pr.State
-	}
-
-	if pr.User.AvatarURL != nil {
-		metadata["avatarUrl"] = *pr.User.AvatarURL
+	metadata := map[string]string{
+		"message":     change,
+		"prNumber":    strconv.Itoa(*pr.Number),
+		"prTitle":     *pr.Title,
+		"state":       *pr.State,
+		"avatarUrl":   *pr.User.AvatarURL,
+		"repoName":    *event.Repo.FullName,
+		"repoUrl":     *event.Repo.HTMLURL,
+		"authorName":  *pr.User.Name,
+		"authorLogin": *pr.User.Login,
 	}
 
 	if pr.User.Name != nil {
-		metadata["authorName"] = *pr.User.Name
-	}
-
-	if pr.User.Login != nil {
-		metadata["authorLogin"] = *pr.User.Login
+		metadata["authorDisplayName"] = *pr.User.Name
+	} else {
+		metadata["authorDisplayName"] = *pr.User.Login
 	}
 
 	var timestamp *int64
@@ -122,23 +115,23 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, change string) *ld
 		timestamp = &m
 	}
 
-	// TODO integration := "github"
+	integration := "github"
 	id := strconv.FormatInt(*pr.ID, 10)
 	// key must be unique
 	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
 	return &ldapi.FlagLinkPost{
-		DeepLink: pr.HTMLURL,
-		Key:      &key,
-		// IntegrationKey: &integration,
-		Timestamp:   timestamp,
-		Title:       getPrTitle(event),
-		Description: pr.Body,
-		Metadata:    &metadata,
+		DeepLink:       pr.HTMLURL,
+		Key:            &key,
+		IntegrationKey: &integration,
+		Timestamp:      timestamp,
+		Title:          getLinkTitle(event),
+		Description:    pr.Body,
+		Metadata:       &metadata,
 	}
 }
 
-func getPrTitle(event *github.PullRequestEvent) *string {
+func getLinkTitle(event *github.PullRequestEvent) *string {
 	builder := new(strings.Builder)
 	builder.WriteString(fmt.Sprintf("[%s]", *event.Repo.FullName))
 
