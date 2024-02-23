@@ -101,7 +101,7 @@ func main() {
 	// Add flag links
 	if config.CreateFlagLinks {
 		gha.StartLogGroup("Adding flag links...")
-		if err := ldclient.CreateFlagLinks(config, flagsRef, event.PullRequest); err != nil {
+		if err := ldclient.CreateFlagLinks(config, flagsRef, event); err != nil {
 			gha.SetWarning("Error creating flag links")
 		}
 		gha.EndLogGroup()

@@ -18,8 +18,8 @@ import (
 	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
-func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, pr *github.PullRequest) error {
-	link := MakeFlagLinkRep(pr)
+func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event *github.PullRequestEvent) error {
+	link := makeFlagLinkRep(event)
 	if link == nil {
 		return nil
 	}
@@ -88,7 +88,8 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkRep, flagKey string)
 	log.Println(string(body))
 }
 
-func MakeFlagLinkRep(pr *github.PullRequest) *ldapi.FlagLinkRep {
+func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkRep {
+	pr := event.PullRequest
 	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
 		return nil
 	}
@@ -109,31 +110,30 @@ func MakeFlagLinkRep(pr *github.PullRequest) *ldapi.FlagLinkRep {
 	}
 
 	m := map[string]string{
-		"prNumber": strconv.Itoa(prNumber),
-		"avatar":   avatar,
-		"state":    state,
+		"prNumber":  strconv.Itoa(prNumber),
+		"avatar":    avatar,
+		"state":     state,
+		"createdAt": strconv.FormatInt(pr.CreatedAt.UnixMilli(), 10),
 	}
 
-	integration := "github"
+	// integration := "github"
 	prIdAsKey := strconv.FormatInt(*pr.ID, 10)
-
-	timestamp := ldapi.NewTimestampRep()
-	if pr.CreatedAt != nil {
-		timestamp.SetMilliseconds(pr.CreatedAt.UnixMilli())
-	}
 
 	prTitle := ""
 	if pr.Title != nil {
 		prTitle = fmt.Sprintf("%s (#%d)", *pr.Title, prNumber)
+	} else if pr.Number != nil {
+		prTitle = fmt.Sprintf("PR #%d", prNumber)
+	} else {
+		prTitle = fmt.Sprintf("%s pull request", *event.Repo.Name)
 	}
 
 	return &ldapi.FlagLinkRep{
-		DeepLink:       *pr.HTMLURL,
-		Key:            &prIdAsKey,
-		IntegrationKey: &integration,
-		Timestamp:      *timestamp,
-		Title:          &prTitle,
-		Description:    pr.Body,
-		Metadata:       &m,
+		DeepLink: *pr.HTMLURL,
+		Key:      &prIdAsKey,
+		// IntegrationKey: &integration,
+		Title:       &prTitle,
+		Description: pr.Body,
+		Metadata:    &m,
 	}
 }
