@@ -18,10 +18,11 @@ import (
 	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
-func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event *github.PullRequestEvent) error {
+func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event *github.PullRequestEvent) {
 	pr := event.PullRequest
 	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
-		return nil
+		gha.Debug("No pull request found in event")
+		return
 	}
 
 	numAdded := len(flagsRef.FlagsAdded)
@@ -42,8 +43,6 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 		link := makeFlagLinkRep(event, key, message)
 		postFlagLink(config, *link, key)
 	}
-
-	return nil
 }
 
 func postFlagLink(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string) {
