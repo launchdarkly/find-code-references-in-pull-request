@@ -161,7 +161,7 @@ func getLinkTitle(event *github.PullRequestEvent) *string {
 
 func buildLinkMessage(key string, aliases []string, action string, added, removed int) string {
 	builder := new(strings.Builder)
-	builder.WriteString(fmt.Sprintf("Flag `%s` %s", key, action))
+	builder.WriteString(fmt.Sprintf("Flag %s", action))
 	if len(aliases) > 0 {
 		builder.WriteString(fmt.Sprintf(" (aliases: %s)", strings.Join(aliases, ", ")))
 	}
@@ -172,7 +172,7 @@ func buildLinkMessage(key string, aliases []string, action string, added, remove
 			count--
 		}
 		if count > 0 {
-			builder.WriteString(fmt.Sprintf("\nAdded %d other flags)", count))
+			builder.WriteString(fmt.Sprintf("\n\t- Added %d other flags", count))
 		}
 	}
 
@@ -182,7 +182,7 @@ func buildLinkMessage(key string, aliases []string, action string, added, remove
 			count--
 		}
 		if count > 0 {
-			builder.WriteString(fmt.Sprintf("\nRemoved %d other flags)", count))
+			builder.WriteString(fmt.Sprintf("\n\t- Removed %d other flags", count))
 		}
 	}
 
