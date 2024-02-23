@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,7 +30,7 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 	for key, aliases := range flagsRef.FlagsAdded {
 		message := buildLinkMessage(key, aliases, "added", numAdded, numRemoved)
 		link := makeFlagLinkRep(event, key, message)
-		sendFlagRequest(config, *link, key)
+		postFlagLink(config, *link, key)
 	}
 
 	for key, aliases := range flagsRef.FlagsRemoved {
@@ -41,23 +40,23 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 		}
 		message := buildLinkMessage(key, aliases, action, numAdded, numRemoved)
 		link := makeFlagLinkRep(event, key, message)
-		sendFlagRequest(config, *link, key)
+		postFlagLink(config, *link, key)
 	}
 
 	return nil
 }
 
-// TODO handle errs etc.
-func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string) {
+func postFlagLink(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string) {
 	requestBody, err := json.Marshal(link)
 	if err != nil {
-		log.Println("Unable to construct flag link payload")
+		gha.SetWarning("Failed to create flag link for %s", flagKey)
+		gha.Debug("Unable to construct flag link payload")
 		return
 	}
 
 	url := fmt.Sprintf("%s/api/v2/flag-links/projects/%s/flags/%s", config.LdInstance, config.LdProject, flagKey)
 
-	fmt.Print(string(requestBody))
+	gha.Debug("[POST %s]\n\n%s", url, string(requestBody))
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -72,23 +71,28 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("Errored when sending flag link request")
+		gha.SetWarning("Failed to create flag link for %s", flagKey)
+		gha.Debug("Error when sending flag link request:\n\n%s", err.Error())
 		return
 	}
+
 	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusConflict {
-		// TODO update duplicate links? maybe just title and status
-		gha.Debug(url)
-		gha.Debug("Flag link already exists [url=%s]", *link.DeepLink)
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("Could not parse flag link request")
+		gha.Debug("Could not parse flag link request")
 	}
 
-	log.Println(string(body))
+	switch resp.StatusCode {
+	case http.StatusCreated:
+		gha.Log("[POST %s] Flag link created [url=%s]", url, *link.DeepLink)
+	case http.StatusConflict:
+		gha.Log("[POST %s] Flag link already exists [url=%s]", url, *link.DeepLink)
+	default:
+		gha.SetWarning("Failed to create flag link for %s", flagKey)
+		gha.Log("[POST %s] Flag link request failed [status=%d]", url, resp.StatusCode)
+	}
+
+	gha.Debug("Response:\n\n%s", string(body))
 }
 
 func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *ldapi.FlagLinkPost {
