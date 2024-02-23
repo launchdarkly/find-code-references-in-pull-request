@@ -81,6 +81,9 @@ func main() {
 	gha.Log("Summarizing results")
 	flagsRef := builder.Build()
 
+	// Set outputs
+	setOutputs(config, flagsRef)
+
 	// Add comment
 	gha.StartLogGroup("Processing comment...")
 	existingComment := checkExistingComments(event, config, ctx)
@@ -95,8 +98,14 @@ func main() {
 	}
 	gha.EndLogGroup()
 
-	// Set outputs
-	setOutputs(config, flagsRef)
+	// Add flag links
+	if config.CreateFlagLinks {
+		gha.StartLogGroup("Adding flag links...")
+		if err := ldclient.CreateFlagLinks(config, flagsRef, event.PullRequest); err != nil {
+			gha.SetWarning("Error creating flag links")
+		}
+		gha.EndLogGroup()
+	}
 
 	failExit(err)
 }

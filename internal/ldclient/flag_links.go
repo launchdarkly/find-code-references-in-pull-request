@@ -14,6 +14,8 @@ import (
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
+
+	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
 // flaglink.CreateFlagLinks(flagsRef.FlagsAdded, flagsRef.FlagsRemoved, event.PullRequest, config)
@@ -34,25 +36,34 @@ type flagLink struct {
 	Metadata       *flagLinkMetadata `json:"metadata"`
 }
 
-func CreateFlagLinks(added map[string][]string, removed map[string][]string, pr *github.PullRequest, config *lcr.Config) {
+func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, pr *github.PullRequest) error {
 	link := MakeFlagLinkRep(pr)
 	if link == nil {
-		return
+		return nil
 	}
 
-	for k := range added {
+	for k := range flagsRef.FlagsAdded {
 		m := *link.Metadata
 		m["contextMessage"] = "added"
 		link.Metadata = &m
 		sendFlagRequest(config, *link, k)
 	}
 
-	for k := range removed {
+	for k := range flagsRef.FlagsRemoved {
 		m := *link.Metadata
 		m["contextMessage"] = "added"
 		link.Metadata = &m
 		sendFlagRequest(config, *link, k)
 	}
+
+	for k := range flagsRef.ExtinctFlags {
+		m := *link.Metadata
+		m["contextMessage"] = "extinct"
+		link.Metadata = &m
+		sendFlagRequest(config, *link, k)
+	}
+
+	return nil
 }
 
 // TODO handle errs etc.
@@ -110,26 +121,36 @@ func MakeFlagLinkRep(pr *github.PullRequest) *ldapi.FlagLinkRep {
 		state = *pr.State
 	}
 
+	var prNumber int
+	if pr.Number != nil {
+		prNumber = *pr.Number
+	}
+
 	m := map[string]string{
-		"prNumber": strconv.Itoa(*pr.Number),
+		"prNumber": strconv.Itoa(prNumber),
 		"avatar":   avatar,
 		"state":    state,
 	}
 
 	integration := "github"
-	k := strconv.FormatInt(*pr.ID, 10)
+	prIdAsKey := strconv.FormatInt(*pr.ID, 10)
 
 	timestamp := ldapi.NewTimestampRep()
 	if pr.CreatedAt != nil {
 		timestamp.SetMilliseconds(pr.CreatedAt.UnixMilli())
 	}
 
+	prTitle := ""
+	if pr.Title != nil {
+		prTitle = fmt.Sprintf("%s (#%d)", *pr.Title, prNumber)
+	}
+
 	return &ldapi.FlagLinkRep{
 		DeepLink:       *pr.HTMLURL,
-		Key:            &k,
+		Key:            &prIdAsKey,
 		IntegrationKey: &integration,
 		Timestamp:      *timestamp,
-		Title:          pr.Title,
+		Title:          &prTitle,
 		Description:    pr.Body,
 		Metadata:       &m,
 	}

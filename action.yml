@@ -45,6 +45,10 @@ inputs:
     description: Check if removed flags still exist in codebase
     required: false
     default: 'true'
+  create-flag-links:
+    description: Create links to flags in LaunchDarkly
+    required: false
+    default: 'true' # consider making this false
 
 outputs:
   any-modified:
