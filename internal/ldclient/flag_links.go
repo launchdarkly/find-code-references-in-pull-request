@@ -77,7 +77,7 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusConflict {
-		gha.Debug("Flag link already exists [url=%s]", link.DeepLink)
+		gha.Debug("Flag link already exists [url=%s]", *link.DeepLink)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -109,6 +109,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
 		prNumber = *pr.Number
 	}
 
+	// update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
 	m := map[string]string{
 		"prNumber": strconv.Itoa(prNumber),
 		"avatar":   avatar,
