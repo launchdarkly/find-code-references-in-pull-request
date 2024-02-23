@@ -130,6 +130,7 @@ func MakeFlagLinkRep(pr *github.PullRequest) *ldapi.FlagLinkRep {
 		IntegrationKey: &integration,
 		Timestamp:      *timestamp,
 		Title:          pr.Title,
+		Description:    pr.Body,
 		Metadata:       &m,
 	}
 }
