@@ -57,7 +57,7 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 
 	url := fmt.Sprintf("%s/api/v2/flag-links/projects/%s/flags/%s", config.LdInstance, config.LdProject, flagKey)
 
-	fmt.Println(requestBody)
+	fmt.Print(string(requestBody))
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(requestBody))
 	if err != nil {
