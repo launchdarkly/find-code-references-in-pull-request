@@ -25,16 +25,21 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 		return nil
 	}
 
-	for key := range flagsRef.FlagsAdded {
-		link := makeFlagLinkRep(event, key, "added")
+	numAdded := len(flagsRef.FlagsAdded)
+	numRemoved := len(flagsRef.FlagsRemoved)
+
+	for key, aliases := range flagsRef.FlagsAdded {
+		message := buildLinkMessage(key, aliases, "added", numAdded, numRemoved)
+		link := makeFlagLinkRep(event, key, message)
 		sendFlagRequest(config, *link, key)
 	}
 
-	for key := range flagsRef.FlagsRemoved {
-		message := "removed"
+	for key, aliases := range flagsRef.FlagsRemoved {
+		action := "removed"
 		if flagsRef.IsExtinct(key) {
-			message = "extinct"
+			action = "extinct"
 		}
+		message := buildLinkMessage(key, aliases, action, numAdded, numRemoved)
 		link := makeFlagLinkRep(event, key, message)
 		sendFlagRequest(config, *link, key)
 	}
@@ -84,7 +89,7 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 	log.Println(string(body))
 }
 
-func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, change string) *ldapi.FlagLinkPost {
+func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *ldapi.FlagLinkPost {
 	pr := event.PullRequest
 	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
 		return nil
@@ -92,7 +97,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, change string) *ld
 
 	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
 	metadata := map[string]string{
-		"message":     change,
+		"message":     message,
 		"prNumber":    strconv.Itoa(*pr.Number),
 		"prTitle":     *pr.Title,
 		"state":       *pr.State,
@@ -126,8 +131,9 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, change string) *ld
 		IntegrationKey: &integration,
 		Timestamp:      timestamp,
 		Title:          getLinkTitle(event),
-		Description:    pr.Body,
-		Metadata:       &metadata,
+		// Description:    pr.Body, TEMP
+		Description: &message,
+		Metadata:    &metadata,
 	}
 }
 
@@ -151,4 +157,34 @@ func getLinkTitle(event *github.PullRequestEvent) *string {
 	title := builder.String()
 
 	return &title
+}
+
+func buildLinkMessage(key string, aliases []string, action string, added, removed int) string {
+	builder := new(strings.Builder)
+	builder.WriteString(fmt.Sprintf("Flag `%s` %s", key, action))
+	if len(aliases) > 0 {
+		builder.WriteString(fmt.Sprintf(" (aliases: %s)", strings.Join(aliases, ", ")))
+	}
+
+	if added > 0 {
+		count := added
+		if action == "added" {
+			count--
+		}
+		if count > 0 {
+			builder.WriteString(fmt.Sprintf("\nAdded %d other flags)", count))
+		}
+	}
+
+	if removed > 0 {
+		count := removed
+		if action == "added" {
+			count--
+		}
+		if count > 0 {
+			builder.WriteString(fmt.Sprintf("\nRemoved %d other flags)", count))
+		}
+	}
+
+	return builder.String()
 }
