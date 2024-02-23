@@ -95,7 +95,6 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		return nil
 	}
 
-	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
 	metadata := map[string]string{
 		"message":   message,
 		"prNumber":  strconv.Itoa(*pr.Number),
@@ -120,17 +119,18 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		timestamp = &m
 	}
 
-	integration := "github"
+	// TODO enable integration once capability is available
+	// integration := "github"
 	id := strconv.FormatInt(*pr.ID, 10)
 	// key must be unique
 	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
 	return &ldapi.FlagLinkPost{
-		DeepLink:       pr.HTMLURL,
-		Key:            &key,
-		IntegrationKey: &integration,
-		Timestamp:      timestamp,
-		Title:          getLinkTitle(event),
+		DeepLink: pr.HTMLURL,
+		Key:      &key,
+		// IntegrationKey: &integration,
+		Timestamp: timestamp,
+		Title:     getLinkTitle(event),
 		// Description:    pr.Body, TEMP
 		Description: &message,
 		Metadata:    &metadata,
