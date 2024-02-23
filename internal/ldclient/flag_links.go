@@ -20,26 +20,22 @@ import (
 )
 
 func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event *github.PullRequestEvent) error {
-	link := makeFlagLinkRep(event)
-	if link == nil {
+	pr := event.PullRequest
+	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
 		return nil
 	}
 
 	for key := range flagsRef.FlagsAdded {
-		m := *link.Metadata
-		m["contextMessage"] = "added"
-		link.SetMetadata(m)
+		link := makeFlagLinkRep(event, key, "added")
 		sendFlagRequest(config, *link, key)
 	}
 
 	for key := range flagsRef.FlagsRemoved {
-		m := *link.Metadata
+		message := "removed"
 		if flagsRef.IsExtinct(key) {
-			m["contextMessage"] = "extinct"
-		} else {
-			m["contextMessage"] = "removed"
+			message = "extinct"
 		}
-		link.SetMetadata(m)
+		link := makeFlagLinkRep(event, key, message)
 		sendFlagRequest(config, *link, key)
 	}
 
@@ -88,14 +84,17 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 	log.Println(string(body))
 }
 
-func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
+func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, change string) *ldapi.FlagLinkPost {
 	pr := event.PullRequest
 	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
 		return nil
 	}
 
 	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
-	metadata := make(map[string]string, 5)
+	metadata := make(map[string]string, 6)
+
+	// maybe rename
+	metadata["contextMessage"] = change
 
 	if pr.Number != nil {
 		metadata["prNumber"] = strconv.Itoa(*pr.Number)
@@ -124,11 +123,13 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
 	}
 
 	// TODO integration := "github"
-	prIdAsKey := strconv.FormatInt(*pr.ID, 10)
+	id := strconv.FormatInt(*pr.ID, 10)
+	// key must be unique
+	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
 	return &ldapi.FlagLinkPost{
 		DeepLink: pr.HTMLURL,
-		Key:      &prIdAsKey,
+		Key:      &key,
 		// IntegrationKey: &integration,
 		Timestamp:   timestamp,
 		Title:       getPrTitle(event),
