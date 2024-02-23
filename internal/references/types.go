@@ -37,6 +37,11 @@ func (fr ReferenceSummary) ExtinctKeys() []string {
 	return keys
 }
 
+func (fr ReferenceSummary) IsExtinct(key string) bool {
+	_, ok := fr.ExtinctFlags[key]
+	return ok
+}
+
 func (fr ReferenceSummary) sortedKeys(keys map[string][]string) []string {
 	sortedKeys := make([]string, 0, len(keys))
 	for k := range keys {

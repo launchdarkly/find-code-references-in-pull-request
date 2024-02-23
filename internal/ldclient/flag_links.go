@@ -33,14 +33,11 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 
 	for key := range flagsRef.FlagsRemoved {
 		m := *link.Metadata
-		m["contextMessage"] = "removed"
-		link.SetMetadata(m)
-		sendFlagRequest(config, *link, key)
-	}
-
-	for key := range flagsRef.ExtinctFlags {
-		m := *link.Metadata
-		m["contextMessage"] = "extinct"
+		if flagsRef.IsExtinct(key) {
+			m["contextMessage"] = "extinct"
+		} else {
+			m["contextMessage"] = "removed"
+		}
 		link.SetMetadata(m)
 		sendFlagRequest(config, *link, key)
 	}
@@ -78,6 +75,7 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 
 	if resp.StatusCode == http.StatusConflict {
 		// TODO update duplicate links? maybe just title and status
+		gha.Debug(url)
 		gha.Debug("Flag link already exists [url=%s]", *link.DeepLink)
 	}
 
