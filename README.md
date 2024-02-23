@@ -86,7 +86,22 @@ You can find more information on aliases at [launchdarkly/ld-find-code-refs](htt
 
 This action does not support monorepos or searching for flags across LaunchDarkly projects.
 
-<!-- action-docs-inputs -->
+<!-- action-docs-inputs action="action.yml" -->
+### Inputs
+
+| name | description | required | default |
+| --- | --- | --- | --- |
+| `repo-token` | <p>Token to use to authorize comments on PR. Typically the <code>GITHUB_TOKEN</code> secret or equivalent <code>github.token</code>.</p> | `true` | `""` |
+| `access-token` | <p>LaunchDarkly access token</p> | `true` | `""` |
+| `project-key` | <p>LaunchDarkly project key</p> | `false` | `default` |
+| `environment-key` | <p>LaunchDarkly environment key for creating flag links</p> | `false` | `production` |
+| `placeholder-comment` | <p>Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated.</p> | `false` | `false` |
+| `include-archived-flags` | <p>Scan for archived flags</p> | `false` | `true` |
+| `max-flags` | <p>Maximum number of flags to find per PR</p> | `false` | `5` |
+| `base-uri` | <p>The base URI for the LaunchDarkly server. Most users should use the default value.</p> | `false` | `https://app.launchdarkly.com` |
+| `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
+| `create-flag-links` | <p>Create links to flags in LaunchDarkly</p> | `false` | `true` |
+<!-- action-docs-inputs action="action.yml" -->
 ### Inputs
 
 | parameter | description | required | default |
@@ -102,7 +117,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | check-extinctions | Check if removed flags still exist in codebase | `false` | true |
 <!-- action-docs-inputs -->
 
-<!-- action-docs-outputs -->
+<!-- action-docs-outputs action="action.yml"-->
 ### Outputs
 
 | parameter | description |
