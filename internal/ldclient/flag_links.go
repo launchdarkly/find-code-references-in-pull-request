@@ -27,21 +27,21 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 	for k := range flagsRef.FlagsAdded {
 		m := *link.Metadata
 		m["contextMessage"] = "added"
-		link.Metadata = &m
+		link.SetMetadata(m)
 		sendFlagRequest(config, *link, k)
 	}
 
 	for k := range flagsRef.FlagsRemoved {
 		m := *link.Metadata
-		m["contextMessage"] = "added"
-		link.Metadata = &m
+		m["contextMessage"] = "removed"
+		link.SetMetadata(m)
 		sendFlagRequest(config, *link, k)
 	}
 
 	for k := range flagsRef.ExtinctFlags {
 		m := *link.Metadata
 		m["contextMessage"] = "extinct"
-		link.Metadata = &m
+		link.SetMetadata(m)
 		sendFlagRequest(config, *link, k)
 	}
 
@@ -49,7 +49,7 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 }
 
 // TODO handle errs etc.
-func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkRep, flagKey string) {
+func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string) {
 	requestBody, err := json.Marshal(link)
 	if err != nil {
 		log.Println("Unable to construct flag link payload")
@@ -88,7 +88,7 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkRep, flagKey string)
 	log.Println(string(body))
 }
 
-func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkRep {
+func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
 	pr := event.PullRequest
 	if pr == nil || pr.HTMLURL == nil || pr.ID == nil {
 		return nil
@@ -110,11 +110,12 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkRep {
 	}
 
 	m := map[string]string{
-		"prNumber":  strconv.Itoa(prNumber),
-		"avatar":    avatar,
-		"state":     state,
-		"createdAt": strconv.FormatInt(pr.CreatedAt.UnixMilli(), 10),
+		"prNumber": strconv.Itoa(prNumber),
+		"avatar":   avatar,
+		"state":    state,
 	}
+
+	timestamp := pr.CreatedAt.UnixMilli()
 
 	// integration := "github"
 	prIdAsKey := strconv.FormatInt(*pr.ID, 10)
@@ -128,10 +129,11 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkRep {
 		prTitle = fmt.Sprintf("%s pull request", *event.Repo.Name)
 	}
 
-	return &ldapi.FlagLinkRep{
-		DeepLink: *pr.HTMLURL,
+	return &ldapi.FlagLinkPost{
+		DeepLink: pr.HTMLURL,
 		Key:      &prIdAsKey,
 		// IntegrationKey: &integration,
+		Timestamp:   &timestamp,
 		Title:       &prTitle,
 		Description: pr.Body,
 		Metadata:    &m,
