@@ -99,6 +99,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		"message":   message,
 		"prNumber":  strconv.Itoa(*pr.Number),
 		"prTitle":   *pr.Title,
+		"prBody":    *pr.Body,
 		"state":     *pr.State,
 		"avatarUrl": *pr.User.AvatarURL,
 		"repoName":  *event.Repo.FullName,
@@ -110,7 +111,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		metadata["authorDisplayName"] = *pr.User.Name
 	} else {
 		metadata["authorDisplayName"] = *pr.User.Login
-		metadata["authorName"] = *pr.User.Login
+		metadata["authorLogin"] = *pr.User.Login
 	}
 
 	var timestamp *int64
