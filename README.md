@@ -7,7 +7,12 @@ Adds a comment to a pull request (PR) whenever a feature flag reference is found
 
 ## Permissions
 
-This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with read access for the designated `project-key`. Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with:
+
+1. Read access for the designated `project-key`
+2. (Optionally) `createFlagLink` role when `create-flag-links: true`
+
+Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
 
 To add a comment to a PR, the `repo-token` used requires `write` permission for PRs. You can also specify permissions for the workflow with:
 
@@ -100,7 +105,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | `max-flags` | <p>Maximum number of flags to find per PR</p> | `false` | `5` |
 | `base-uri` | <p>The base URI for the LaunchDarkly server. Most users should use the default value.</p> | `false` | `https://app.launchdarkly.com` |
 | `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
-| `create-flag-links` | <p>Create links to flags in LaunchDarkly</p> | `false` | `true` |
+| `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role.</p> | `false` | `false` |
 <!-- action-docs-inputs action="action.yml" -->
 ### Inputs
 

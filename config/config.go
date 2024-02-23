@@ -43,7 +43,6 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		MaxFlags:             5,
 		IncludeArchivedFlags: true,
 		CheckExtinctions:     true,
-		CreateFlagLinks:      true,
 	}
 
 	config.LdProject = os.Getenv("INPUT_PROJECT-KEY")
@@ -94,7 +93,7 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	}
 
 	if createFlagLinks, err := strconv.ParseBool(os.Getenv("INPUT_CREATE-FLAG-LINKS")); err == nil {
-		// ignore error - default is true
+		// ignore error - default is false
 		config.CreateFlagLinks = createFlagLinks
 	}
 

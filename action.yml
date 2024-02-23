@@ -46,9 +46,9 @@ inputs:
     required: false
     default: 'true'
   create-flag-links:
-    description: Create links to flags in LaunchDarkly
+    description: Create links to flags in LaunchDarkly. To use this feature you must use an access token with the `createFlagLink` role.
     required: false
-    default: 'true' # consider making this false
+    default: 'false'
 
 outputs:
   any-modified:

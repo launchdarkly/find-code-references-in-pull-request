@@ -21,6 +21,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           base-uri: https://app.launchdarkly.com
           max-flags: 200
+          create-flag-links: true
       - name: Find flags summary
         run: |
           echo "flags addded or modified ${{ steps.find-flags.outputs.modified-flags-count }}"
