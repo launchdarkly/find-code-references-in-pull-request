@@ -18,24 +18,6 @@ import (
 	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 )
 
-// flaglink.CreateFlagLinks(flagsRef.FlagsAdded, flagsRef.FlagsRemoved, event.PullRequest, config)
-
-type flagLinkMetadata struct {
-	Number         string  `json:"number"`
-	Avatar         *string `json:"avatar"`
-	State          *string `json:"state"`
-	ContextMessage string  `json:"contextMessage"`
-}
-
-type flagLink struct {
-	DeepLink string `json:"deepLink"`
-	Key      string `json:"key"`
-	// Timestamp            string `json:"timestamp"`
-	IntegrationKey string            `json:"integrationKey"`
-	Title          *string           `json:"title"`
-	Metadata       *flagLinkMetadata `json:"metadata"`
-}
-
 func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, pr *github.PullRequest) error {
 	link := MakeFlagLinkRep(pr)
 	if link == nil {
