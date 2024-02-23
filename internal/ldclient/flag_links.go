@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go/v13"
@@ -93,49 +94,67 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
 		return nil
 	}
 
-	avatar := ""
-	if pr.User.AvatarURL != nil {
-		avatar = *pr.User.AvatarURL
-	}
-
-	state := ""
-	if pr.State != nil {
-		state = *pr.State
-	}
-
-	var prNumber int
-	if pr.Number != nil {
-		prNumber = *pr.Number
-	}
-
 	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
-	m := map[string]string{
-		"prNumber": strconv.Itoa(prNumber),
-		"avatar":   avatar,
-		"state":    state,
+	metadata := make(map[string]string, 5)
+
+	if pr.Number != nil {
+		metadata["prNumber"] = strconv.Itoa(*pr.Number)
 	}
 
-	timestamp := pr.CreatedAt.UnixMilli()
+	if pr.State != nil {
+		metadata["state"] = *pr.State
+	}
+
+	if pr.User.AvatarURL != nil {
+		metadata["avatarUrl"] = *pr.User.AvatarURL
+	}
+
+	if pr.User.Name != nil {
+		metadata["authorName"] = *pr.User.Name
+	}
+
+	if pr.User.Login != nil {
+		metadata["authorLogin"] = *pr.User.Login
+	}
+
+	var timestamp *int64
+	if pr.CreatedAt != nil {
+		m := pr.CreatedAt.UnixMilli()
+		timestamp = &m
+	}
 
 	// TODO integration := "github"
 	prIdAsKey := strconv.FormatInt(*pr.ID, 10)
-
-	prTitle := ""
-	if pr.Title != nil {
-		prTitle = fmt.Sprintf("%s (#%d)", *pr.Title, prNumber)
-	} else if pr.Number != nil {
-		prTitle = fmt.Sprintf("PR #%d", prNumber)
-	} else {
-		prTitle = fmt.Sprintf("%s pull request", *event.Repo.Name)
-	}
 
 	return &ldapi.FlagLinkPost{
 		DeepLink: pr.HTMLURL,
 		Key:      &prIdAsKey,
 		// IntegrationKey: &integration,
-		Timestamp:   &timestamp,
-		Title:       &prTitle,
+		Timestamp:   timestamp,
+		Title:       getPrTitle(event),
 		Description: pr.Body,
-		Metadata:    &m,
+		Metadata:    &metadata,
 	}
+}
+
+func getPrTitle(event *github.PullRequestEvent) *string {
+	builder := new(strings.Builder)
+	builder.WriteString(fmt.Sprintf("[%s]", *event.Repo.FullName))
+
+	pr := event.PullRequest
+	if pr.Title != nil {
+		builder.WriteString(" ")
+		builder.WriteString(*pr.Title)
+		if pr.Number != nil {
+			builder.WriteString(fmt.Sprintf(" (#%d)", *pr.Number))
+		}
+	} else if pr.Number != nil {
+		builder.WriteString(fmt.Sprintf(" PR #%d", *pr.Number))
+	} else {
+		builder.WriteString(" pull request")
+	}
+
+	title := builder.String()
+
+	return &title
 }
