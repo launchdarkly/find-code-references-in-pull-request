@@ -24,25 +24,25 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 		return nil
 	}
 
-	for k := range flagsRef.FlagsAdded {
+	for key := range flagsRef.FlagsAdded {
 		m := *link.Metadata
 		m["contextMessage"] = "added"
 		link.SetMetadata(m)
-		sendFlagRequest(config, *link, k)
+		sendFlagRequest(config, *link, key)
 	}
 
-	for k := range flagsRef.FlagsRemoved {
+	for key := range flagsRef.FlagsRemoved {
 		m := *link.Metadata
 		m["contextMessage"] = "removed"
 		link.SetMetadata(m)
-		sendFlagRequest(config, *link, k)
+		sendFlagRequest(config, *link, key)
 	}
 
-	for k := range flagsRef.ExtinctFlags {
+	for key := range flagsRef.ExtinctFlags {
 		m := *link.Metadata
 		m["contextMessage"] = "extinct"
 		link.SetMetadata(m)
-		sendFlagRequest(config, *link, k)
+		sendFlagRequest(config, *link, key)
 	}
 
 	return nil
@@ -77,6 +77,7 @@ func sendFlagRequest(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusConflict {
+		// TODO update duplicate links? maybe just title and status
 		gha.Debug("Flag link already exists [url=%s]", *link.DeepLink)
 	}
 
@@ -109,7 +110,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
 		prNumber = *pr.Number
 	}
 
-	// update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
+	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
 	m := map[string]string{
 		"prNumber": strconv.Itoa(prNumber),
 		"avatar":   avatar,
@@ -118,7 +119,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent) *ldapi.FlagLinkPost {
 
 	timestamp := pr.CreatedAt.UnixMilli()
 
-	// integration := "github"
+	// TODO integration := "github"
 	prIdAsKey := strconv.FormatInt(*pr.ID, 10)
 
 	prTitle := ""
