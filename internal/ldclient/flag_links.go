@@ -129,10 +129,9 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		DeepLink: pr.HTMLURL,
 		Key:      &key,
 		// IntegrationKey: &integration,
-		Timestamp: timestamp,
-		Title:     getLinkTitle(event),
-		// Description:    pr.Body, TEMP
-		Description: &message,
+		Timestamp:   timestamp,
+		Title:       getLinkTitle(event),
+		Description: pr.Body,
 		Metadata:    &metadata,
 	}
 }
