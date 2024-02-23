@@ -97,21 +97,21 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 
 	// TODO update metadata info https://github.com/launchdarkly/integration-framework/blob/main/integrations/slack-app/manifest.json
 	metadata := map[string]string{
-		"message":     message,
-		"prNumber":    strconv.Itoa(*pr.Number),
-		"prTitle":     *pr.Title,
-		"state":       *pr.State,
-		"avatarUrl":   *pr.User.AvatarURL,
-		"repoName":    *event.Repo.FullName,
-		"repoUrl":     *event.Repo.HTMLURL,
-		"authorName":  *pr.User.Name,
-		"authorLogin": *pr.User.Login,
+		"message":   message,
+		"prNumber":  strconv.Itoa(*pr.Number),
+		"prTitle":   *pr.Title,
+		"state":     *pr.State,
+		"avatarUrl": *pr.User.AvatarURL,
+		"repoName":  *event.Repo.FullName,
+		"repoUrl":   *event.Repo.HTMLURL,
 	}
 
 	if pr.User.Name != nil {
+		metadata["authorName"] = *pr.User.Name
 		metadata["authorDisplayName"] = *pr.User.Name
 	} else {
 		metadata["authorDisplayName"] = *pr.User.Login
+		metadata["authorName"] = *pr.User.Login
 	}
 
 	var timestamp *int64
