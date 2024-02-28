@@ -9,8 +9,8 @@ Adds a comment to a pull request (PR) whenever a feature flag reference is found
 
 This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with:
 
-1. Read access for the designated `project-key`
-2. (Optionally) `createFlagLink` role when `create-flag-links: true`
+* Read access for the designated `project-key`
+* (Optional) `createFlagLink` action, if you have set the `create-flag-links` input to `true`
 
 Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
 
