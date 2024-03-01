@@ -26,6 +26,7 @@ type Config struct {
 	PlaceholderComment   bool
 	IncludeArchivedFlags bool
 	CheckExtinctions     bool
+	CreateFlagLinks      bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -89,6 +90,11 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	if checkExtinctions, err := strconv.ParseBool(os.Getenv("INPUT_CHECK-EXTINCTIONS")); err == nil {
 		// ignore error - default is true
 		config.CheckExtinctions = checkExtinctions
+	}
+
+	if createFlagLinks, err := strconv.ParseBool(os.Getenv("INPUT_CREATE-FLAG-LINKS")); err == nil {
+		// ignore error - default is false
+		config.CreateFlagLinks = createFlagLinks
 	}
 
 	config.GHClient = getGithubClient(ctx)

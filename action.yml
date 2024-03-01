@@ -38,13 +38,17 @@ inputs:
     required: false
     default: '5'
   base-uri:
-    description: The base URI for the LaunchDarkly server. Most users should use the default value.
+    description: The base URI for the LaunchDarkly server. Most members should use the default value.
     required: false
     default: 'https://app.launchdarkly.com'
   check-extinctions:
     description: Check if removed flags still exist in codebase
     required: false
     default: 'true'
+  create-flag-links:
+    description: Create links to flags in LaunchDarkly. To use this feature you must use an access token with the `createFlagLink` role.
+    required: false
+    default: 'false'
 
 outputs:
   any-modified:

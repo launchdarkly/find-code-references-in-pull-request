@@ -137,11 +137,7 @@ func ProcessFlags(flagsRef refs.ReferenceSummary, flags []ldapi.FeatureFlag, con
 	for _, flagKey := range flagsRef.RemovedKeys() {
 		flagAliases := flagsRef.FlagsRemoved[flagKey]
 		idx, _ := find(flags, flagKey)
-		extinct := false
-		if flagsRef.ExtinctFlags != nil {
-			_, e := flagsRef.ExtinctFlags[flagKey]
-			extinct = e
-		}
+		extinct := flagsRef.IsExtinct(flagKey)
 		removedComment, err := githubFlagComment(flags[idx], flagAliases, false, extinct, config)
 		if err != nil {
 			gha.LogError(err)
