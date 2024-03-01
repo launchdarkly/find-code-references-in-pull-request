@@ -99,7 +99,7 @@ func main() {
 	gha.EndLogGroup()
 
 	// Add flag links
-	if config.CreateFlagLinks && postedComments != "" {
+	if config.CreateFlagLinks && flagsRef.AnyFound() && postedComments != "" {
 		// if postedComments is empty, we probably already created the flag links
 		gha.StartLogGroup("Adding flag links...")
 		ldclient.CreateFlagLinks(config, flagsRef, event)
