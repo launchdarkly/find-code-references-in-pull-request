@@ -10,7 +10,7 @@ Adds a comment to a pull request (PR) whenever a feature flag reference is found
 This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with:
 
 * Read access for the designated `project-key`
-* (Optional) `createFlagLink` action, if you have set the `create-flag-links` input to `true`
+* (Optional) the `createFlagLink` action, if you have set the `create-flag-links` input to `true`
 
 Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
 
@@ -34,7 +34,7 @@ jobs:
     name: Find LaunchDarkly feature flags in diff
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Find flags
         uses: launchdarkly/find-code-references-in-pull-request@v1
         id: find-flags
@@ -43,6 +43,7 @@ jobs:
           environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          create-flag-links: true
 ```
 
 Use outputs in workflow:
@@ -56,7 +57,7 @@ jobs:
     name: Find LaunchDarkly feature flags in diff
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Find flags
         uses: launchdarkly/find-code-references-in-pull-request@v1
         id: find-flags
@@ -65,6 +66,7 @@ jobs:
           environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          create-flag-links: true
 
       # Add or remove labels on PRs if any flags have changed
       - name: Add label
@@ -105,7 +107,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | `max-flags` | <p>Maximum number of flags to find per PR</p> | `false` | `5` |
 | `base-uri` | <p>The base URI for the LaunchDarkly server. Most members should use the default value.</p> | `false` | `https://app.launchdarkly.com` |
 | `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
-| `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role.</p> | `false` | `false` |
+| `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role. To learn more, read <a href="https://docs.launchdarkly.com/home/organize/links">Flag links</a>.</p> | `false` | `false` |
 <!-- action-docs-inputs action="action.yml" -->
 ### Inputs
 

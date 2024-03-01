@@ -6,6 +6,16 @@
 
 ### Fixed
 
+## 1.2.0
+
+### Added
+
+- Automatically create [flag links](https://docs.launchdarkly.com/home/organize/links) for flags modified in the pull request
+
+### Changed
+
+- Update dependencies
+
 ## 1.1.1
 
 ### Changed
