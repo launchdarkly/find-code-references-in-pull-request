@@ -125,20 +125,19 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		timestamp = &m
 	}
 
-	// TODO enable integration once capability is available
-	// integration := "github"
+	integration := "github"
 	id := strconv.FormatInt(*pr.ID, 10)
 	// key must be unique
 	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
 	return &ldapi.FlagLinkPost{
-		DeepLink: pr.HTMLURL,
-		Key:      &key,
-		// IntegrationKey: &integration,
-		Timestamp:   timestamp,
-		Title:       getLinkTitle(event),
-		Description: pr.Body,
-		Metadata:    &metadata,
+		DeepLink:       pr.HTMLURL,
+		Key:            &key,
+		IntegrationKey: &integration,
+		Timestamp:      timestamp,
+		Title:          getLinkTitle(event),
+		Description:    pr.Body,
+		Metadata:       &metadata,
 	}
 }
 
