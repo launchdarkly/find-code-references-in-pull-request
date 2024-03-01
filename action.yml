@@ -38,7 +38,7 @@ inputs:
     required: false
     default: '5'
   base-uri:
-    description: The base URI for the LaunchDarkly server. Most users should use the default value.
+    description: The base URI for the LaunchDarkly server. Most members should use the default value.
     required: false
     default: 'https://app.launchdarkly.com'
   check-extinctions:
