@@ -161,8 +161,8 @@ github.com/launchdarkly/api-client-go/v7 v7.1.1 h1:3VBkFt9xHljMw5KDlVFDUogxfH78Y
 github.com/launchdarkly/api-client-go/v7 v7.1.1/go.mod h1:GVl1inKsWoKX3yLgdqrjxWw8k4ih0HlSmdnrhi5NNDs=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f h1:jfiPiz2hE/7mHv2NOS4cm07sSJCsKlbxmR7pzPhhvpU=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f/go.mod h1:CHbYdMs8UjvNnS2fatlQvi4UYnBTRYGxRHc/0kQupSQ=
-github.com/launchdarkly/ld-find-code-refs/v2 v2.11.9 h1:LKsbBX7A6iOOoz8KmwD8r+slzNW7Yv6glCCiEPuTyEc=
-github.com/launchdarkly/ld-find-code-refs/v2 v2.11.9/go.mod h1:DAeS9pEZDVMLd3zGglE2zpGMUvJlLqIupmJpmFx2XrA=
+github.com/launchdarkly/ld-find-code-refs/v2 v2.11.10 h1:MXIsG3P5Sv6NKThPKdUqhi00gTkoOa+2Ml2uIPm3N7U=
+github.com/launchdarkly/ld-find-code-refs/v2 v2.11.10/go.mod h1:/mUCX1XI2Sz/LoN81c1BIHQp1v/eCCed5zUGV3IleCk=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
@@ -426,8 +426,8 @@ golang.org/x/tools v0.0.0-20200729194436-6467de6f59a7/go.mod h1:njjCfa9FT2d7l9Bc
 golang.org/x/tools v0.0.0-20200804011535-6c149bb5ef0d/go.mod h1:njjCfa9FT2d7l9Bc6FUM5FLjQPp3cFF28FI3qnDFljA=
 golang.org/x/tools v0.0.0-20200825202427-b303f430e36d/go.mod h1:njjCfa9FT2d7l9Bc6FUM5FLjQPp3cFF28FI3qnDFljA=
 golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc=
-golang.org/x/tools v0.18.0 h1:k8NLag8AGHnn+PHbl7g43CtqZAwG60vZkLqgyZgIHgQ=
-golang.org/x/tools v0.18.0/go.mod h1:GL7B4CwcLLeo59yx/9UWWuNOW1n3VZ4f5axWfML7Lcg=
+golang.org/x/tools v0.19.0 h1:tfGCXNR1OsFG+sVdLAitlpjAvD/I6dHDKnYrpEZUHkw=
+golang.org/x/tools v0.19.0/go.mod h1:qoJWxmGSIBmAeriMx19ogtrEPrGtDbPK634QFIcLAhc=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=

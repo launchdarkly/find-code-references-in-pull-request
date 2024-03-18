@@ -86,7 +86,7 @@ github.com/launchdarkly/api-client-go/v7
 # github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f
 ## explicit
 github.com/launchdarkly/json-patch
-# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.9
+# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.10
 ## explicit; go 1.20
 github.com/launchdarkly/ld-find-code-refs/v2/aliases
 github.com/launchdarkly/ld-find-code-refs/v2/flags
@@ -236,8 +236,8 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.18.0
-## explicit; go 1.18
+# golang.org/x/tools v0.19.0
+## explicit; go 1.19
 golang.org/x/tools/godoc/util
 golang.org/x/tools/godoc/vfs
 # google.golang.org/appengine v1.6.7
