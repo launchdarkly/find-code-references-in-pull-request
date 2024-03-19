@@ -77,9 +77,9 @@ github.com/kyoh86/richgo/editor/test
 # github.com/kyoh86/xdg v1.2.0
 ## explicit; go 1.12
 github.com/kyoh86/xdg
-# github.com/launchdarkly/api-client-go/v13 v13.0.0
+# github.com/launchdarkly/api-client-go/v15 v15.0.0
 ## explicit; go 1.13
-github.com/launchdarkly/api-client-go/v13
+github.com/launchdarkly/api-client-go/v15
 # github.com/launchdarkly/api-client-go/v7 v7.1.1
 ## explicit; go 1.13
 github.com/launchdarkly/api-client-go/v7
