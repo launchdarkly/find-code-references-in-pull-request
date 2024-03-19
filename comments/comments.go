@@ -15,7 +15,7 @@ import (
 	sprig "github.com/Masterminds/sprig/v3"
 
 	"github.com/google/go-github/github"
-	ldapi "github.com/launchdarkly/api-client-go/v13"
+	ldapi "github.com/launchdarkly/api-client-go/v15"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
 	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"

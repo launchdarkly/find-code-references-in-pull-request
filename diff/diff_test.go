@@ -3,7 +3,7 @@ package diff
 import (
 	"testing"
 
-	ldapi "github.com/launchdarkly/api-client-go/v13"
+	ldapi "github.com/launchdarkly/api-client-go/v15"
 	"github.com/launchdarkly/find-code-references-in-pull-request/config"
 	refs "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
 	lsearch "github.com/launchdarkly/ld-find-code-refs/v2/search"
