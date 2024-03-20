@@ -29,7 +29,7 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 	numRemoved := len(flagsRef.FlagsRemoved)
 
 	for key, aliases := range flagsRef.FlagsAdded {
-		message := buildLinkMessage(key, aliases, "added", numAdded, numRemoved)
+		message := buildLinkMessage(aliases, "added", numAdded, numRemoved)
 		link := makeFlagLinkRep(event, key, message)
 		postFlagLink(config, *link, key)
 	}
@@ -39,7 +39,7 @@ func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event 
 		if flagsRef.IsExtinct(key) {
 			action = "extinct"
 		}
-		message := buildLinkMessage(key, aliases, action, numAdded, numRemoved)
+		message := buildLinkMessage(aliases, action, numAdded, numRemoved)
 		link := makeFlagLinkRep(event, key, message)
 		postFlagLink(config, *link, key)
 	}
@@ -163,7 +163,7 @@ func getLinkTitle(event *github.PullRequestEvent) *string {
 	return &title
 }
 
-func buildLinkMessage(key string, aliases []string, action string, added, removed int) string {
+func buildLinkMessage(aliases []string, action string, added, removed int) string {
 	builder := new(strings.Builder)
 	builder.WriteString(fmt.Sprintf("Flag %s", action))
 	if len(aliases) > 0 {
