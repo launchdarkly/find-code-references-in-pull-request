@@ -22,14 +22,15 @@ import (
 )
 
 type Comment struct {
-	Flag       ldapi.FeatureFlag
-	ArchivedAt time.Time
-	Added      bool
-	Extinct    bool
-	Aliases    []string
-	ChangeType string
-	Primary    ldapi.FeatureFlagConfig
-	LDInstance string
+	Flag               ldapi.FeatureFlag
+	ArchivedAt         time.Time
+	Added              bool
+	Extinct            bool
+	Aliases            []string
+	ChangeType         string
+	Primary            ldapi.FeatureFlagConfig
+	LDInstance         string
+	ExtinctionsEnabled bool
 }
 
 func isNil(a interface{}) bool {
@@ -39,12 +40,13 @@ func isNil(a interface{}) bool {
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *lcr.Config) (string, error) {
 	commentTemplate := Comment{
-		Flag:       flag,
-		Added:      added,
-		Extinct:    config.CheckExtinctions && extinct,
-		Aliases:    aliases,
-		Primary:    flag.Environments[config.LdEnvironment],
-		LDInstance: config.LdInstance,
+		Flag:               flag,
+		Added:              added,
+		Extinct:            config.CheckExtinctions && extinct,
+		Aliases:            aliases,
+		Primary:            flag.Environments[config.LdEnvironment],
+		LDInstance:         config.LdInstance,
+		ExtinctionsEnabled: config.CheckExtinctions,
 	}
 	var commentBody bytes.Buffer
 	if flag.ArchivedDate != nil {
@@ -56,7 +58,8 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 		`{{- if ne (len .Aliases) 0}}` +
 		`{{range $i, $e := .Aliases }}` + `{{if $i}},{{end}}` + " `" + `{{$e}}` + "`" + `{{end}}` +
 		`{{- end}} | ` +
-		`{{- if eq .Extinct true}} :white_check_mark: all references removed{{- end}} ` +
+		`{{- if eq .Extinct true}} :white_check_mark: all references removed` +
+		`{{- else if eq .ExtinctionsEnabled true}} :warning: not all references removed {{- end}} ` +
 		`{{- if eq .Flag.Archived true}}{{- if eq .Extinct true}}<br>{{end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}}{{- end}} |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
