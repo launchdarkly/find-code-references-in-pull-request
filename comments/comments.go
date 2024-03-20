@@ -60,7 +60,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 		`{{- end}} | ` +
 		`{{- if eq .Extinct true}} :white_check_mark: all references removed` +
 		`{{- else if eq .ExtinctionsEnabled true}} :warning: not all references removed {{- end}} ` +
-		`{{- if eq .Flag.Archived true}}{{- if eq .Extinct true}}<br>{{end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}}{{- end}} |`
+		`{{- if eq .Flag.Archived true}}{{- if eq .Extinct true}}<br>{{- else if eq .ExtinctionsEnabled true}}<br>{{end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}}{{- end}} |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
 	err := tmpl.Execute(&commentBody, commentTemplate)
