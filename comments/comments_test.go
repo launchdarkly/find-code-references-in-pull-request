@@ -180,7 +180,7 @@ func (e *testFlagEnv) NoAliases(t *testing.T) {
 	comment, err := githubFlagComment(e.Flag, []string{}, true, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [example flag](https://example.com/test) | `example-flag` | | :warning: not all references removed |"
+	expected := "| [example flag](https://example.com/test) | `example-flag` | | |"
 	assert.Equal(t, expected, comment)
 }
 
@@ -188,7 +188,7 @@ func (e *testFlagEnv) Alias(t *testing.T) {
 	comment, err := githubFlagComment(e.Flag, []string{"exampleFlag", "ExampleFlag"}, true, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [example flag](https://example.com/test) | `example-flag` | `exampleFlag`, `ExampleFlag` | :warning: not all references removed |"
+	expected := "| [example flag](https://example.com/test) | `example-flag` | `exampleFlag`, `ExampleFlag` | |"
 	assert.Equal(t, expected, comment)
 }
 
@@ -196,7 +196,7 @@ func (e *testFlagEnv) ArchivedAdded(t *testing.T) {
 	comment, err := githubFlagComment(e.ArchivedFlag, []string{}, true, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :warning: not all references removed<br> :warning: archived on 2023-08-03 |"
+	expected := "| [archived flag](https://example.com/test) | `archived-flag` | | :warning: archived on 2023-08-03 |"
 	assert.Equal(t, expected, comment)
 }
 
@@ -236,7 +236,7 @@ func (e *testFlagEnv) DeprecatedRemoved(t *testing.T) {
 	comment, err := githubFlagComment(e.DeprecatedFlag, []string{}, false, false, &e.Config)
 	require.NoError(t, err)
 
-	expected := "| [deprecated flag](https://example.com/test) | `deprecated-flag` | | :information_source: deprecated on 2023-08-03 |"
+	expected := "| [deprecated flag](https://example.com/test) | `deprecated-flag` | | :warning: not all references removed<br> :information_source: deprecated on 2023-08-03 |"
 	assert.Equal(t, expected, comment)
 }
 
