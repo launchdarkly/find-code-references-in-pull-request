@@ -22,9 +22,14 @@ import (
 )
 
 type Comment struct {
-	Flag               ldapi.FeatureFlag
+	FlagKey            string
+	FlagName           string
+	Archived           bool
 	ArchivedAt         time.Time
+	Deprecated         bool
+	DeprecatedAt       time.Time
 	Added              bool
+	Removed            bool
 	Extinct            bool
 	Aliases            []string
 	ChangeType         string
@@ -38,38 +43,54 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
+// Test go template rendering here https://gotemplate.io/
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *lcr.Config) (string, error) {
 	commentTemplate := Comment{
-		Flag:               flag,
+		FlagKey:            flag.Key,
+		FlagName:           flag.Name,
+		Archived:           flag.Archived,
+		Deprecated:         flag.Deprecated,
 		Added:              added,
+		Removed:            !added,
 		Extinct:            config.CheckExtinctions && extinct,
 		Aliases:            aliases,
 		Primary:            flag.Environments[config.LdEnvironment],
 		LDInstance:         config.LdInstance,
 		ExtinctionsEnabled: config.CheckExtinctions,
 	}
-	var commentBody bytes.Buffer
 	if flag.ArchivedDate != nil {
 		commentTemplate.ArchivedAt = time.UnixMilli(*flag.ArchivedDate)
 	}
+	if flag.DeprecatedDate != nil {
+		commentTemplate.DeprecatedAt = time.UnixMilli(*flag.DeprecatedDate)
+	}
+
 	// All whitespace for template is required to be there or it will not render properly nested.
-	tmplSetup := `| [{{.Flag.Name}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` +
-		"`" + `{{.Flag.Key}}` + "` |" +
+	tmplSetup := `| [{{.FlagName}}]({{.LDInstance}}{{.Primary.Site.Href}}) | ` +
+		"`" + `{{.FlagKey}}` + "` |" +
 		`{{- if ne (len .Aliases) 0}}` +
 		`{{range $i, $e := .Aliases }}` + `{{if $i}},{{end}}` + " `" + `{{$e}}` + "`" + `{{end}}` +
-		`{{- end}} | ` +
-		`{{- if eq .Extinct true}} :white_check_mark: all references removed` +
-		`{{- else if eq .ExtinctionsEnabled true}} :warning: not all references removed {{- end}} ` +
-		`{{- if eq .Flag.Archived true}}{{- if eq .Extinct true}}<br>{{- else if eq .ExtinctionsEnabled true}}<br>{{end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}}{{- end}} |`
+		`{{- end}} | ` + infoCellTemplate() + ` |`
 
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace, "isNil": isNil}).Funcs(sprig.FuncMap()).Parse(tmplSetup))
-	err := tmpl.Execute(&commentBody, commentTemplate)
-	if err != nil {
+
+	var commentBody bytes.Buffer
+	if err := tmpl.Execute(&commentBody, commentTemplate); err != nil {
 		return "", err
 	}
+
 	commentStr := html.UnescapeString(commentBody.String())
 
 	return commentStr, nil
+}
+
+// Template for info cell
+// Will only show deprecated warning if flag is not archived
+func infoCellTemplate() string {
+	return `{{- if eq .Extinct true}} :white_check_mark: all references removed` +
+		`{{- else if and .Removed .ExtinctionsEnabled}} :warning: not all references removed {{- end}} ` +
+		`{{- if eq .Archived true}}{{- if eq .Extinct true}}<br>{{- else if and .Removed .ExtinctionsEnabled }}<br>{{- end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} archived on {{.ArchivedAt | date "2006-01-02"}} ` +
+		`{{- else if eq .Deprecated true}}{{- if eq .Extinct true}}<br>{{- else if and .Removed .ExtinctionsEnabled }}<br>{{- end}}{{- if eq .Added true}} :warning:{{else}} :information_source:{{- end}} deprecated on {{.DeprecatedAt | date "2006-01-02"}}{{- end}}`
 }
 
 func GithubNoFlagComment() *github.IssueComment {
