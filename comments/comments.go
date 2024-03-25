@@ -84,7 +84,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 }
 
 // Template for info cell
-// Will only show deprecated warning, if flag is not archived
+// Will only show deprecated warning if flag is not archived
 func infoCellTemplate() string {
 	return `{{- if eq .Extinct true}} :white_check_mark: all references removed` +
 		`{{- else if and .Removed .ExtinctionsEnabled}} :warning: not all references removed {{- end}} ` +
