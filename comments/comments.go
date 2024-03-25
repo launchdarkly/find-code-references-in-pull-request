@@ -45,7 +45,6 @@ func isNil(a interface{}) bool {
 
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *lcr.Config) (string, error) {
 	commentTemplate := Comment{
-		Flag:               flag,
 		FlagKey:            flag.Key,
 		FlagName:           flag.Name,
 		Archived:           flag.Archived,
