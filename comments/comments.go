@@ -22,7 +22,6 @@ import (
 )
 
 type Comment struct {
-	Flag               ldapi.FeatureFlag
 	FlagKey            string
 	FlagName           string
 	Archived           bool
