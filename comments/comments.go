@@ -29,6 +29,7 @@ type Comment struct {
 	Deprecated         bool
 	DeprecatedAt       time.Time
 	Added              bool
+	Removed            bool
 	Extinct            bool
 	Aliases            []string
 	ChangeType         string
@@ -49,6 +50,7 @@ func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct 
 		Archived:           flag.Archived,
 		Deprecated:         flag.Deprecated,
 		Added:              added,
+		Removed:            !added,
 		Extinct:            config.CheckExtinctions && extinct,
 		Aliases:            aliases,
 		Primary:            flag.Environments[config.LdEnvironment],
