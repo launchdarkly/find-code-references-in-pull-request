@@ -93,7 +93,7 @@ You can find more information on aliases at [launchdarkly/ld-find-code-refs](htt
 
 This action does not support monorepos or searching for flags across LaunchDarkly projects.
 
-<!-- action-docs-inputs action="action.yml" -->
+<!-- action-docs-inputs source="action.yml" -->
 ### Inputs
 
 | name | description | required | default |
@@ -108,37 +108,23 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | `base-uri` | <p>The base URI for the LaunchDarkly server. Most members should use the default value.</p> | `false` | `https://app.launchdarkly.com` |
 | `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
 | `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role. To learn more, read <a href="https://docs.launchdarkly.com/home/organize/links">Flag links</a>.</p> | `false` | `false` |
-<!-- action-docs-inputs action="action.yml" -->
-### Inputs
+<!-- action-docs-inputs source="action.yml" -->
 
-| parameter | description | required | default |
-| --- | --- | --- | --- |
-| repo-token | Token to use to authorize comments on PR. Typically the `GITHUB_TOKEN` secret or equivalent `github.token`. | `true` |  |
-| access-token | LaunchDarkly access token | `true` |  |
-| project-key | LaunchDarkly project key | `false` | default |
-| environment-key | LaunchDarkly environment key for creating flag links | `false` | production |
-| placeholder-comment | Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated. | `false` | false |
-| include-archived-flags | Scan for archived flags | `false` | true |
-| max-flags | Maximum number of flags to find per PR | `false` | 5 |
-| base-uri | The base URI for the LaunchDarkly server. Most users should use the default value. | `false` | https://app.launchdarkly.com |
-| check-extinctions | Check if removed flags still exist in codebase | `false` | true |
-<!-- action-docs-inputs -->
-
-<!-- action-docs-outputs action="action.yml"-->
+<!-- action-docs-outputs source="action.yml" -->
 ### Outputs
 
-| parameter | description |
+| name | description |
 | --- | --- |
-| any-modified | Returns true if any flags have been added or modified in PR |
-| modified-flags | Space-separated list of flags added or modified in PR |
-| modified-flags-count | Number of flags added or modified in PR |
-| any-removed | Returns true if any flags have been removed in PR |
-| removed-flags | Space-separated list of flags removed in PR |
-| removed-flags-count | Number of flags removed in PR |
-| any-changed | Returns true if any flags have been changed in PR |
-| changed-flags | Space-separated list of flags changed in PR |
-| changed-flags-count | Number of flags changed in PR |
-| any-extinct | Returns true if any flags have been removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true. |
-| extinct-flags | Space-separated list of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true. |
-| extinct-flags-count | Number of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true. |
-<!-- action-docs-outputs -->
+| `any-modified` | <p>Returns true if any flags have been added or modified in PR</p> |
+| `modified-flags` | <p>Space-separated list of flags added or modified in PR</p> |
+| `modified-flags-count` | <p>Number of flags added or modified in PR</p> |
+| `any-removed` | <p>Returns true if any flags have been removed in PR</p> |
+| `removed-flags` | <p>Space-separated list of flags removed in PR</p> |
+| `removed-flags-count` | <p>Number of flags removed in PR</p> |
+| `any-changed` | <p>Returns true if any flags have been changed in PR</p> |
+| `changed-flags` | <p>Space-separated list of flags changed in PR</p> |
+| `changed-flags-count` | <p>Number of flags changed in PR</p> |
+| `any-extinct` | <p>Returns true if any flags have been removed in PR and no longer exist in codebase. Only returned if <code>check-extinctions</code> is true.</p> |
+| `extinct-flags` | <p>Space-separated list of flags removed in PR and no longer exist in codebase. Only returned if <code>check-extinctions</code> is true.</p> |
+| `extinct-flags-count` | <p>Number of flags removed in PR and no longer exist in codebase. Only returned if <code>check-extinctions</code> is true.</p> |
+<!-- action-docs-outputs source="action.yml" -->

@@ -49,7 +49,6 @@ inputs:
     description: Create links to flags in LaunchDarkly. To use this feature you must use an access token with the `createFlagLink` role. To learn more, read [Flag links](https://docs.launchdarkly.com/home/organize/links).
     required: false
     default: 'false'
-
 outputs:
   any-modified:
     description: Returns true if any flags have been added or modified in PR
