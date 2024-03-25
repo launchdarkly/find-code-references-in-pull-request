@@ -43,6 +43,7 @@ func isNil(a interface{}) bool {
 	return a == nil || reflect.ValueOf(a).IsNil()
 }
 
+// Test go template rendering here https://gotemplate.io/
 func githubFlagComment(flag ldapi.FeatureFlag, aliases []string, added, extinct bool, config *lcr.Config) (string, error) {
 	commentTemplate := Comment{
 		FlagKey:            flag.Key,
