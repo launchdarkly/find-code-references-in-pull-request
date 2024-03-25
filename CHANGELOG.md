@@ -6,6 +6,18 @@
 
 ### Fixed
 
+## 1.3.0
+
+### Added
+
+- Add an info warning for changes flags that have been [deprecated](https://docs.launchdarkly.com/home/code/flag-archive#deprecating-flags)
+
+### Changed
+
+- Update info message for removed, but not extinct flags
+
+### Fixed
+
 ## 1.2.0
 
 ### Added
