@@ -2,6 +2,8 @@
 
 ### Added
 
+- Create flag links will be on by default
+
 ### Changed
 
 ### Fixed

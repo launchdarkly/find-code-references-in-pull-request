@@ -1,16 +1,17 @@
 # LaunchDarkly Find Code References in Pull Request GitHub action
 
-Adds a comment to a pull request (PR) whenever a feature flag reference is found in a PR diff.
+Adds a comment to a pull request (PR) whenever a feature flag reference is found in a PR diff and creates a [flag link](https://docs.launchdarkly.com/home/organize/links) in LaunchDarkly.
 
-<!-- TODO update this link when repo name changes -->
 <img src="https://github.com/launchdarkly/find-code-references-in-pull-request/raw/main/images/example-comment.png?raw=true" alt="An example code references PR comment" width="100%">
+
+<img src="https://github.com/launchdarkly/find-code-references-in-pull-request/raw/main/images/example-flag-link.png?raw=true" alt="An example GitHub pull request flag link" width="100%">
 
 ## Permissions
 
 This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com/home/account-security/api-access-tokens) with:
 
 * Read access for the designated `project-key`
-* (Optional) the `createFlagLink` action, if you have set the `create-flag-links` input to `true`
+* (Optional) the `createFlagLink` action, when [`create-flag-links` input is `true` (default behavior)](#inputs)
 
 Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
 
@@ -107,7 +108,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | `max-flags` | <p>Maximum number of flags to find per PR</p> | `false` | `5` |
 | `base-uri` | <p>The base URI for the LaunchDarkly server. Most members should use the default value.</p> | `false` | `https://app.launchdarkly.com` |
 | `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
-| `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role. To learn more, read <a href="https://docs.launchdarkly.com/home/organize/links">Flag links</a>.</p> | `false` | `false` |
+| `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role. To learn more, read <a href="https://docs.launchdarkly.com/home/organize/links">Flag links</a>.</p> | `false` | `true` |
 <!-- action-docs-inputs source="action.yml" -->
 
 <!-- action-docs-outputs source="action.yml" -->
