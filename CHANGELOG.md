@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Enable scanning github workflow files for flag references. [More info](https://github.com/launchdarkly/ld-find-code-refs/pull/441)
+
 ### Fixed
 
 ## 1.3.0
