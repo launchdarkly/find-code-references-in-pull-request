@@ -2,13 +2,19 @@
 
 ### Added
 
-- Create flag links will be on by default
+### Changed
+
+### Fixed
+
+## 2.0.0
+
+### Added
+
+- [Breaking change] Create flag links will be on by default. Ensure your access token has the required `createFlagLink` role.
 
 ### Changed
 
 - Enable scanning github workflow files for flag references. [More info](https://github.com/launchdarkly/ld-find-code-refs/pull/441)
-
-### Fixed
 
 ## 1.3.0
 
@@ -20,8 +26,6 @@
 
 - Update info message for removed, but not extinct flags
 - Update dependencies
-
-### Fixed
 
 ## 1.2.0
 

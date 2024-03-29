@@ -28,4 +28,4 @@ Follow instructions to [publish a release to the GitHub Marketplace](https://doc
 
 We use [semantic versioning](https://semver.org/)_ AND a major version release tag for users of the action
 
-Example latest release of v1.1.1 will also be available at tag v1.
+Example: latest release of v1.3.0 will also be available at tag v1.
