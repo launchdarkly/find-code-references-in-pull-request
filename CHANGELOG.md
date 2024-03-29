@@ -2,7 +2,15 @@
 
 ### Added
 
-- Create flag links will be on by default
+### Changed
+
+### Fixed
+
+## 2.0.0
+
+### Added
+
+- [Breaking change] Create flag links will be on by default. Ensure your access token has the required `createFlagLink` role.
 
 ### Changed
 
