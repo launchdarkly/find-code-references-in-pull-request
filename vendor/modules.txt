@@ -20,8 +20,8 @@ github.com/fsnotify/fsnotify
 ## explicit; go 1.19
 github.com/go-git/go-git/v5/plumbing
 github.com/go-git/go-git/v5/plumbing/hash
-# github.com/golang/protobuf v1.5.3
-## explicit; go 1.9
+# github.com/golang/protobuf v1.5.4
+## explicit; go 1.17
 github.com/golang/protobuf/proto
 # github.com/google/go-github v17.0.0+incompatible
 ## explicit
@@ -80,13 +80,10 @@ github.com/kyoh86/xdg
 # github.com/launchdarkly/api-client-go/v15 v15.0.0
 ## explicit; go 1.13
 github.com/launchdarkly/api-client-go/v15
-# github.com/launchdarkly/api-client-go/v7 v7.1.1
-## explicit; go 1.13
-github.com/launchdarkly/api-client-go/v7
 # github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f
 ## explicit
 github.com/launchdarkly/json-patch
-# github.com/launchdarkly/ld-find-code-refs/v2 v2.11.10
+# github.com/launchdarkly/ld-find-code-refs/v2 v2.12.0
 ## explicit; go 1.20
 github.com/launchdarkly/ld-find-code-refs/v2/aliases
 github.com/launchdarkly/ld-find-code-refs/v2/flags
@@ -215,9 +212,6 @@ golang.org/x/exp/slices
 golang.org/x/exp/slog
 golang.org/x/exp/slog/internal
 golang.org/x/exp/slog/internal/buffer
-# golang.org/x/net v0.22.0
-## explicit; go 1.18
-golang.org/x/net/context
 # golang.org/x/oauth2 v0.18.0
 ## explicit; go 1.18
 golang.org/x/oauth2
@@ -240,7 +234,7 @@ golang.org/x/text/unicode/norm
 ## explicit; go 1.19
 golang.org/x/tools/godoc/util
 golang.org/x/tools/godoc/vfs
-# google.golang.org/appengine v1.6.7
+# google.golang.org/appengine v1.6.8
 ## explicit; go 1.11
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
