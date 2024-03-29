@@ -37,14 +37,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v1
+        uses: launchdarkly/find-code-references-in-pull-request@v2
         id: find-flags
         with:
           project-key: default
           environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          create-flag-links: true
 ```
 
 Use outputs in workflow:
@@ -60,14 +59,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v1
+        uses: launchdarkly/find-code-references-in-pull-request@v2
         id: find-flags
         with:
           project-key: default
           environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          create-flag-links: true
 
       # Add or remove labels on PRs if any flags have changed
       - name: Add label
