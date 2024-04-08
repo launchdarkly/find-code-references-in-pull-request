@@ -43,7 +43,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/kyoh86/xdg v1.2.0 // indirect
-	github.com/launchdarkly/api-client-go/v15 v15.0.0
+	github.com/launchdarkly/api-client-go/v15 v15.1.0
 	github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
