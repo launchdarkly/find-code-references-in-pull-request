@@ -8,7 +8,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.19.0
 )
@@ -53,7 +53,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/petar-dambovaliev/aho-corasick v0.0.0-20211021192214-5ab2d9280aa9 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1
