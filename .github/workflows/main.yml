@@ -1,7 +1,7 @@
 # Run test file with command:
 #   act pull_request -e testdata/act/pull-request.json
 
-name: Test find flags
+name: Test and Generate Docs
 on: pull_request
 
 
