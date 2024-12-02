@@ -6,13 +6,11 @@ on: pull_request
 
 
 jobs:
-  Run_Tests:
+  Run_Go_Tests:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
       - name: Checkout
         uses: actions/checkout@v4
-      # Run Go Tests
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -21,7 +19,12 @@ jobs:
         run: go mod tidy
       - name: Run tests
         run: go test ./... -coverprofile=coverage.out
-      # Test the Github Action E2E
+
+  Run_E2E_Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
