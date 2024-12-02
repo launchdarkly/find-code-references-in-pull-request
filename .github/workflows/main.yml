@@ -6,12 +6,22 @@ on: pull_request
 
 
 jobs:
-  find-feature-flags:
+  Run_Tests:
     runs-on: ubuntu-latest
-    name: Test Find Flags
     steps:
+      # Checkout the code
       - name: Checkout
         uses: actions/checkout@v4
+      # Run Go Tests
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Run tests
+        run: go test ./... -coverprofile=coverage.out
+      # Test the Github Action E2E
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
@@ -51,3 +61,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+      
