@@ -4,6 +4,7 @@
 name: Test find flags
 on: pull_request
 
+
 jobs:
   find-feature-flags:
     runs-on: ubuntu-latest
