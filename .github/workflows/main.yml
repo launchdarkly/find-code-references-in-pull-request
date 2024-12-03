@@ -33,8 +33,23 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
-      - name: Run tests
-        run: go test ./... -coverprofile=coverage.out
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
+      - name: Run tests with gotestsum
+        run: |
+          mkdir -p ${{ github.workspace }}/artifacts
+          mkdir -p ${{ github.workspace }}/reports
+
+          GONFALON_MODE=test \
+          gotestsum --packages="./..." \
+            --junitfile ${{ github.workspace }}/reports/go-test_go_tests.xml \
+            --jsonfile ${{ github.workspace }}/artifacts/go-test_go_tests.json \
+            --rerun-fails=2 \
+            --rerun-fails-max-failures=10 \
+            --rerun-fails-report ${{ github.workspace }}/artifacts/rerun_tests_go_tests.txt \
+            -- -tags=launchdarkly_easyjson -p=1
+      
 
   e2e-tests:
     runs-on: ubuntu-latest
