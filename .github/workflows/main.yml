@@ -2,8 +2,8 @@
 #   act pull_request -e testdata/act/pull-request.json
 
 name: Test and Generate Docs
-on: pull_request
 
+on: pull_request
 
 jobs:
   Run_Go_Tests:
