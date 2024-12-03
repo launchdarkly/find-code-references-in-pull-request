@@ -51,7 +51,7 @@ jobs:
             -- -tags=launchdarkly_easyjson -p=1
 
       - name: Publish JUnit Tests
-        uses: ./.github/actions/publish-junit-tests
+        uses: ./.github/actions/publish-junit
         with:
           files: ${{ github.workspace }}/reports/go-test_go_tests.xml
           name: Go Tests
