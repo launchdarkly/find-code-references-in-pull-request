@@ -49,6 +49,14 @@ jobs:
             --rerun-fails-max-failures=10 \
             --rerun-fails-report ${{ github.workspace }}/artifacts/rerun_tests_go_tests.txt \
             -- -tags=launchdarkly_easyjson -p=1
+
+      - name: Publish JUnit Tests
+        uses: ./.github/actions/publish-junit-tests
+        with:
+          files: ${{ github.workspace }}/reports/go-test_go_tests.xml
+          name: Go Tests
+          datadog: 'true'
+          github: 'true'
       
 
   e2e-tests:
