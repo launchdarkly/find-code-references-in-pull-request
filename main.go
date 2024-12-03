@@ -228,7 +228,7 @@ func setOutputsForChangedFlags(modifier string, changedFlags []string) {
 func failExit(err error) {
 	if err != nil {
 		gha.LogError(err)
-		gha.SetError(err.Error())
+		gha.SetError("%s", err.Error())
 		os.Exit(1)
 	}
 }

@@ -30,7 +30,7 @@ func MaskInput(input string) {
 }
 
 func Log(format string, a ...any) {
-	log.Println(fmt.Sprintf(format, a...))
+	fmt.Printf(format, a...)
 }
 
 func LogError(err error) {
