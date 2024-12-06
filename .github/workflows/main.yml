@@ -6,7 +6,7 @@ name: Test and Generate Docs
 on: pull_request
 
 jobs:
-  go-tests:
+  go-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
