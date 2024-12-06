@@ -1,5 +1,5 @@
 # Run test file with command:
-#   act pull_request -e testdata/act/pull-request.json
+#  act pull_request -e testdata/act/pull-request.json
 
 name: Test and Generate Docs
 
