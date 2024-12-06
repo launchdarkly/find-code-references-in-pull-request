@@ -64,7 +64,7 @@ jobs:
           DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
         with:
           files: ${{ github.workspace }}/reports/go-test_go_tests.xml
-          name: Go Tests
+          name: find-code-references-in-pull-request
           datadog: 'true'
           github: 'true'
       
@@ -131,7 +131,7 @@ jobs:
           pip install pre-commit
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: '18.8.0'
 
