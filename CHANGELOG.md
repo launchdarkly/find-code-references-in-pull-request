@@ -6,6 +6,14 @@
 
 ### Fixed
 
+## 2.0.1
+
+### Changed
+
+- Update dependencies
+- Update golang version
+- Migrate from CircleCI to Github Actions
+
 ## 2.0.0
 
 ### Added
