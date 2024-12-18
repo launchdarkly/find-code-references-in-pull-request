@@ -81,7 +81,10 @@ func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.Refere
 		for _, flagKey := range elementMatcher.FindMatches(line) {
 			aliasMatches := elementMatcher.FindAliases(line, flagKey)
 			gha.Debug("Found (%s) reference to flag %s with aliases %v", op, flagKey, aliasMatches)
-			builder.AddReference(flagKey, op, aliasMatches)
+			err := builder.AddReference(flagKey, op, aliasMatches)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		if builder.MaxReferences() {
 			break
