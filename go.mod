@@ -1,6 +1,7 @@
 module github.com/launchdarkly/find-code-references-in-pull-request
 
 go 1.22
+toolchain go1.22.5
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
@@ -16,7 +17,7 @@ require (
 require (
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/kyoh86/richgo v0.3.12
-	github.com/launchdarkly/ld-find-code-refs/v2 v2.12.0
+	github.com/launchdarkly/ld-find-code-refs/v2 v2.13.0
 )
 
 require (
@@ -32,10 +33,10 @@ require (
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
-	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.7.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-git/go-git/v5 v5.11.0 // indirect
+	github.com/go-git/go-git/v5 v5.12.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
@@ -67,7 +68,7 @@ require (
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/tools v0.28.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
