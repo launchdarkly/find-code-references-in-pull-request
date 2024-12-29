@@ -3,7 +3,7 @@ name: 'LaunchDarkly Code References in Pull Request'
 description: 'Find references to feature flags in your pull request'
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'docker://ghcr.io/ln-zap/find-code-references-in-pull-request:latest'
   env:
     LD_PROJ_KEY: ${{ inputs.project-key }}
     LD_ACCESS_TOKEN: ${{ inputs.access-token }}
