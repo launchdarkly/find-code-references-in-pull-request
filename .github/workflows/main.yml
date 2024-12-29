@@ -75,7 +75,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Find LaunchDarkly feature flags in diff
-        uses: ./ # Uses an action in the root directory
+        uses: ghcr.io/launchdarkly/find-code-references-in-pull-request:latest # P4078
         id: find-flags
         with:
           project-key: demo-dan-042021-2

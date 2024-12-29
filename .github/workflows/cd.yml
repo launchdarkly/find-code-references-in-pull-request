@@ -1,0 +1,61 @@
+# When a PR is merged, or when run manually, this workflow will create a
+# release and publish the container image to the GitHub Container Registry. Both
+# will be labeled with the version specified in the manifest file.
+name: Continuous Delivery
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  CONTAINER_REGISTRY: ghcr.io
+  CONTAINER_REGISTRY_USERNAME: ${{ github.actor  }}
+  CONTAINER_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  MANIFEST_PATH: action.yml
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ env.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ env.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create Release
+        id: release
+        uses: issue-ops/releaser@v2
+        with:
+          tag: v${{ steps.meta.outputs.version }}
