@@ -98,11 +98,15 @@ jobs:
           context: .
           push: true
           tags: ${{ env.TEST_TAG }}
+      - name: Update action.yml for local testing
+        run: |
+          # Backup original file
+          cp action.yml action.yml.bak
+          # Replace image path for local testing
+          sed -i 's|docker://ghcr.io/ln-zap/find-code-references-in-pull-request:latest|docker://localhost:5001/actions/find-code-references-in-pull-request:latest|' action.yml
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
-        env:
-          DOCKER_IMAGE: localhost:5001/actions/find-code-references-in-pull-request:latest
         with:
           project-key: demo-dan-042021-2
           environment-key: development
