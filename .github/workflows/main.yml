@@ -101,6 +101,8 @@ jobs:
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
+        env:
+          DOCKER_IMAGE: localhost:5001/actions/find-code-references-in-pull-request:latest
         with:
           project-key: demo-dan-042021-2
           environment-key: development
