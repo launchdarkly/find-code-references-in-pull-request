@@ -23,11 +23,11 @@ github.com/fsnotify/fsnotify
 ## explicit; go 1.19
 github.com/go-git/go-git/v5/plumbing
 github.com/go-git/go-git/v5/plumbing/hash
-# github.com/google/go-github v17.0.0+incompatible
-## explicit
-github.com/google/go-github/github
-# github.com/google/go-querystring v1.0.0
-## explicit
+# github.com/google/go-github/v68 v68.0.0
+## explicit; go 1.21
+github.com/google/go-github/v68/github
+# github.com/google/go-querystring v1.1.0
+## explicit; go 1.10
 github.com/google/go-querystring/query
 # github.com/google/uuid v1.6.0
 ## explicit
