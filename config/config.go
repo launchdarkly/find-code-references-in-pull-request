@@ -113,5 +113,5 @@ func getGithubClient(ctx context.Context) (*github.Client, error) {
 	tc := oauth2.NewClient(ctx, ts)
 	host := os.Getenv("GITHUB_SERVER_URL")
 
-	return github.NewEnterpriseClient(host+"/api/v3/", host+"/api/uploads/", tc)
+	return github.NewClient(tc).WithEnterpriseURLs(host+"/api/v3/", host+"/api/uploads/")
 }
