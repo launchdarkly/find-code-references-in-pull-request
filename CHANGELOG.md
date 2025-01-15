@@ -10,7 +10,7 @@
 
 ### Changed
 
-- Update golang version
+- Update dependencies
 
 ## 2.0.1
 
