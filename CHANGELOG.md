@@ -6,6 +6,12 @@
 
 ### Fixed
 
+## 2.0.2
+
+### Changed
+
+- Update dependencies
+
 ## 2.0.1
 
 ### Changed

@@ -10,10 +10,11 @@ repos:
     language: golang
     pass_filenames: false
 
-- repo: https://github.com/dnephin/pre-commit-golang
-  rev: v0.3.3
-  hooks:
-    - id: go-unit-tests
+# Run as part of GHA workflow
+# - repo: https://github.com/dnephin/pre-commit-golang
+#   rev: v0.3.3
+#   hooks:
+#     - id: go-unit-tests
 
 - repo: local
   hooks:

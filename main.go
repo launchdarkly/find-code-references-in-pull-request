@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v68/github"
 	ghc "github.com/launchdarkly/find-code-references-in-pull-request/comments"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	ldiff "github.com/launchdarkly/find-code-references-in-pull-request/diff"

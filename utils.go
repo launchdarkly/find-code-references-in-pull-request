@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v68/github"
 )
 
 // pulled from ld-find-code-refs github action
