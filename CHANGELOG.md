@@ -6,6 +6,12 @@
 
 ### Fixed
 
+## 2.0.2
+
+### Changed
+
+- Update golang version
+
 ## 2.0.1
 
 ### Changed

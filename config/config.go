@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v68/github"
+
 	"golang.org/x/oauth2"
 
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"

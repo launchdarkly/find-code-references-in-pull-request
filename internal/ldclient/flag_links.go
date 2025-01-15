@@ -9,7 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v68/github"
+
 	ldapi "github.com/launchdarkly/api-client-go/v15"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"

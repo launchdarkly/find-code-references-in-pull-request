@@ -1,12 +1,12 @@
 module github.com/launchdarkly/find-code-references-in-pull-request
 
-go 1.22
-toolchain go1.22.5
+go 1.22.0
+
+toolchain go1.22.7
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/google/go-github v17.0.0+incompatible
-	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1
 	github.com/spf13/viper v1.19.0
@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/google/go-github/v68 v68.0.0
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/kyoh86/richgo v0.3.12
 	github.com/launchdarkly/ld-find-code-refs/v2 v2.13.0
