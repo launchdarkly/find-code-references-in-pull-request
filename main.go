@@ -265,12 +265,6 @@ func getPullRequestDiffUsingGitCommand(ctx context.Context, config *lcr.Config, 
 	}
 
 	mergeBaseSha := commitsComparison.GetMergeBaseCommit().GetSHA()
-	for _, sha := range []string{mergeBaseSha, headSha} {
-		_, err := exec.Command("git", "fetch", "--depth=1", head.GetRepo().GetHTMLURL(), sha).CombinedOutput()
-		if err != nil {
-			return nil, fmt.Errorf("failed to run git fetch: %w", err)
-		}
-	}
 
 	bytes, err := exec.Command("git", "diff", "--find-renames", mergeBaseSha, headSha).CombinedOutput()
 	if err != nil {
