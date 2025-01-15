@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 
@@ -173,6 +174,21 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 			return nil, e.UnauthorizedError
 		}
 
+		if resp != nil && resp.StatusCode == http.StatusNotAcceptable {
+			gha.Debug("PR %d is too large to process - falling back to git command", prNumber)
+			raw, err := getPullRequestDiffUsingGitCommand(ctx, config, config.Owner, config.Repo, prNumber)
+			if err != nil {
+				return nil, err
+			}
+			multi, err := diff.ParseMultiFileDiff(raw)
+			if err != nil {
+				return nil, err
+			}
+			gha.Debug("Got %d diff files", len(multi))
+
+			return multi, nil
+		}
+
 		return nil, err
 	}
 
@@ -231,4 +247,36 @@ func failExit(err error) {
 		gha.SetError("%s", err.Error())
 		os.Exit(1)
 	}
+}
+
+// getPullRequestDiffUsingGitCommand returns a diff of PullRequest using git command.
+func getPullRequestDiffUsingGitCommand(ctx context.Context, config *lcr.Config, owner, repo string, number int) ([]byte, error) {
+	pr, _, err := config.GHClient.PullRequests.Get(ctx, owner, repo, number)
+	if err != nil {
+		return nil, err
+	}
+
+	head := pr.GetHead()
+	headSha := head.GetSHA()
+
+	commitsComparison, _, err := config.GHClient.Repositories.CompareCommits(ctx, owner, repo, headSha, pr.GetBase().GetSHA(), nil)
+	gha.Debug("PR %d: commitsComparison: %+v", number, commitsComparison)
+	if err != nil {
+		return nil, err
+	}
+
+	mergeBaseSha := commitsComparison.GetMergeBaseCommit().GetSHA()
+	for _, sha := range []string{mergeBaseSha, headSha} {
+		_, err := exec.Command("git", "fetch", "--depth=1", head.GetRepo().GetHTMLURL(), sha).CombinedOutput()
+		if err != nil {
+			return nil, fmt.Errorf("failed to run git fetch: %w", err)
+		}
+	}
+
+	bytes, err := exec.Command("git", "diff", "--find-renames", mergeBaseSha, headSha).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run git diff: %w", err)
+	}
+
+	return bytes, nil
 }
