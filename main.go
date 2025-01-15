@@ -174,7 +174,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 			return nil, e.UnauthorizedError
 		}
 
-		if resp != nil && resp.StatusCode == http.StatusNotAcceptable {
+		if resp.StatusCode == http.StatusNotAcceptable {
 			gha.Debug("PR %d is too large to process - falling back to git command", prNumber)
 			raw, err := getPullRequestDiffUsingGitCommand(ctx, config, config.Owner, config.Repo, prNumber)
 			if err != nil {
@@ -260,7 +260,6 @@ func getPullRequestDiffUsingGitCommand(ctx context.Context, config *lcr.Config, 
 	headSha := head.GetSHA()
 
 	commitsComparison, _, err := config.GHClient.Repositories.CompareCommits(ctx, owner, repo, headSha, pr.GetBase().GetSHA(), nil)
-	gha.Debug("PR %d: commitsComparison: %+v", number, commitsComparison)
 	if err != nil {
 		return nil, err
 	}
