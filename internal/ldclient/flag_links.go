@@ -134,6 +134,10 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
 	description := utils.SafeString(pr.Body)
+	// Flag links require a description
+	if description == "" {
+		description = "Empty PR Body"
+	}
 	return &ldapi.FlagLinkPost{
 		DeepLink:       pr.HTMLURL,
 		Key:            &key,
