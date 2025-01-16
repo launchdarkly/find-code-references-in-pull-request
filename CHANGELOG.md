@@ -2,6 +2,14 @@
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 2.1.0
+
+### Added
+
 - Add support for enterprise hosted github instances [More info](https://github.com/launchdarkly/find-code-references-in-pull-request/issues/102)
 
 ### Changed
