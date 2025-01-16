@@ -116,6 +116,7 @@ func getGithubClient(ctx context.Context) (*github.Client, error) {
 
 	host := os.Getenv("GITHUB_SERVER_URL")
 	if host != "https://github.com" && host != "" {
+		gha.Debug("Using GitHub Enterprise host. baseUrl: %s, uploadUrl: %s", host+"/api/v3/", host+"/api/uploads/")
 		return gc.WithEnterpriseURLs(host+"/api/v3/", host+"/api/uploads/")
 	}
 
