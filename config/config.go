@@ -98,14 +98,27 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		config.CreateFlagLinks = createFlagLinks
 	}
 
-	config.GHClient = getGithubClient(ctx)
+	client, err := getGithubClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	config.GHClient = client
+
 	return &config, nil
 }
 
-func getGithubClient(ctx context.Context) *github.Client {
+func getGithubClient(ctx context.Context) (*github.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	return github.NewClient(tc)
+	gc := github.NewClient(tc)
+
+	host := os.Getenv("GITHUB_SERVER_URL")
+	if host != "https://github.com" && host != "" {
+		gha.Log("Using GitHub Enterprise host. baseUrl: %s, uploadUrl: %s", host+"/api/v3/", host+"/api/uploads/")
+		return gc.WithEnterpriseURLs(host+"/api/v3/", host+"/api/uploads/")
+	}
+
+	return gc, nil
 }
