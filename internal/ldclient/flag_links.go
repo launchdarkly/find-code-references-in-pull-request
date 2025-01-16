@@ -102,6 +102,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		return nil
 	}
 
+	authorLogin := utils.SafeString(pr.User.Login)
 	metadata := map[string]string{
 		"message":   message,
 		"prNumber":  strconv.Itoa(*pr.Number),
@@ -114,11 +115,11 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 	}
 
 	if pr.User.Name != nil {
-		metadata["authorName"] = *pr.User.Name
-		metadata["authorDisplayName"] = *pr.User.Name
+		metadata["authorName"] = utils.SafeString(pr.User.Name)
+		metadata["authorDisplayName"] = utils.SafeString(pr.User.Name)
 	} else {
-		metadata["authorDisplayName"] = *pr.User.Login
-		metadata["authorLogin"] = *pr.User.Login
+		metadata["authorDisplayName"] = authorLogin
+		metadata["authorLogin"] = authorLogin
 	}
 
 	var timestamp *int64
@@ -132,13 +133,14 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 	// key must be unique
 	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
+	description := utils.SafeString(pr.Body)
 	return &ldapi.FlagLinkPost{
 		DeepLink:       pr.HTMLURL,
 		Key:            &key,
 		IntegrationKey: &integration,
 		Timestamp:      timestamp,
 		Title:          getLinkTitle(event),
-		Description:    pr.Body,
+		Description:    &description,
 		Metadata:       &metadata,
 	}
 }
@@ -150,7 +152,7 @@ func getLinkTitle(event *github.PullRequestEvent) *string {
 	pr := event.PullRequest
 	if pr.Title != nil {
 		builder.WriteString(" ")
-		builder.WriteString(*pr.Title)
+		builder.WriteString(utils.SafeString(pr.Title))
 		if pr.Number != nil {
 			builder.WriteString(fmt.Sprintf(" (#%d)", *pr.Number))
 		}
