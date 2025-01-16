@@ -14,3 +14,10 @@ func Dedupe(s []string) []string {
 	}
 	return ret
 }
+
+func SafeString(s *string) string {
+	if s != nil {
+		return *s
+	}
+	return ""
+}

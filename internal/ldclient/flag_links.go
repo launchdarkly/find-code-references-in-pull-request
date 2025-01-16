@@ -14,6 +14,7 @@ import (
 	ldapi "github.com/launchdarkly/api-client-go/v15"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
 
 	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
@@ -104,12 +105,12 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 	metadata := map[string]string{
 		"message":   message,
 		"prNumber":  strconv.Itoa(*pr.Number),
-		"prTitle":   *pr.Title,
-		"prBody":    *pr.Body,
-		"state":     *pr.State,
-		"avatarUrl": *pr.User.AvatarURL,
-		"repoName":  *event.Repo.FullName,
-		"repoUrl":   *event.Repo.HTMLURL,
+		"prTitle":   utils.SafeString(pr.Title),
+		"prBody":    utils.SafeString(pr.Body),
+		"state":     utils.SafeString(pr.State),
+		"avatarUrl": utils.SafeString(pr.User.AvatarURL),
+		"repoName":  utils.SafeString(event.Repo.FullName),
+		"repoUrl":   utils.SafeString(event.Repo.HTMLURL),
 	}
 
 	if pr.User.Name != nil {
@@ -144,7 +145,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 
 func getLinkTitle(event *github.PullRequestEvent) *string {
 	builder := new(strings.Builder)
-	builder.WriteString(fmt.Sprintf("[%s]", *event.Repo.FullName))
+	builder.WriteString(fmt.Sprintf("[%s]", utils.SafeString(event.Repo.FullName)))
 
 	pr := event.PullRequest
 	if pr.Title != nil {
