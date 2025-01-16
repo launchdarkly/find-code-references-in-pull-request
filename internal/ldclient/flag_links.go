@@ -101,11 +101,16 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		return nil
 	}
 
+	body := ""
+	if pr.Body != nil {
+		body = *pr.Body
+	}
+
 	metadata := map[string]string{
 		"message":   message,
 		"prNumber":  strconv.Itoa(*pr.Number),
 		"prTitle":   *pr.Title,
-		"prBody":    *pr.Body,
+		"prBody":    body,
 		"state":     *pr.State,
 		"avatarUrl": *pr.User.AvatarURL,
 		"repoName":  *event.Repo.FullName,
