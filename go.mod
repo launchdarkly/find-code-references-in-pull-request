@@ -1,8 +1,7 @@
 module github.com/launchdarkly/find-code-references-in-pull-request
 
 go 1.22.0
-
-toolchain go1.22.7
+toolchain go1.24.1
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
@@ -11,7 +10,7 @@ require (
 	github.com/sourcegraph/go-diff v0.6.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.29.0
 )
 
 require (
