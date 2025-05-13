@@ -9,9 +9,10 @@
 ## Testing locally
 
 Use [nektos/act](https://github.com/nektos/act) to run actions locally.
+NB: You'll want to use the `large` runner in order to have access to all commands needed for testing.
 
 ```
-act
+act -e testdata/act/pull-request.json
 ```
 
 _Read more: [Example commands](https://github.com/nektos/act#example-commands)_

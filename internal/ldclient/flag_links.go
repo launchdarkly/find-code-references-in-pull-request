@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v68/github"
+
 	ldapi "github.com/launchdarkly/api-client-go/v15"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
 	gha "github.com/launchdarkly/find-code-references-in-pull-request/internal/github_actions"
+	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils"
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
 
 	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
@@ -100,23 +102,24 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 		return nil
 	}
 
+	authorLogin := utils.SafeString(pr.User.Login)
 	metadata := map[string]string{
 		"message":   message,
 		"prNumber":  strconv.Itoa(*pr.Number),
-		"prTitle":   *pr.Title,
-		"prBody":    *pr.Body,
-		"state":     *pr.State,
-		"avatarUrl": *pr.User.AvatarURL,
-		"repoName":  *event.Repo.FullName,
-		"repoUrl":   *event.Repo.HTMLURL,
+		"prTitle":   utils.SafeString(pr.Title),
+		"prBody":    utils.SafeString(pr.Body),
+		"state":     utils.SafeString(pr.State),
+		"avatarUrl": utils.SafeString(pr.User.AvatarURL),
+		"repoName":  utils.SafeString(event.Repo.FullName),
+		"repoUrl":   utils.SafeString(event.Repo.HTMLURL),
 	}
 
 	if pr.User.Name != nil {
-		metadata["authorName"] = *pr.User.Name
-		metadata["authorDisplayName"] = *pr.User.Name
+		metadata["authorName"] = utils.SafeString(pr.User.Name)
+		metadata["authorDisplayName"] = utils.SafeString(pr.User.Name)
 	} else {
-		metadata["authorDisplayName"] = *pr.User.Login
-		metadata["authorLogin"] = *pr.User.Login
+		metadata["authorDisplayName"] = authorLogin
+		metadata["authorLogin"] = authorLogin
 	}
 
 	var timestamp *int64
@@ -130,25 +133,30 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 	// key must be unique
 	key := fmt.Sprintf("github-pr-%s-%s", id, flagKey)
 
+	description := utils.SafeString(pr.Body)
+	// Flag links require a description
+	if description == "" {
+		description = "Empty PR Body"
+	}
 	return &ldapi.FlagLinkPost{
 		DeepLink:       pr.HTMLURL,
 		Key:            &key,
 		IntegrationKey: &integration,
 		Timestamp:      timestamp,
 		Title:          getLinkTitle(event),
-		Description:    pr.Body,
+		Description:    &description,
 		Metadata:       &metadata,
 	}
 }
 
 func getLinkTitle(event *github.PullRequestEvent) *string {
 	builder := new(strings.Builder)
-	builder.WriteString(fmt.Sprintf("[%s]", *event.Repo.FullName))
+	builder.WriteString(fmt.Sprintf("[%s]", utils.SafeString(event.Repo.FullName)))
 
 	pr := event.PullRequest
 	if pr.Title != nil {
 		builder.WriteString(" ")
-		builder.WriteString(*pr.Title)
+		builder.WriteString(utils.SafeString(pr.Title))
 		if pr.Number != nil {
 			builder.WriteString(fmt.Sprintf(" (#%d)", *pr.Number))
 		}

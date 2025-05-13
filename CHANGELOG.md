@@ -6,6 +6,24 @@
 
 ### Fixed
 
+## 2.1.0
+
+### Added
+
+- Add support for enterprise hosted github instances [More info](https://github.com/launchdarkly/find-code-references-in-pull-request/issues/102)
+
+### Changed
+
+### Fixed
+
+ - Potential null pointer error when creating flag links
+
+## 2.0.2
+
+### Changed
+
+- Update dependencies
+
 ## 2.0.1
 
 ### Changed
