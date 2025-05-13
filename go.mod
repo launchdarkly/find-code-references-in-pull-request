@@ -9,7 +9,7 @@ require (
 	github.com/sourcegraph/go-diff v0.6.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.30.0
 )
 
 require (
