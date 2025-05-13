@@ -29,7 +29,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -41,6 +40,14 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/pflag"
 
+	"github.com/spf13/viper/internal/encoding"
+	"github.com/spf13/viper/internal/encoding/dotenv"
+	"github.com/spf13/viper/internal/encoding/hcl"
+	"github.com/spf13/viper/internal/encoding/ini"
+	"github.com/spf13/viper/internal/encoding/javaproperties"
+	"github.com/spf13/viper/internal/encoding/json"
+	"github.com/spf13/viper/internal/encoding/toml"
+	"github.com/spf13/viper/internal/encoding/yaml"
 	"github.com/spf13/viper/internal/features"
 )
 
@@ -163,6 +170,9 @@ type Viper struct {
 	configPermissions os.FileMode
 	envPrefix         string
 
+	// Specific commands for ini parsing
+	iniLoadOptions ini.LoadOptions
+
 	automaticEnvApplied bool
 	envKeyReplacer      StringReplacer
 	allowEmptyEnv       bool
@@ -181,10 +191,9 @@ type Viper struct {
 
 	logger *slog.Logger
 
-	encoderRegistry EncoderRegistry
-	decoderRegistry DecoderRegistry
-
-	decodeHook mapstructure.DecodeHookFunc
+	// TODO: should probably be protected with a mutex
+	encoderRegistry *encoding.EncoderRegistry
+	decoderRegistry *encoding.DecoderRegistry
 
 	experimentalFinder     bool
 	experimentalBindStruct bool
@@ -208,10 +217,7 @@ func New() *Viper {
 	v.typeByDefValue = false
 	v.logger = slog.New(&discardHandler{})
 
-	codecRegistry := NewCodecRegistry()
-
-	v.encoderRegistry = codecRegistry
-	v.decoderRegistry = codecRegistry
+	v.resetEncoding()
 
 	v.experimentalFinder = features.Finder
 	v.experimentalBindStruct = features.BindStruct
@@ -250,22 +256,7 @@ type StringReplacer interface {
 // EnvKeyReplacer sets a replacer used for mapping environment variables to internal keys.
 func EnvKeyReplacer(r StringReplacer) Option {
 	return optionFunc(func(v *Viper) {
-		if r == nil {
-			return
-		}
-
 		v.envKeyReplacer = r
-	})
-}
-
-// WithDecodeHook sets a default decode hook for mapstructure.
-func WithDecodeHook(h mapstructure.DecodeHookFunc) Option {
-	return optionFunc(func(v *Viper) {
-		if h == nil {
-			return
-		}
-
-		v.decodeHook = h
 	})
 }
 
@@ -277,6 +268,8 @@ func NewWithOptions(opts ...Option) *Viper {
 		opt.apply(v)
 	}
 
+	v.resetEncoding()
+
 	return v
 }
 
@@ -285,8 +278,15 @@ func NewWithOptions(opts ...Option) *Viper {
 // Be careful when using this function: subsequent calls may override options you set.
 // It's always better to use a local Viper instance.
 func SetOptions(opts ...Option) {
+	keyDelim := v.keyDelim
+
 	for _, opt := range opts {
 		opt.apply(v)
+	}
+
+	// reset encoding if key delimiter changed
+	if keyDelim != v.keyDelim {
+		v.resetEncoding()
 	}
 }
 
@@ -298,6 +298,84 @@ func Reset() {
 	SupportedExts = []string{"json", "toml", "yaml", "yml", "properties", "props", "prop", "hcl", "tfvars", "dotenv", "env", "ini"}
 
 	resetRemote()
+}
+
+// TODO: make this lazy initialization instead.
+func (v *Viper) resetEncoding() {
+	encoderRegistry := encoding.NewEncoderRegistry()
+	decoderRegistry := encoding.NewDecoderRegistry()
+
+	{
+		codec := yaml.Codec{}
+
+		encoderRegistry.RegisterEncoder("yaml", codec)
+		decoderRegistry.RegisterDecoder("yaml", codec)
+
+		encoderRegistry.RegisterEncoder("yml", codec)
+		decoderRegistry.RegisterDecoder("yml", codec)
+	}
+
+	{
+		codec := json.Codec{}
+
+		encoderRegistry.RegisterEncoder("json", codec)
+		decoderRegistry.RegisterDecoder("json", codec)
+	}
+
+	{
+		codec := toml.Codec{}
+
+		encoderRegistry.RegisterEncoder("toml", codec)
+		decoderRegistry.RegisterDecoder("toml", codec)
+	}
+
+	{
+		codec := hcl.Codec{}
+
+		encoderRegistry.RegisterEncoder("hcl", codec)
+		decoderRegistry.RegisterDecoder("hcl", codec)
+
+		encoderRegistry.RegisterEncoder("tfvars", codec)
+		decoderRegistry.RegisterDecoder("tfvars", codec)
+	}
+
+	{
+		codec := ini.Codec{
+			KeyDelimiter: v.keyDelim,
+			LoadOptions:  v.iniLoadOptions,
+		}
+
+		encoderRegistry.RegisterEncoder("ini", codec)
+		decoderRegistry.RegisterDecoder("ini", codec)
+	}
+
+	{
+		codec := &javaproperties.Codec{
+			KeyDelimiter: v.keyDelim,
+		}
+
+		encoderRegistry.RegisterEncoder("properties", codec)
+		decoderRegistry.RegisterDecoder("properties", codec)
+
+		encoderRegistry.RegisterEncoder("props", codec)
+		decoderRegistry.RegisterDecoder("props", codec)
+
+		encoderRegistry.RegisterEncoder("prop", codec)
+		decoderRegistry.RegisterDecoder("prop", codec)
+	}
+
+	{
+		codec := &dotenv.Codec{}
+
+		encoderRegistry.RegisterEncoder("dotenv", codec)
+		decoderRegistry.RegisterDecoder("dotenv", codec)
+
+		encoderRegistry.RegisterEncoder("env", codec)
+		decoderRegistry.RegisterDecoder("env", codec)
+	}
+
+	v.encoderRegistry = encoderRegistry
+	v.decoderRegistry = decoderRegistry
 }
 
 // SupportedExts are universally supported extensions.
@@ -461,7 +539,7 @@ func (v *Viper) AddConfigPath(in string) {
 		absin := absPathify(v.logger, in)
 
 		v.logger.Info("adding path to search paths", "path", absin)
-		if !slices.Contains(v.configPaths, absin) {
+		if !stringInSlice(absin, v.configPaths) {
 			v.configPaths = append(v.configPaths, absin)
 		}
 	}
@@ -774,7 +852,6 @@ func (v *Viper) Sub(key string) *Viper {
 		subv.automaticEnvApplied = v.automaticEnvApplied
 		subv.envPrefix = v.envPrefix
 		subv.envKeyReplacer = v.envKeyReplacer
-		subv.keyDelim = v.keyDelim
 		subv.config = cast.ToStringMap(data)
 		return subv
 	}
@@ -915,7 +992,7 @@ func UnmarshalKey(key string, rawVal any, opts ...DecoderConfigOption) error {
 }
 
 func (v *Viper) UnmarshalKey(key string, rawVal any, opts ...DecoderConfigOption) error {
-	return decode(v.Get(key), v.defaultDecoderConfig(rawVal, opts...))
+	return decode(v.Get(key), defaultDecoderConfig(rawVal, opts...))
 }
 
 // Unmarshal unmarshals the config into a Struct. Make sure that the tags
@@ -938,13 +1015,13 @@ func (v *Viper) Unmarshal(rawVal any, opts ...DecoderConfigOption) error {
 	}
 
 	// TODO: struct keys should be enough?
-	return decode(v.getSettings(keys), v.defaultDecoderConfig(rawVal, opts...))
+	return decode(v.getSettings(keys), defaultDecoderConfig(rawVal, opts...))
 }
 
 func (v *Viper) decodeStructKeys(input any, opts ...DecoderConfigOption) ([]string, error) {
 	var structKeyMap map[string]any
 
-	err := decode(input, v.defaultDecoderConfig(&structKeyMap, opts...))
+	err := decode(input, defaultDecoderConfig(&structKeyMap, opts...))
 	if err != nil {
 		return nil, err
 	}
@@ -961,29 +1038,20 @@ func (v *Viper) decodeStructKeys(input any, opts ...DecoderConfigOption) ([]stri
 
 // defaultDecoderConfig returns default mapstructure.DecoderConfig with support
 // of time.Duration values & string slices.
-func (v *Viper) defaultDecoderConfig(output any, opts ...DecoderConfigOption) *mapstructure.DecoderConfig {
-	decodeHook := v.decodeHook
-	if decodeHook == nil {
-		decodeHook = mapstructure.ComposeDecodeHookFunc(
+func defaultDecoderConfig(output any, opts ...DecoderConfigOption) *mapstructure.DecoderConfig {
+	c := &mapstructure.DecoderConfig{
+		Metadata:         nil,
+		Result:           output,
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			mapstructure.StringToTimeDurationHookFunc(),
 			// mapstructure.StringToSliceHookFunc(","),
 			stringToWeakSliceHookFunc(","),
-		)
+		),
 	}
-
-	c := &mapstructure.DecoderConfig{
-		Metadata:         nil,
-		WeaklyTypedInput: true,
-		DecodeHook:       decodeHook,
-	}
-
 	for _, opt := range opts {
 		opt(c)
 	}
-
-	// Do not allow overwriting the output
-	c.Result = output
-
 	return c
 }
 
@@ -1025,7 +1093,7 @@ func UnmarshalExact(rawVal any, opts ...DecoderConfigOption) error {
 }
 
 func (v *Viper) UnmarshalExact(rawVal any, opts ...DecoderConfigOption) error {
-	config := v.defaultDecoderConfig(rawVal, opts...)
+	config := defaultDecoderConfig(rawVal, opts...)
 	config.ErrorUnused = true
 
 	keys := v.AllKeys()
@@ -1480,7 +1548,7 @@ func (v *Viper) ReadInConfig() error {
 		return err
 	}
 
-	if !slices.Contains(SupportedExts, v.getConfigType()) {
+	if !stringInSlice(v.getConfigType(), SupportedExts) {
 		return UnsupportedConfigError(v.getConfigType())
 	}
 
@@ -1511,7 +1579,7 @@ func (v *Viper) MergeInConfig() error {
 		return err
 	}
 
-	if !slices.Contains(SupportedExts, v.getConfigType()) {
+	if !stringInSlice(v.getConfigType(), SupportedExts) {
 		return UnsupportedConfigError(v.getConfigType())
 	}
 
@@ -1592,19 +1660,6 @@ func (v *Viper) WriteConfigAs(filename string) error {
 	return v.writeConfig(filename, true)
 }
 
-// WriteConfigTo writes current configuration to an [io.Writer].
-func WriteConfigTo(w io.Writer) error { return v.WriteConfigTo(w) }
-
-func (v *Viper) WriteConfigTo(w io.Writer) error {
-	format := strings.ToLower(v.getConfigType())
-
-	if !slices.Contains(SupportedExts, format) {
-		return UnsupportedConfigError(format)
-	}
-
-	return v.marshalWriter(w, format)
-}
-
 // SafeWriteConfigAs writes current configuration to a given filename if it does not exist.
 func SafeWriteConfigAs(filename string) error { return v.SafeWriteConfigAs(filename) }
 
@@ -1631,7 +1686,7 @@ func (v *Viper) writeConfig(filename string, force bool) error {
 		return fmt.Errorf("config type could not be determined for %s", filename)
 	}
 
-	if !slices.Contains(SupportedExts, configType) {
+	if !stringInSlice(configType, SupportedExts) {
 		return UnsupportedConfigError(configType)
 	}
 	if v.config == nil {
@@ -1658,20 +1713,12 @@ func (v *Viper) unmarshalReader(in io.Reader, c map[string]any) error {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(in)
 
-	format := strings.ToLower(v.getConfigType())
-
-	if !slices.Contains(SupportedExts, format) {
-		return UnsupportedConfigError(format)
-	}
-
-	decoder, err := v.decoderRegistry.Decoder(format)
-	if err != nil {
-		return ConfigParseError{err}
-	}
-
-	err = decoder.Decode(buf.Bytes(), c)
-	if err != nil {
-		return ConfigParseError{err}
+	switch format := strings.ToLower(v.getConfigType()); format {
+	case "yaml", "yml", "json", "toml", "hcl", "tfvars", "ini", "properties", "props", "prop", "dotenv", "env":
+		err := v.decoderRegistry.Decode(format, buf.Bytes(), c)
+		if err != nil {
+			return ConfigParseError{err}
+		}
 	}
 
 	insensitiviseMap(c)
@@ -1679,24 +1726,20 @@ func (v *Viper) unmarshalReader(in io.Reader, c map[string]any) error {
 }
 
 // Marshal a map into Writer.
-func (v *Viper) marshalWriter(w io.Writer, configType string) error {
+func (v *Viper) marshalWriter(f afero.File, configType string) error {
 	c := v.AllSettings()
+	switch configType {
+	case "yaml", "yml", "json", "toml", "hcl", "tfvars", "ini", "prop", "props", "properties", "dotenv", "env":
+		b, err := v.encoderRegistry.Encode(configType, c)
+		if err != nil {
+			return ConfigMarshalError{err}
+		}
 
-	encoder, err := v.encoderRegistry.Encoder(configType)
-	if err != nil {
-		return ConfigMarshalError{err}
+		_, err = f.WriteString(string(b))
+		if err != nil {
+			return ConfigMarshalError{err}
+		}
 	}
-
-	b, err := encoder.Encode(c)
-	if err != nil {
-		return ConfigMarshalError{err}
-	}
-
-	_, err = w.Write(b)
-	if err != nil {
-		return ConfigMarshalError{err}
-	}
-
 	return nil
 }
 
@@ -1974,6 +2017,13 @@ func SetConfigPermissions(perm os.FileMode) { v.SetConfigPermissions(perm) }
 
 func (v *Viper) SetConfigPermissions(perm os.FileMode) {
 	v.configPermissions = perm.Perm()
+}
+
+// IniLoadOptions sets the load options for ini parsing.
+func IniLoadOptions(in ini.LoadOptions) Option {
+	return optionFunc(func(v *Viper) {
+		v.iniLoadOptions = in
+	})
 }
 
 func (v *Viper) getConfigType() string {

@@ -9,10 +9,6 @@ import (
 // WithFinder sets a custom [Finder].
 func WithFinder(f Finder) Option {
 	return optionFunc(func(v *Viper) {
-		if f == nil {
-			return
-		}
-
 		v.finder = f
 	})
 }
@@ -38,10 +34,6 @@ func (c *combinedFinder) Find(fsys afero.Fs) ([]string, error) {
 	var errs []error
 
 	for _, finder := range c.finders {
-		if finder == nil {
-			continue
-		}
-
 		r, err := finder.Find(fsys)
 		if err != nil {
 			errs = append(errs, err)

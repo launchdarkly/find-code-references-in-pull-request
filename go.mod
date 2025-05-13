@@ -7,7 +7,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1
-	github.com/spf13/viper v1.20.0-alpha.6
+	github.com/spf13/viper v1.20.0-alpha.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/oauth2 v0.30.0
 )
@@ -22,10 +22,13 @@ require (
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.0.0 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/sagikazarmark/locafero v0.6.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 )
 
 require (
