@@ -1,6 +1,6 @@
 module github.com/launchdarkly/find-code-references-in-pull-request
 
-go 1.23.0
+go 1.24
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
