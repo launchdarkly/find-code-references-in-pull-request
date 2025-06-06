@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"exec"
 	"fmt"
 	"net/http"
 	"os"
@@ -165,12 +166,45 @@ func postGithubComment(ctx context.Context, flagsRef references.ReferenceSummary
 
 func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.FileDiff, error) {
 	gha.Debug("Getting pull request diff...")
-	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, resp, err := config.GHClient.PullRequests.GetRaw(ctx, config.Owner, config.Repo, prNumber, rawOpts)
+
+	var (
+		client  = config.GHClient
+		owner   = config.Owner
+		repo    = config.Repo
+		rawOpts = github.RawOptions{Type: github.Diff}
+	)
+
+	raw, resp, err := client.PullRequests.GetRaw(ctx, owner, repo, prNumber, rawOpts)
 	if err != nil {
 		// TODO use this elsewhere
 		if resp.StatusCode == http.StatusUnauthorized {
 			return nil, e.UnauthorizedError
+		}
+
+		// check that git is installed
+		_, gitCmdErr := exec.Command("git", "-v").CombinedOutput()
+
+		// For very large diffs, the github api will return a 406, when this
+		// happens, fallback to calling `git diff` directly
+		if resp != nil && resp.StatusCode == http.StatusNotAcceptable && gitCmdErr == nil {
+			gha.Debug("Diff too large, fallback to traditional git command")
+			pr, _, err := client.PullRequests.Get(ctx, owner, repo, prNumber)
+			if err != nil {
+				return nil, err
+			}
+
+			headSha := pr.GetHead().GetSHA()
+
+			commitsComparison, _, err := client.Repositories.CompareCommits(ctx, owner, repo, headSha, pr.GetBase().GetSHA(), nil)
+			if err != nil {
+				return nil, err
+			}
+
+			mergeBaseSha := commitsComparison.GetMergeBaseCommit().GetSHA()
+			raw, err = exec.Command("git", "diff", "--find-renames", mergeBaseSha, headSha).CombinedOutput()
+			if err != nil {
+				return nil, fmt.Errorf("failed to run git diff: %w", err)
+			}
 		}
 
 		return nil, err
