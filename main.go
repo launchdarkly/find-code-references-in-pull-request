@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"exec"
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 
