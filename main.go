@@ -206,14 +206,9 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 
 			mergeBaseSha := commitsComparison.GetMergeBaseCommit().GetSHA()
 			rawDiff, err = exec.Command("git", "diff", "--find-renames", mergeBaseSha, headSha).CombinedOutput()
-			if err != nil {
-				fmt.Printf(`
-
-err -> %v
-
-
-
-					`, err.Error())
+			// git diff return exit status 1 if there is a diff, so that does
+			// not indicate an error
+			if err != nil && err.Error() != "exit status 1" {
 				return nil, fmt.Errorf("failed to run git diff: %w", err)
 			}
 		}
