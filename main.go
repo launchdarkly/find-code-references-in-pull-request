@@ -172,9 +172,11 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 		owner   = config.Owner
 		repo    = config.Repo
 		rawOpts = github.RawOptions{Type: github.Diff}
+		raw     []byte
 	)
 
-	raw, resp, err := client.PullRequests.GetRaw(ctx, owner, repo, prNumber, rawOpts)
+	diff, resp, err := client.PullRequests.GetRaw(ctx, owner, repo, prNumber, rawOpts)
+	raw = []byte(diff)
 	if err != nil {
 		// TODO use this elsewhere
 		if resp.StatusCode == http.StatusUnauthorized {
@@ -210,7 +212,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 		return nil, err
 	}
 
-	multi, err := diff.ParseMultiFileDiff([]byte(raw))
+	multi, err := diff.ParseMultiFileDiff(raw)
 	if err != nil {
 		return nil, err
 	}
