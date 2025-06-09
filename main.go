@@ -184,11 +184,13 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 		}
 
 		// check that git is installed
-		_, gitCmdErr := exec.Command("git", "-v").CombinedOutput()
+		if _, gitCmdErr := exec.Command("git", "-v").CombinedOutput(); gitCmdErr != nil {
+			return nil, e.NoGitError
+		}
 
 		// For very large diffs, the github api will return a 406, when this
 		// happens, fallback to calling `git diff` directly
-		if resp != nil && resp.StatusCode == http.StatusNotAcceptable && gitCmdErr == nil {
+		if resp != nil && resp.StatusCode == http.StatusNotAcceptable {
 			gha.Debug("Diff too large, fallback to traditional git command")
 			pr, _, err := client.PullRequests.Get(ctx, owner, repo, prNumber)
 			if err != nil {
@@ -208,8 +210,6 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 				return nil, fmt.Errorf("failed to run git diff: %w", err)
 			}
 		}
-
-		return nil, err
 	}
 
 	multi, err := diff.ParseMultiFileDiff(rawDiff)
