@@ -172,11 +172,11 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 		owner   = config.Owner
 		repo    = config.Repo
 		rawOpts = github.RawOptions{Type: github.Diff}
-		raw     []byte
+		rawDiff []byte
 	)
 
-	diff, resp, err := client.PullRequests.GetRaw(ctx, owner, repo, prNumber, rawOpts)
-	raw = []byte(diff)
+	raw, resp, err := client.PullRequests.GetRaw(ctx, owner, repo, prNumber, rawOpts)
+	rawDiff = []byte(raw)
 	if err != nil {
 		// TODO use this elsewhere
 		if resp.StatusCode == http.StatusUnauthorized {
@@ -203,7 +203,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 			}
 
 			mergeBaseSha := commitsComparison.GetMergeBaseCommit().GetSHA()
-			raw, err = exec.Command("git", "diff", "--find-renames", mergeBaseSha, headSha).CombinedOutput()
+			rawDiff, err = exec.Command("git", "diff", "--find-renames", mergeBaseSha, headSha).CombinedOutput()
 			if err != nil {
 				return nil, fmt.Errorf("failed to run git diff: %w", err)
 			}
@@ -212,7 +212,7 @@ func getDiffs(ctx context.Context, config *lcr.Config, prNumber int) ([]*diff.Fi
 		return nil, err
 	}
 
-	multi, err := diff.ParseMultiFileDiff(raw)
+	multi, err := diff.ParseMultiFileDiff(rawDiff)
 	if err != nil {
 		return nil, err
 	}
