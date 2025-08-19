@@ -67,6 +67,7 @@ type Options struct {
 	DryRun              bool   `mapstructure:"dryRun"`
 	IgnoreServiceErrors bool   `mapstructure:"ignoreServiceErrors"`
 	Prune               bool   `mapstructure:"prune"`
+	SkipArchivedFlags   bool   `mapstructure:"skipArchivedFlags"`
 
 	// The following options can only be configured via YAML configuration
 
@@ -195,7 +196,7 @@ func (o Options) ValidateRequired() error {
 	}
 
 	if len(o.ProjKey) > 0 && len(o.Projects) > 0 {
-		return fmt.Errorf("`--projKey` cannot be combined with `projects` in configuration")
+		return errors.New("`--projKey` cannot be combined with `projects` in configuration")
 	}
 
 	if len(o.ProjKey) > maxProjKeyLength {
@@ -263,7 +264,7 @@ func (o Options) Validate() error {
 	}
 
 	if o.Revision != "" && o.Branch == "" {
-		return fmt.Errorf(`"branch" option is required when "revision" option is set`)
+		return errors.New(`"branch" option is required when "revision" option is set`)
 	}
 
 	if len(o.Projects) > 0 {

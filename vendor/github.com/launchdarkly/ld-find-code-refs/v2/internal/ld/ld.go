@@ -20,7 +20,7 @@ import (
 	h "github.com/hashicorp/go-retryablehttp"
 	"github.com/olekukonko/tablewriter"
 
-	ldapi "github.com/launchdarkly/api-client-go/v15"
+	ldapi "github.com/launchdarkly/api-client-go/v17"
 	jsonpatch "github.com/launchdarkly/json-patch"
 	"github.com/launchdarkly/ld-find-code-refs/v2/internal/log"
 	"github.com/launchdarkly/ld-find-code-refs/v2/internal/validation"
@@ -40,10 +40,11 @@ type ApiOptions struct {
 }
 
 const (
-	apiVersion       = "20220603"
+	apiVersion       = "20240415"
 	apiVersionHeader = "LD-API-Version"
 	v2ApiPath        = "/api/v2"
 	reposPath        = "/code-refs/repositories"
+	shortShaLength   = 7 // Descriptive constant for SHA length
 )
 
 type ConfigurationError struct {
@@ -76,8 +77,8 @@ func IsTransient(err error) bool {
 // Fallback to default backoff if header can't be parsed
 // https://apidocs.launchdarkly.com/#section/Overview/Rate-limiting
 // Method is curried in order to avoid stubbing the time package and fallback Backoff in unit tests
-func RateLimitBackoff(now func() time.Time, fallbackBackoff h.Backoff) func(time.Duration, time.Duration, int, *http.Response) time.Duration {
-	return func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+func RateLimitBackoff(now func() time.Time, fallbackBackoff h.Backoff) func(minDuration, _ time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	return func(minDuration, max2 time.Duration, attemptNum int, resp *http.Response) time.Duration {
 		if resp != nil {
 			if resp.StatusCode == http.StatusTooManyRequests {
 				if s, ok := resp.Header["X-Ratelimit-Reset"]; ok {
@@ -95,7 +96,7 @@ func RateLimitBackoff(now func() time.Time, fallbackBackoff h.Backoff) func(time
 			}
 		}
 
-		return fallbackBackoff(min, max, attemptNum, resp)
+		return fallbackBackoff(minDuration, max2, attemptNum, resp)
 	}
 }
 
@@ -108,7 +109,7 @@ func InitApiClient(options ApiOptions) ApiClient {
 	if options.RetryMax != nil && *options.RetryMax >= 0 {
 		client.RetryMax = *options.RetryMax
 	}
-	client.Backoff = RateLimitBackoff(time.Now, h.LinearJitterBackoff)
+	client.Backoff = RateLimitBackoff(time.Now, h.LinearJitterBackoff) //nolint:bodyclose
 
 	return ApiClient{
 		httpClient: client,
@@ -121,7 +122,11 @@ func (c ApiClient) getPath(path string) string {
 	return fmt.Sprintf("%s%s%s", c.Options.BaseUri, v2ApiPath, path)
 }
 
-func (c ApiClient) GetFlagKeyList(projKey string) ([]string, error) {
+func (c ApiClient) getPathFromLink(path string) string {
+	return fmt.Sprintf("%s%s", c.Options.BaseUri, path)
+}
+
+func (c ApiClient) GetFlagKeyList(projKey string, skipArchivedFlags bool) ([]string, error) {
 	env, err := c.getProjectEnvironment(projKey)
 	if err != nil {
 		return nil, err
@@ -134,6 +139,15 @@ func (c ApiClient) GetFlagKeyList(projKey string) ([]string, error) {
 	activeFlags, err := c.getFlags(projKey, params)
 	if err != nil {
 		return nil, err
+	}
+
+	// If we only want live flags, return them now
+	if skipArchivedFlags {
+		flagKeys := make([]string, 0, len(activeFlags))
+		for _, flag := range activeFlags {
+			flagKeys = append(flagKeys, flag.Key)
+		}
+		return flagKeys, nil
 	}
 
 	params.Add("filter", "state:archived")
@@ -192,32 +206,53 @@ func (c ApiClient) getProjectEnvironment(projKey string) (*ldapi.Environment, er
 }
 
 func (c ApiClient) getFlags(projKey string, params url.Values) ([]ldapi.FeatureFlag, error) {
-	url := c.getPath(fmt.Sprintf("/flags/%s", projKey))
-	req, err := h.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.URL.RawQuery = params.Encode()
-
-	res, err := c.do(req)
-	if err != nil {
-		return nil, err
+	// If no limit is set, use the maximum allowed
+	if params.Get("limit") == "" {
+		params.Set("limit", "100")
 	}
 
-	resBytes, err := io.ReadAll(res.Body)
-	if res != nil {
-		defer res.Body.Close()
-	}
-	if err != nil {
-		return nil, err
+	var allFlags []ldapi.FeatureFlag
+	nextUrl := c.getPath(fmt.Sprintf("/flags/%s", projKey)) //nolint:perfsprint
+	for nextUrl != "" {
+		req, err := h.NewRequest(http.MethodGet, nextUrl, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if nextUrl == c.getPath(fmt.Sprintf("/flags/%s", projKey)) { //nolint:perfsprint
+			req.URL.RawQuery = params.Encode()
+		}
+
+		log.Info.Printf("Requesting flags from %s", nextUrl)
+		res, err := c.do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		resBytes, err := io.ReadAll(res.Body)
+		if res != nil {
+			defer res.Body.Close()
+		}
+		if err != nil {
+			return nil, err
+		}
+		var flagsPage ldapi.FeatureFlags
+		if err := json.Unmarshal(resBytes, &flagsPage); err != nil {
+			return nil, err
+		}
+
+		allFlags = append(allFlags, flagsPage.Items...)
+		if flagsPage.TotalCount != nil && len(allFlags) >= int(*flagsPage.TotalCount) {
+			break
+		}
+
+		nextLink, ok := flagsPage.Links["next"]
+		if ok {
+			nextUrl = c.getPathFromLink(*nextLink.Href)
+		}
 	}
 
-	var flags ldapi.FeatureFlags
-	if err := json.Unmarshal(resBytes, &flags); err != nil {
-		return nil, err
-	}
-
-	return flags.Items, nil
+	return allFlags, nil
 }
 
 func (c ApiClient) patchCodeReferenceRepository(currentRepo, repo RepoParams) error {
@@ -441,7 +476,7 @@ type ldErrorResponse struct {
 
 func (c ApiClient) do(req *h.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", c.Options.ApiKey)
-	req.Header.Set(apiVersionHeader, apiVersion)
+	req.Header.Set(apiVersionHeader, apiVersion) //nolint:canonicalheader
 	req.Header.Set("User-Agent", c.Options.UserAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Length", strconv.FormatInt(req.ContentLength, 10))
@@ -550,8 +585,8 @@ func (b BranchRep) TotalHunkCount() int {
 func (b BranchRep) WriteToCSV(outDir, projKey, repo, sha string) (path string, err error) {
 	// Try to create a filename with a shortened sha, but if the sha is too short for some unexpected reason, use the branch name instead
 	var tag string
-	if len(sha) >= 7 {
-		tag = sha[:7]
+	if len(sha) >= shortShaLength {
+		tag = sha[:shortShaLength]
 	} else {
 		tag = b.Name
 	}
@@ -577,7 +612,7 @@ func (b BranchRep) WriteToCSV(outDir, projKey, repo, sha string) (path string, e
 	// sort csv by flag key
 	sort.Slice(records, func(i, j int) bool {
 		// sort by flagKey -> path -> startingLineNumber
-		for k := 0; k < 3; k++ {
+		for k := range [3]int{} {
 			if records[i][k] != records[j][k] {
 				return records[i][k] < records[j][k]
 			}
@@ -697,8 +732,7 @@ func (b BranchRep) PrintReferenceCountTable() {
 	truncatedData = append(truncatedData, []string{"Other flags", strconv.FormatInt(additionalRefCount, 10)})
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Flag", "# References"})
-	table.SetBorder(false)
-	table.AppendBulk(truncatedData)
+	table.Header([]string{"Flag", "# References"})
+	table.Bulk(truncatedData)
 	table.Render()
 }
