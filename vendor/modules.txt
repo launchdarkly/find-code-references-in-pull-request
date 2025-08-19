@@ -10,18 +10,21 @@ github.com/Masterminds/semver/v3
 # github.com/Masterminds/sprig/v3 v3.3.0
 ## explicit; go 1.21
 github.com/Masterminds/sprig/v3
-# github.com/bmatcuk/doublestar/v4 v4.7.1
+# github.com/bmatcuk/doublestar/v4 v4.9.1
 ## explicit; go 1.16
 github.com/bmatcuk/doublestar/v4
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.16.0
+## explicit; go 1.17
+github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.8.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/go-git/go-git/v5 v5.13.0
-## explicit; go 1.21
+# github.com/go-git/go-git/v5 v5.16.2
+## explicit; go 1.23.0
 github.com/go-git/go-git/v5/plumbing
 github.com/go-git/go-git/v5/plumbing/hash
 # github.com/go-viper/mapstructure/v2 v2.3.0
@@ -40,8 +43,8 @@ github.com/google/uuid
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.7.7
-## explicit; go 1.19
+# github.com/hashicorp/go-retryablehttp v0.7.8
+## explicit; go 1.23
 github.com/hashicorp/go-retryablehttp
 # github.com/huandu/xstrings v1.5.0
 ## explicit; go 1.12
@@ -70,11 +73,14 @@ github.com/kyoh86/xdg
 # github.com/launchdarkly/api-client-go/v15 v15.1.0
 ## explicit; go 1.13
 github.com/launchdarkly/api-client-go/v15
+# github.com/launchdarkly/api-client-go/v17 v17.2.0
+## explicit; go 1.13
+github.com/launchdarkly/api-client-go/v17
 # github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f
 ## explicit
 github.com/launchdarkly/json-patch
-# github.com/launchdarkly/ld-find-code-refs/v2 v2.13.0
-## explicit; go 1.22
+# github.com/launchdarkly/ld-find-code-refs/v2 v2.14.0
+## explicit; go 1.24
 github.com/launchdarkly/ld-find-code-refs/v2/aliases
 github.com/launchdarkly/ld-find-code-refs/v2/flags
 github.com/launchdarkly/ld-find-code-refs/v2/internal/helpers
@@ -84,10 +90,13 @@ github.com/launchdarkly/ld-find-code-refs/v2/internal/validation
 github.com/launchdarkly/ld-find-code-refs/v2/internal/version
 github.com/launchdarkly/ld-find-code-refs/v2/options
 github.com/launchdarkly/ld-find-code-refs/v2/search
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
+github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.9
+# github.com/mattn/go-runewidth v0.0.16
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
 # github.com/mitchellh/copystructure v1.2.0
@@ -102,9 +111,21 @@ github.com/monochromegane/go-gitignore
 # github.com/morikuni/aec v1.0.0
 ## explicit
 github.com/morikuni/aec
-# github.com/olekukonko/tablewriter v0.0.5
-## explicit; go 1.12
+# github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6
+## explicit; go 1.21
+github.com/olekukonko/errors
+# github.com/olekukonko/ll v0.0.8
+## explicit; go 1.21
+github.com/olekukonko/ll
+github.com/olekukonko/ll/lh
+github.com/olekukonko/ll/lx
+# github.com/olekukonko/tablewriter v1.0.8
+## explicit; go 1.21
 github.com/olekukonko/tablewriter
+github.com/olekukonko/tablewriter/pkg/twwarp
+github.com/olekukonko/tablewriter/pkg/twwidth
+github.com/olekukonko/tablewriter/renderer
+github.com/olekukonko/tablewriter/tw
 # github.com/pelletier/go-toml/v2 v2.2.3
 ## explicit; go 1.21.0
 github.com/pelletier/go-toml/v2
@@ -115,8 +136,8 @@ github.com/pelletier/go-toml/v2/unstable
 # github.com/petar-dambovaliev/aho-corasick v0.0.0-20211021192214-5ab2d9280aa9
 ## explicit; go 1.15
 github.com/petar-dambovaliev/aho-corasick
-# github.com/pjbgf/sha1cd v0.3.0
-## explicit; go 1.19
+# github.com/pjbgf/sha1cd v0.3.2
+## explicit; go 1.21
 github.com/pjbgf/sha1cd
 github.com/pjbgf/sha1cd/internal
 github.com/pjbgf/sha1cd/ubc
@@ -126,6 +147,9 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
+# github.com/rivo/uniseg v0.2.0
+## explicit; go 1.12
+github.com/rivo/uniseg
 # github.com/sagikazarmark/locafero v0.7.0
 ## explicit; go 1.21
 github.com/sagikazarmark/locafero
@@ -149,7 +173,7 @@ github.com/spf13/afero/mem
 # github.com/spf13/cast v1.7.1
 ## explicit; go 1.19
 github.com/spf13/cast
-# github.com/spf13/pflag v1.0.6
+# github.com/spf13/pflag v1.0.7
 ## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/spf13/viper v1.20.1
@@ -168,16 +192,61 @@ github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
+# github.com/tetratelabs/wazero v1.9.0
+## explicit; go 1.22.0
+github.com/tetratelabs/wazero
+github.com/tetratelabs/wazero/api
+github.com/tetratelabs/wazero/experimental
+github.com/tetratelabs/wazero/experimental/sys
+github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1
+github.com/tetratelabs/wazero/internal/descriptor
+github.com/tetratelabs/wazero/internal/engine/interpreter
+github.com/tetratelabs/wazero/internal/engine/wazevo
+github.com/tetratelabs/wazero/internal/engine/wazevo/backend
+github.com/tetratelabs/wazero/internal/engine/wazevo/backend/isa/amd64
+github.com/tetratelabs/wazero/internal/engine/wazevo/backend/isa/arm64
+github.com/tetratelabs/wazero/internal/engine/wazevo/backend/regalloc
+github.com/tetratelabs/wazero/internal/engine/wazevo/frontend
+github.com/tetratelabs/wazero/internal/engine/wazevo/ssa
+github.com/tetratelabs/wazero/internal/engine/wazevo/wazevoapi
+github.com/tetratelabs/wazero/internal/expctxkeys
+github.com/tetratelabs/wazero/internal/filecache
+github.com/tetratelabs/wazero/internal/fsapi
+github.com/tetratelabs/wazero/internal/ieee754
+github.com/tetratelabs/wazero/internal/internalapi
+github.com/tetratelabs/wazero/internal/leb128
+github.com/tetratelabs/wazero/internal/moremath
+github.com/tetratelabs/wazero/internal/platform
+github.com/tetratelabs/wazero/internal/sock
+github.com/tetratelabs/wazero/internal/sys
+github.com/tetratelabs/wazero/internal/sysfs
+github.com/tetratelabs/wazero/internal/u32
+github.com/tetratelabs/wazero/internal/u64
+github.com/tetratelabs/wazero/internal/version
+github.com/tetratelabs/wazero/internal/wasip1
+github.com/tetratelabs/wazero/internal/wasm
+github.com/tetratelabs/wazero/internal/wasm/binary
+github.com/tetratelabs/wazero/internal/wasmdebug
+github.com/tetratelabs/wazero/internal/wasmruntime
+github.com/tetratelabs/wazero/sys
 # github.com/wacul/ptr v1.0.0
 ## explicit
 github.com/wacul/ptr
+# github.com/wasilibs/go-re2 v1.10.0
+## explicit; go 1.22.0
+github.com/wasilibs/go-re2
+github.com/wasilibs/go-re2/internal
+github.com/wasilibs/go-re2/internal/cre2
+# github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52
+## explicit; go 1.20
+github.com/wasilibs/wazero-helpers/allocator
 # go.uber.org/atomic v1.9.0
 ## explicit; go 1.13
 go.uber.org/atomic
 # go.uber.org/multierr v1.9.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# golang.org/x/crypto v0.35.0
+# golang.org/x/crypto v0.41.0
 ## explicit; go 1.23.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -187,12 +256,12 @@ golang.org/x/crypto/scrypt
 ## explicit; go 1.23.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.30.0
-## explicit; go 1.18
+# golang.org/x/sys v0.35.0
+## explicit; go 1.23.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.22.0
-## explicit; go 1.18
+# golang.org/x/text v0.28.0
+## explicit; go 1.23.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
@@ -201,8 +270,8 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/runes
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.28.0
-## explicit; go 1.22.0
+# golang.org/x/tools v0.36.0
+## explicit; go 1.23.0
 golang.org/x/tools/godoc/util
 golang.org/x/tools/godoc/vfs
 # gopkg.in/yaml.v2 v2.4.0
