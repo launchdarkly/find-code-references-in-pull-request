@@ -22,7 +22,7 @@ require (
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/launchdarkly/api-client-go/v17 v17.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6 // indirect
