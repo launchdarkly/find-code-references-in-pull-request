@@ -1,0 +1,12 @@
+.git/
+.github/
+images/
+testdata/
+
+.gitignore
+.ldignore
+action.yml
+CODEOWNERS
+
+*.md
+Makefile
