@@ -91,6 +91,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Swap full line for action to use Dockerfile
+        run: |
+          sed -i 's/image:.*/image: "Dockerfile"' action.yml
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
