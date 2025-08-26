@@ -176,6 +176,7 @@ jobs:
           cache-to: type=gha,mode=max
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/launchdarkly/find-code-references-in-pull-request:latest
             ghcr.io/launchdarkly/find-code-references-in-pull-request:${{ github.sha }}
