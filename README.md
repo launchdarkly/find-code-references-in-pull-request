@@ -67,7 +67,9 @@ jobs:
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Add or remove labels on PRs if any flags have changed
+      # Add or remove labels on PRs if any flags have changed.
+      # Note: This example requires the "ld-flags" label to have been created in the repository first:
+      # https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/managing-labels#creating-a-label
       - name: Add label
         if: steps.find-flags.outputs.any-changed == 'true'
         run: gh pr edit $PR_NUMBER --add-label ld-flags
