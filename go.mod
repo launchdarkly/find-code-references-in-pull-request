@@ -8,7 +8,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	golang.org/x/oauth2 v0.30.0
 )
 
