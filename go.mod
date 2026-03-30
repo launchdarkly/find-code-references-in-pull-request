@@ -44,7 +44,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.9.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-git/go-git/v5 v5.16.2 // indirect
+	github.com/go-git/go-git/v5 v5.17.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
