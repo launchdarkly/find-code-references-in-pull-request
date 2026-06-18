@@ -69,11 +69,12 @@ func newProcessFlagAccEnv() *testProcessor {
 
 func Test_checkDiffFile(t *testing.T) {
 	cases := []struct {
-		name     string
-		fileName string
-		origName string
-		newName  string
-		skip     bool
+		name             string
+		fileName         string
+		origName         string
+		newName          string
+		skip             bool
+		expectedFilePath string // when non-empty, overrides "../testdata/" + fileName
 	}{
 		{
 			name:     "basic",
@@ -89,6 +90,16 @@ func Test_checkDiffFile(t *testing.T) {
 			newName:  "b/.testignore",
 			skip:     true,
 		},
+		{
+			// Mode-only diffs (e.g. chmod changes) produce no --- / +++ headers.
+			// go-diff returns empty OrigName and NewName for these entries, which
+			// caused a panic at diff.go:44 when SplitN("", "/", 2)[1] was accessed.
+			name:             "skip mode-only diff with empty OrigName and NewName",
+			origName:         "",
+			newName:          "",
+			skip:             true,
+			expectedFilePath: "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -100,13 +111,16 @@ func Test_checkDiffFile(t *testing.T) {
 				OrigStartLine: 0,
 				StartPosition: 1,
 			}
-			diff := diff.FileDiff{
+			fileDiff := diff.FileDiff{
 				OrigName: tc.origName,
 				NewName:  tc.newName,
 				Hunks:    []*diff.Hunk{hunk},
 			}
-			filePath, ignore := checkDiffFile(&diff, "../testdata")
-			expectedFilePath := "../testdata/" + tc.fileName
+			filePath, ignore := checkDiffFile(&fileDiff, "../testdata")
+			expectedFilePath := tc.expectedFilePath
+			if expectedFilePath == "" && tc.fileName != "" {
+				expectedFilePath = "../testdata/" + tc.fileName
+			}
 			assert.Equal(t, expectedFilePath, filePath)
 			assert.Equal(t, tc.skip, ignore)
 		})
