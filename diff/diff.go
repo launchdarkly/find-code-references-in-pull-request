@@ -41,6 +41,11 @@ func checkDiffFile(parsedDiff *diff.FileDiff, workspace string) (filePath string
 	// If file is being renamed we don't want to check it for flags.
 	parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 	parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
+	// Mode-only diffs (e.g. chmod changes) and some binary diffs emit no --- / +++ headers.
+	// go-diff returns empty OrigName/NewName for these entries; there is no content to scan.
+	if len(parsedFileA) < 2 || len(parsedFileB) < 2 {
+		return "", true
+	}
 	fullPathToA := workspace + "/" + parsedFileA[1]
 	fullPathToB := workspace + "/" + parsedFileB[1]
 	info, err := os.Stat(fullPathToB)
