@@ -8,6 +8,11 @@ import (
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/utils/diff_util"
 )
 
+type refCounts struct {
+	adds    int
+	deletes int
+}
+
 type ReferenceSummaryBuilder struct {
 	max                int  // maximum number of flags to find
 	includeExtinctions bool // include extinctions in summary
@@ -15,6 +20,7 @@ type ReferenceSummaryBuilder struct {
 	flagsRemoved       map[string][]string
 	flagsFoundAtHead   map[string]struct{}
 	foundFlags         map[string]struct{}
+	counts             map[string]refCounts
 }
 
 func NewReferenceSummaryBuilder(max int, includeExtinctions bool) *ReferenceSummaryBuilder {
@@ -23,6 +29,7 @@ func NewReferenceSummaryBuilder(max int, includeExtinctions bool) *ReferenceSumm
 		flagsRemoved:       make(map[string][]string),
 		foundFlags:         make(map[string]struct{}),
 		flagsFoundAtHead:   make(map[string]struct{}),
+		counts:             make(map[string]refCounts),
 		max:                max,
 		includeExtinctions: includeExtinctions,
 	}
@@ -62,6 +69,9 @@ func (b *ReferenceSummaryBuilder) foundFlag(flagKey string) {
 // Flag and aliases found in added diff
 func (b *ReferenceSummaryBuilder) addedFlag(flagKey string, aliases []string) {
 	b.foundFlag(flagKey)
+	counts := b.counts[flagKey]
+	counts.adds++
+	b.counts[flagKey] = counts
 	if _, ok := b.flagsAdded[flagKey]; !ok {
 		b.flagsAdded[flagKey] = make([]string, 0, len(aliases))
 	}
@@ -71,6 +81,9 @@ func (b *ReferenceSummaryBuilder) addedFlag(flagKey string, aliases []string) {
 // Flag and aliases found in removed diff
 func (b *ReferenceSummaryBuilder) removedFlag(flagKey string, aliases []string) {
 	b.foundFlag(flagKey)
+	counts := b.counts[flagKey]
+	counts.deletes++
+	b.counts[flagKey] = counts
 	if _, ok := b.flagsRemoved[flagKey]; !ok {
 		b.flagsRemoved[flagKey] = make([]string, 0, len(aliases))
 	}
@@ -80,8 +93,10 @@ func (b *ReferenceSummaryBuilder) removedFlag(flagKey string, aliases []string) 
 // Returns a list of removed flag keys
 func (b *ReferenceSummaryBuilder) RemovedFlagKeys() []string {
 	keys := make([]string, 0, len(b.flagsRemoved))
-	for k := range b.flagsRemoved {
-		keys = append(keys, k)
+	for k, counts := range b.counts {
+		if counts.deletes > 0 && counts.adds == 0 {
+			keys = append(keys, k)
+		}
 	}
 	return keys
 }
@@ -92,15 +107,15 @@ func (b *ReferenceSummaryBuilder) Build() ReferenceSummary {
 	extinctions := make(map[string]struct{}, len(b.flagsRemoved))
 
 	for flagKey := range b.foundFlags {
-		if aliases, ok := b.flagsAdded[flagKey]; ok {
-			// if there are any removed aliases, we should add them
-			aliases := append(aliases, b.flagsRemoved[flagKey]...)
+		counts := b.counts[flagKey]
+		switch {
+		case counts.adds > 0:
+			aliases := append(b.flagsAdded[flagKey], b.flagsRemoved[flagKey]...)
 			aliases = uniqueStrs(aliases)
 			sort.Strings(aliases)
 			added[flagKey] = aliases
-		} else if aliases, ok := b.flagsRemoved[flagKey]; ok {
-			// only add to removed if it wasn't also added
-			aliases := uniqueStrs(aliases)
+		case counts.deletes > 0:
+			aliases := uniqueStrs(b.flagsRemoved[flagKey])
 			sort.Strings(aliases)
 			removed[flagKey] = aliases
 			if _, ok := b.flagsFoundAtHead[flagKey]; !ok {
