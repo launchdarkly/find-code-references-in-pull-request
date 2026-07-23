@@ -78,8 +78,8 @@ jobs:
         uses: ./ # Uses an action in the root directory
         id: find-flags
         with:
-          project-key: demo-dan-042021-2
-          environment-key: development
+          project-key: developer-toolbar-sandbox
+          environment-key: test
           access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           base-uri: https://app.launchdarkly.com
