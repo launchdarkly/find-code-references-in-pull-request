@@ -5,12 +5,18 @@ import (
 	"time"
 )
 
+// ParseOptions specifies options for parsing diffs.
+type ParseOptions struct {
+	// KeepCR specifies whether to keep trailing carriage return characters (\r) in lines.
+	KeepCR bool
+}
+
 // A FileDiff represents a unified diff for a single file.
 //
 // A file unified diff has a header that resembles the following:
 //
-//   --- oldname	2009-10-11 15:12:20.000000000 -0700
-//   +++ newname	2009-10-11 15:12:30.000000000 -0700
+//	--- oldname	2009-10-11 15:12:20.000000000 -0700
+//	+++ newname	2009-10-11 15:12:30.000000000 -0700
 type FileDiff struct {
 	// the original name of the file
 	OrigName string
@@ -119,6 +125,10 @@ const onlyInMessage = "Only in %s: %s\n"
 // header timestamps.
 // See https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html.
 const diffTimeParseLayout = "2006-01-02 15:04:05 -0700"
+
+// Apple's diff is based on freebsd diff, which uses a timestamp format that does
+// not include the timezone offset.
+const diffTimeParseWithoutTZLayout = "2006-01-02 15:04:05"
 
 // diffTimeFormatLayout is the layout used to format (i.e., print) the time in unified diff file
 // header timestamps.
