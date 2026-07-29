@@ -1,9 +1,9 @@
 # action.yml
-name: 'LaunchDarkly Code References in Pull Request'
-description: 'Find references to feature flags in your pull request'
+name: "LaunchDarkly Code References in Pull Request"
+description: "Find references to feature flags in your pull request"
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: "docker"
+  image: "Dockerfile"
   env:
     LD_PROJ_KEY: ${{ inputs.project-key }}
     LD_ACCESS_TOKEN: ${{ inputs.access-token }}
@@ -12,43 +12,47 @@ runs:
     GITHUB_TOKEN: ${{ inputs.repo-token }}
 inputs:
   repo-token:
-      description: 'Token to use to authorize comments on PR. Typically the `GITHUB_TOKEN` secret or equivalent `github.token`.'
-      required: true
+    description: "Token to use to authorize comments on PR. Typically the `GITHUB_TOKEN` secret or equivalent `github.token`."
+    required: true
   access-token:
     description: LaunchDarkly access token
     required: true
   project-key:
     description: LaunchDarkly project key
     required: false
-    default: 'default'
+    default: "default"
   environment-key:
     description: LaunchDarkly environment key for creating flag links
     required: false
-    default: 'production'
+    default: "production"
   placeholder-comment:
     description: Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated.
     required: false
-    default: 'false'
+    default: "false"
   include-archived-flags:
     description: Scan for archived flags
     required: false
-    default: 'true'
+    default: "true"
   max-flags:
     description: Maximum number of flags to find per PR
     required: false
-    default: '5'
+    default: "5"
   base-uri:
     description: The base URI for the LaunchDarkly server. Most members should use the default value.
     required: false
-    default: 'https://app.launchdarkly.com'
+    default: "https://app.launchdarkly.com"
   check-extinctions:
     description: Check if removed flags still exist in codebase
     required: false
-    default: 'true'
+    default: "true"
   create-flag-links:
     description: Create links to flags in LaunchDarkly. To use this feature you must use an access token with the `createFlagLink` role. To learn more, read [Flag links](https://docs.launchdarkly.com/home/organize/links).
     required: false
-    default: 'true'
+    default: "true"
+  skip-comment:
+    description: Skip commenting on PR. If set to true, the action will not comment on the PR, but will still set outputs.
+    required: false
+    default: "false"
 outputs:
   any-modified:
     description: Returns true if any flags have been added or modified in PR

@@ -86,18 +86,21 @@ func main() {
 	setOutputs(config, flagsRef)
 
 	// Add comment
-	gha.StartLogGroup("Processing comment...")
-	existingComment := checkExistingComments(event, config, ctx)
-	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-	if postedComments != "" {
-		comment := github.IssueComment{
-			Body: &postedComments,
-		}
+	postedComments := ""
+	if !config.SkipComment {
+		gha.StartLogGroup("Processing comment...")
+		existingComment := checkExistingComments(event, config, ctx)
+		buildComment := ghc.ProcessFlags(flagsRef, flags, config)
+		postedComments = ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+		if postedComments != "" {
+			comment := github.IssueComment{
+				Body: &postedComments,
+			}
 
-		err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+			err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
+		}
+		gha.EndLogGroup()
 	}
-	gha.EndLogGroup()
 
 	// Add flag links
 	if config.CreateFlagLinks && postedComments != "" {
