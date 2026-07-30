@@ -1,5 +1,8 @@
 # Run test file with command:
 #   act pull_request -e testdata/act/pull-request.json
+#
+# Fork PRs only run jobs that do not need repository secrets here. See test-fork-pr.yml
+# for the label-gated workflow that runs e2e tests on forks.
 
 name: Test and Generate Docs
 
@@ -59,6 +62,7 @@ jobs:
             -- -tags=launchdarkly_easyjson -p=1
 
       - name: Publish JUnit Tests
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: ./.github/actions/publish-junit
         env:
           DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -67,9 +71,9 @@ jobs:
           name: find-code-references-in-pull-request
           datadog: 'true'
           github: 'true'
-      
 
   e2e-tests:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
