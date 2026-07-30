@@ -1,0 +1,70 @@
+# Runs e2e tests on fork PRs after a maintainer adds the "safe-to-test" label.
+# This uses pull_request_target so repository secrets are available (fork PRs cannot
+# access secrets via the regular pull_request trigger). The label gate ensures untrusted
+# code is reviewed before it runs with access to secrets.
+#
+# Security: Only the "labeled" event triggers this workflow. New pushes to the fork do NOT
+# re-trigger tests — see remove-safe-to-test-label.yml which strips the label on new commits,
+# forcing a maintainer to re-review and re-label.
+name: "Test (Fork PRs)"
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-tests:
+    if: >-
+      github.event.label.name == 'safe-to-test'
+      && github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Find LaunchDarkly feature flags in diff
+        uses: ./ # Uses an action in the root directory
+        id: find-flags
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: true
+      - name: Find flags summary
+        run: |
+          echo "flags addded or modified ${{ steps.find-flags.outputs.modified-flags-count }}"
+          echo "flags removed ${{ steps.find-flags.outputs.removed-flags-count }}"
+      - name: Added or modified flags
+        if: steps.find-flags.outputs.any-modified == 'true'
+        run: |
+          for flag in ${{ steps.find-flags.outputs.modified-flags }}; do
+            echo "$flag was added or modified"
+          done
+      - name: Removed flags
+        if: steps.find-flags.outputs.any-removed == 'true'
+        run: |
+          for flag in ${{ steps.find-flags.outputs.removed-flags }}; do
+            echo "$flag was removed"
+          done
+      - name: Add label
+        if: ${{ steps.find-flags.outputs.any-changed == 'true' && github.actor != 'dependabot[bot]' }}
+        run: gh pr edit $PR_NUMBER --add-label ld-flags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Remove label
+        if: ${{ steps.find-flags.outputs.any-changed == 'false' && github.actor != 'dependabot[bot]' }}
+        run: gh pr edit $PR_NUMBER --remove-label ld-flags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
