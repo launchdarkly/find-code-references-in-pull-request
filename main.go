@@ -86,21 +86,23 @@ func main() {
 	setOutputs(config, flagsRef)
 
 	// Add comment
-	postedComments := ""
-	if !config.SkipComment {
-		gha.StartLogGroup("Processing comment...")
-		existingComment := checkExistingComments(event, config, ctx)
-		buildComment := ghc.ProcessFlags(flagsRef, flags, config)
-		postedComments = ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
-		if postedComments != "" {
-			comment := github.IssueComment{
-				Body: &postedComments,
-			}
+	gha.StartLogGroup("Processing comment...")
+	existingComment := checkExistingComments(event, config, ctx)
+	buildComment := ghc.ProcessFlags(flagsRef, flags, config)
+	// this is used to help minimize duplicate flag link requests, so it makes sense to generate, even when skipping comment creation
+	postedComments := ghc.BuildFlagComment(buildComment, flagsRef, existingComment)
+	if postedComments != "" {
+		comment := github.IssueComment{
+			Body: &postedComments,
+		}
 
+		if !config.SkipComment {
+			gha.Log("Skipping comment creation as skip-comment is set to true")
+		} else {
 			err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
 		}
-		gha.EndLogGroup()
 	}
+	gha.EndLogGroup()
 
 	// Add flag links
 	if config.CreateFlagLinks && postedComments != "" {
