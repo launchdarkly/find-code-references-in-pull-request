@@ -1,4 +1,4 @@
-# Runs e2e tests on fork PRs after a maintainer adds the "safe-to-test" label.
+# Runs go-test and e2e tests on fork PRs after a maintainer adds the "safe-to-test" label.
 # This uses pull_request_target so repository secrets are available (fork PRs cannot
 # access secrets via the regular pull_request trigger). The label gate ensures untrusted
 # code is reviewed before it runs with access to secrets.
@@ -16,6 +16,74 @@ permissions:
   contents: read
 
 jobs:
+  go-test:
+    if: >-
+      github.event.label.name == 'safe-to-test'
+      && github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '18.x'
+
+      - name: Install datadog-ci
+        run: npm install -g @datadog/datadog-ci
+
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.x'
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Install pre-commit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pre-commit
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
+      - name: Run tests with gotestsum
+        run: |
+          mkdir -p ${{ github.workspace }}/artifacts
+          mkdir -p ${{ github.workspace }}/reports
+
+          GONFALON_MODE=test \
+          gotestsum --packages="./..." \
+            --junitfile ${{ github.workspace }}/reports/go-test_go_tests.xml \
+            --jsonfile ${{ github.workspace }}/artifacts/go-test_go_tests.json \
+            --rerun-fails=2 \
+            --rerun-fails-max-failures=10 \
+            --rerun-fails-report ${{ github.workspace }}/artifacts/rerun_tests_go_tests.txt \
+            -- -tags=launchdarkly_easyjson -p=1
+
+      - name: Publish JUnit Tests
+        uses: ./.github/actions/publish-junit
+        env:
+          DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        with:
+          files: ${{ github.workspace }}/reports/go-test_go_tests.xml
+          name: find-code-references-in-pull-request
+          datadog: 'true'
+          github: 'true'
+
   e2e-tests:
     if: >-
       github.event.label.name == 'safe-to-test'
@@ -68,3 +136,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+
+  check-success:
+    name: "Check Success (Fork)"
+    needs:
+      - go-test
+      - e2e-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate results
+        run: |
+          if printf '${{ toJSON(needs) }}' | grep --quiet --extended-regexp --ignore-case '"result": "(failure|cancelled)"'; then
+            printf "Tests failed or workflow cancelled:\n\n${{ toJSON(needs) }}"
+            exit 1
+          fi
