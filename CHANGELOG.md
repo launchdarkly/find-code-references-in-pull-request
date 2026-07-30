@@ -6,6 +6,22 @@
 
 ### Fixed
 
+## 2.2.0
+
+### Added
+
+- Support for large pull request diffs by falling back to `git diff` when the GitHub API returns a 406 response
+
+### Changed
+
+- Update dependencies
+- Update Go version
+
+### Fixed
+
+- False flag removals when `max-flags` stopped scanning mid-file
+- Delete-then-re-add flag churn is now reported as modified instead of removed
+
 ## 2.1.0
 
 ### Added
