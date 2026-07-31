@@ -109,6 +109,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | `base-uri` | <p>The base URI for the LaunchDarkly server. Most members should use the default value.</p> | `false` | `https://app.launchdarkly.com` |
 | `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
 | `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role. To learn more, read <a href="https://docs.launchdarkly.com/home/organize/links">Flag links</a>.</p> | `false` | `true` |
+| `skip-comment` | <p>Skip commenting on PR. If set to true, the action will not comment on the PR, but will still set outputs.</p> | `false` | `false` |
 <!-- action-docs-inputs source="action.yml" -->
 
 <!-- action-docs-outputs source="action.yml" -->

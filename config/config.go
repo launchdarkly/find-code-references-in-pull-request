@@ -28,6 +28,7 @@ type Config struct {
 	IncludeArchivedFlags bool
 	CheckExtinctions     bool
 	CreateFlagLinks      bool
+	SkipComment          bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
@@ -96,6 +97,11 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 	if createFlagLinks, err := strconv.ParseBool(os.Getenv("INPUT_CREATE-FLAG-LINKS")); err == nil {
 		// ignore error - default is false
 		config.CreateFlagLinks = createFlagLinks
+	}
+
+	if skipComment, err := strconv.ParseBool(os.Getenv("INPUT_SKIP-COMMENT")); err == nil {
+		// ignore error - default is false
+		config.SkipComment = skipComment
 	}
 
 	client, err := getGithubClient(ctx)
