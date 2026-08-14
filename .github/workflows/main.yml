@@ -120,7 +120,116 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-  
+
+  e2e-docker-entrypoint:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+      - name: Build local runtime image
+        run: |
+          set -euo pipefail
+          docker build -t fcr-pr-local:${{ github.sha }} .
+          docker run --rm --entrypoint git fcr-pr-local:${{ github.sha }} --version
+
+      - name: Root Action (control)
+        id: root
+        uses: ./
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: false
+          skip-comment: true
+
+      - name: /docker Action (local image)
+        id: docker-local
+        uses: ./docker
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: false
+          skip-comment: true
+          dockerImage: fcr-pr-local:${{ github.sha }}
+
+      - name: Assert output parity
+        run: |
+          set -euo pipefail
+          echo "root any-changed=${{ steps.root.outputs.any-changed }} count=${{ steps.root.outputs.changed-flags-count }}"
+          echo "docker any-changed=${{ steps.docker-local.outputs.any-changed }} count=${{ steps.docker-local.outputs.changed-flags-count }}"
+          if [[ "${{ steps.root.outputs.any-changed }}" != "${{ steps.docker-local.outputs.any-changed }}" ]]; then
+            echo "any-changed mismatch"
+            exit 1
+          fi
+          if [[ "${{ steps.root.outputs.changed-flags-count }}" != "${{ steps.docker-local.outputs.changed-flags-count }}" ]]; then
+            echo "changed-flags-count mismatch"
+            exit 1
+          fi
+
+      - name: Mirror image to GHCR
+        run: |
+          set -euo pipefail
+          DEST=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          docker tag fcr-pr-local:${{ github.sha }} "$DEST"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$DEST"
+          # Drop local tags so the next step must pull from GHCR.
+          docker image rm "$DEST" fcr-pr-local:${{ github.sha }}
+          echo "MIRRORED_IMAGE=$DEST" >> "$GITHUB_ENV"
+
+      - name: /docker Action (GHCR mirror)
+        id: docker-mirror
+        uses: ./docker
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: false
+          skip-comment: true
+          dockerImage: ${{ env.MIRRORED_IMAGE }}
+
+      - name: Assert mirror outputs
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.root.outputs.any-changed }}" != "${{ steps.docker-mirror.outputs.any-changed }}" ]]; then
+            echo "mirror any-changed mismatch"
+            exit 1
+          fi
+
+      - name: Fail-loud empty dockerImage
+        id: empty-image
+        continue-on-error: true
+        uses: ./docker
+        with:
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-comment: true
+          dockerImage: ""
+
+      - name: Assert empty dockerImage failed
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.empty-image.outcome }}" != "failure" ]]; then
+            echo "expected empty dockerImage to fail"
+            exit 1
+          fi
+
   generate-docs:
     runs-on: ubuntu-latest
     steps:

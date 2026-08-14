@@ -1,0 +1,194 @@
+name: "LaunchDarkly Code References in Pull Request (custom image)"
+description: >-
+  Find references to feature flags in your pull request. Same scanner as the
+  root Action, but runs via docker run so you can override the image registry
+  (for example an internal Docker Hub proxy).
+author: LaunchDarkly
+branding:
+  icon: toggle-right
+  color: gray-dark
+
+inputs:
+  repo-token:
+    description: "Token to use to authorize comments on PR. Typically the `GITHUB_TOKEN` secret or equivalent `github.token`."
+    required: true
+  access-token:
+    description: LaunchDarkly access token
+    required: true
+  project-key:
+    description: LaunchDarkly project key
+    required: false
+    default: "default"
+  environment-key:
+    description: LaunchDarkly environment key for creating flag links
+    required: false
+    default: "production"
+  placeholder-comment:
+    description: Comment on PR when no flags are found. If flags are found in later commits, this comment will be updated.
+    required: false
+    default: "false"
+  include-archived-flags:
+    description: Scan for archived flags
+    required: false
+    default: "true"
+  max-flags:
+    description: Maximum number of flags to find per PR
+    required: false
+    default: "5"
+  base-uri:
+    description: The base URI for the LaunchDarkly server. Most members should use the default value.
+    required: false
+    default: "https://app.launchdarkly.com"
+  check-extinctions:
+    description: Check if removed flags still exist in codebase
+    required: false
+    default: "true"
+  create-flag-links:
+    description: Create links to flags in LaunchDarkly. To use this feature you must use an access token with the `createFlagLink` role. To learn more, read [Flag links](https://docs.launchdarkly.com/home/organize/links).
+    required: false
+    default: "true"
+  skip-comment:
+    description: Skip commenting on PR. If set to true, the action will not comment on the PR, but will still set outputs.
+    required: false
+    default: "false"
+  dockerImage:
+    description: >-
+      Container image to run. Defaults to the public Docker Hub runtime image.
+      Set this to your mirrored/proxy image (for example
+      your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.0).
+      Authenticate to private registries with docker/login-action (or equivalent)
+      in a prior step. Requires a runner with a Docker CLI (GitHub-hosted
+      ubuntu-* runners include one).
+    required: false
+    default: "launchdarkly/find-code-references-in-pull-request:2.3.0"
+
+outputs:
+  any-modified:
+    description: Returns true if any flags have been added or modified in PR
+    value: ${{ steps.run.outputs.any-modified }}
+  modified-flags:
+    description: Space-separated list of flags added or modified in PR
+    value: ${{ steps.run.outputs.modified-flags }}
+  modified-flags-count:
+    description: Number of flags added or modified in PR
+    value: ${{ steps.run.outputs.modified-flags-count }}
+  any-removed:
+    description: Returns true if any flags have been removed in PR
+    value: ${{ steps.run.outputs.any-removed }}
+  removed-flags:
+    description: Space-separated list of flags removed in PR
+    value: ${{ steps.run.outputs.removed-flags }}
+  removed-flags-count:
+    description: Number of flags removed in PR
+    value: ${{ steps.run.outputs.removed-flags-count }}
+  any-changed:
+    description: Returns true if any flags have been changed in PR
+    value: ${{ steps.run.outputs.any-changed }}
+  changed-flags:
+    description: Space-separated list of flags changed in PR
+    value: ${{ steps.run.outputs.changed-flags }}
+  changed-flags-count:
+    description: Number of flags changed in PR
+    value: ${{ steps.run.outputs.changed-flags-count }}
+  any-extinct:
+    description: Returns true if any flags have been removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true.
+    value: ${{ steps.run.outputs.any-extinct }}
+  extinct-flags:
+    description: Space-separated list of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true.
+    value: ${{ steps.run.outputs.extinct-flags }}
+  extinct-flags-count:
+    description: Number of flags removed in PR and no longer exist in codebase. Only returned if `check-extinctions` is true.
+    value: ${{ steps.run.outputs.extinct-flags-count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run LaunchDarkly Code References in Pull Request
+      id: run
+      shell: bash
+      env:
+        DOCKER_IMAGE: ${{ inputs.dockerImage }}
+        INPUT_REPO-TOKEN: ${{ inputs.repo-token }}
+        INPUT_ACCESS-TOKEN: ${{ inputs.access-token }}
+        INPUT_PROJECT-KEY: ${{ inputs.project-key }}
+        INPUT_ENVIRONMENT-KEY: ${{ inputs.environment-key }}
+        INPUT_PLACEHOLDER-COMMENT: ${{ inputs.placeholder-comment }}
+        INPUT_INCLUDE-ARCHIVED-FLAGS: ${{ inputs.include-archived-flags }}
+        INPUT_MAX-FLAGS: ${{ inputs.max-flags }}
+        INPUT_BASE-URI: ${{ inputs.base-uri }}
+        INPUT_CHECK-EXTINCTIONS: ${{ inputs.check-extinctions }}
+        INPUT_CREATE-FLAG-LINKS: ${{ inputs.create-flag-links }}
+        INPUT_SKIP-COMMENT: ${{ inputs.skip-comment }}
+        GITHUB_TOKEN: ${{ inputs.repo-token }}
+        LD_PROJ_KEY: ${{ inputs.project-key }}
+        LD_ACCESS_TOKEN: ${{ inputs.access-token }}
+        LD_BASE_URI: ${{ inputs.base-uri }}
+        LD_ENV_KEY: ${{ inputs.environment-key }}
+      run: |
+        set -euo pipefail
+
+        if [[ -z "${DOCKER_IMAGE:-}" ]]; then
+          echo "::error::dockerImage input must not be empty"
+          exit 1
+        fi
+        if [[ -z "${GITHUB_WORKSPACE:-}" || ! -d "${GITHUB_WORKSPACE}" ]]; then
+          echo "::error::GITHUB_WORKSPACE is missing or not a directory; ensure actions/checkout ran before this step"
+          exit 1
+        fi
+        if [[ -z "${GITHUB_EVENT_PATH:-}" || ! -f "${GITHUB_EVENT_PATH}" ]]; then
+          echo "::error::GITHUB_EVENT_PATH is missing or not a readable file"
+          exit 1
+        fi
+        if [[ -z "${GITHUB_OUTPUT:-}" ]]; then
+          echo "::error::GITHUB_OUTPUT is missing; cannot set Action outputs"
+          exit 1
+        fi
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "::error::docker CLI not found on the runner; this Action entry point requires Docker"
+          exit 1
+        fi
+
+        # Ensure the output file exists so the container can append to it.
+        touch "${GITHUB_OUTPUT}"
+
+        proxy_env=()
+        for v in HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy; do
+          if [[ -n "${!v:-}" ]]; then
+            proxy_env+=(-e "$v")
+          fi
+        done
+
+        docker run --rm \
+          -v "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+          -w "${GITHUB_WORKSPACE}" \
+          -v "${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro" \
+          -v "${GITHUB_OUTPUT}:${GITHUB_OUTPUT}" \
+          -e GITHUB_WORKSPACE \
+          -e GITHUB_EVENT_PATH \
+          -e GITHUB_OUTPUT \
+          -e GITHUB_REPOSITORY \
+          -e GITHUB_REPOSITORY_OWNER \
+          -e GITHUB_REF \
+          -e GITHUB_SERVER_URL \
+          -e GITHUB_ACTIONS=true \
+          -e GITHUB_TOKEN \
+          -e "INPUT_REPO-TOKEN" \
+          -e "INPUT_ACCESS-TOKEN" \
+          -e "INPUT_PROJECT-KEY" \
+          -e "INPUT_ENVIRONMENT-KEY" \
+          -e "INPUT_PLACEHOLDER-COMMENT" \
+          -e "INPUT_INCLUDE-ARCHIVED-FLAGS" \
+          -e "INPUT_MAX-FLAGS" \
+          -e "INPUT_BASE-URI" \
+          -e "INPUT_CHECK-EXTINCTIONS" \
+          -e "INPUT_CREATE-FLAG-LINKS" \
+          -e "INPUT_SKIP-COMMENT" \
+          -e LD_PROJ_KEY \
+          -e LD_ACCESS_TOKEN \
+          -e LD_BASE_URI \
+          -e LD_ENV_KEY \
+          -e GIT_CONFIG_COUNT=1 \
+          -e GIT_CONFIG_KEY_0=safe.directory \
+          -e GIT_CONFIG_VALUE_0="${GITHUB_WORKSPACE}" \
+          "${proxy_env[@]}" \
+          "${DOCKER_IMAGE}"

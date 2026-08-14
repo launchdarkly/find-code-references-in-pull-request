@@ -19,11 +19,18 @@ _Read more: [Example commands](https://github.com/nektos/act#example-commands)_
 
 ## Publishing a release
 
-Make sure [CHANGELOG.md](CHANGELOG.md) and [version](internal/version/version.go) are updated
+1. Move `[Unreleased]` notes into a new version section in [CHANGELOG.md](CHANGELOG.md)
+2. Set [internal/version/version.go](internal/version/version.go) to match
+3. Update the default `dockerImage` tag in [docker/action.yml](docker/action.yml) (and README examples) to the new semver
+4. Create the GitHub release / Marketplace publish (manual publish step — see [GitHub docs](https://docs.github.com/en/actions/creating-actions/publishing-actions-in-github-marketplace#publishing-an-action))
+5. Maintain the major floating tag (`v2` for 2.x) in addition to the semver tag
+6. Publish the runtime Docker image to Docker Hub (required for the optional `/docker` entry point):
+   - Prefer tagging `vX.Y.Z` on `main` (triggers [.github/workflows/publish-image.yml](.github/workflows/publish-image.yml)), **or**
+   - Run **Publish Docker image** via `workflow_dispatch` with `version: X.Y.Z`
+   - Repo secrets required: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
+   - Image: `launchdarkly/find-code-references-in-pull-request:X.Y.Z` (and `latest` when enabled)
 
-Follow instructions to [publish a release to the GitHub Marketplace](https://docs.github.com/en/actions/creating-actions/publishing-actions-in-github-marketplace#publishing-an-action).
-
-**Publishing** is a manual step even if automation is used to create a release.
+**Publishing** to the Marketplace is a manual step even if automation is used to create a release.
 
 ### Versioning
 

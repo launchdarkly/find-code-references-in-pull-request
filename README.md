@@ -84,6 +84,42 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
 ```
 
+## Using a private or mirrored container registry
+
+The root Action (`launchdarkly/find-code-references-in-pull-request@v2`) is a Docker container action. GitHub builds its `Dockerfile` on each run (which pulls base images from Docker Hub), and that image reference cannot be overridden with an input.
+
+If your organization must pull images through an internal registry or Docker Hub proxy, use the optional **`docker`** entry point. It runs a **prebuilt** runtime image via `docker run` and accepts a `dockerImage` input. Mirror `launchdarkly/find-code-references-in-pull-request` into your registry first (pin the tag you mirrored).
+
+```yaml
+on: pull_request
+
+jobs:
+  find-flags:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: your.registry.example
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Find flags
+        id: find-flags
+        # Pin to a release that includes the docker/ entry point and published image (see changelog).
+        uses: launchdarkly/find-code-references-in-pull-request/docker@v2.3.0
+        with:
+          project-key: default
+          environment-key: production
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          dockerImage: your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.0
+```
+
+This entry point requires a Docker CLI on the runner (included on GitHub-hosted `ubuntu-*` runners). Existing workflows that use the root Action do not need to change.
+
 ### Flag aliases
 
 This action has full support for code reference aliases. If the project has an existing [`.launchdarkly/coderefs.yaml`](https://github.com/launchdarkly/ld-find-code-refs/blob/main/docs/CONFIGURATION.md#yaml) file, it will use the aliases defined there.
