@@ -1,4 +1,4 @@
-# Runs go-test and e2e tests on fork PRs after a maintainer adds the "safe-to-test" label.
+# Runs the e2e tests on fork PRs after a maintainer adds the "safe-to-test" label.
 # This uses pull_request_target so repository secrets are available (fork PRs cannot
 # access secrets via the regular pull_request trigger). The label gate ensures untrusted
 # code is reviewed before it runs with access to secrets.
@@ -6,6 +6,11 @@
 # Security: Only the "labeled" event triggers this workflow. New pushes to the fork do NOT
 # re-trigger tests — see remove-safe-to-test-label.yml which strips the label on new commits,
 # forcing a maintainer to re-review and re-label.
+#
+# Scope: only the e2e job lives here. It is irreducibly privileged — it exists to run the
+# fork's own action code against the LaunchDarkly API, so it needs both the untrusted
+# checkout and LD_ACCESS_TOKEN_WRITER. Unit tests need no secrets and therefore run under
+# the unprivileged `pull_request` trigger in main.yml instead of here.
 name: "Test (Fork PRs)"
 
 on:
@@ -16,74 +21,6 @@ permissions:
   contents: read
 
 jobs:
-  go-test:
-    if: >-
-      github.event.label.name == 'safe-to-test'
-      && github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: '18.x'
-
-      - name: Install datadog-ci
-        run: npm install -g @datadog/datadog-ci
-
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
-        with:
-          python-version: '3.x'
-
-      - name: Set up Go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
-        with:
-          go-version-file: go.mod
-          cache: false
-
-      - name: Install pre-commit
-        run: |
-          python -m pip install --upgrade pip
-          pip install pre-commit
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Install gotestsum
-        run: go install gotest.tools/gotestsum@latest
-
-      - name: Run tests with gotestsum
-        run: |
-          mkdir -p ${{ github.workspace }}/artifacts
-          mkdir -p ${{ github.workspace }}/reports
-
-          GONFALON_MODE=test \
-          gotestsum --packages="./..." \
-            --junitfile ${{ github.workspace }}/reports/go-test_go_tests.xml \
-            --jsonfile ${{ github.workspace }}/artifacts/go-test_go_tests.json \
-            --rerun-fails=2 \
-            --rerun-fails-max-failures=10 \
-            --rerun-fails-report ${{ github.workspace }}/artifacts/rerun_tests_go_tests.txt \
-            -- -tags=launchdarkly_easyjson -p=1
-
-      - name: Publish JUnit Tests
-        uses: ./.github/actions/publish-junit
-        env:
-          DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-        with:
-          files: ${{ github.workspace }}/reports/go-test_go_tests.xml
-          name: find-code-references-in-pull-request
-          datadog: 'true'
-          github: 'true'
-
   e2e-tests:
     if: >-
       github.event.label.name == 'safe-to-test'
@@ -97,6 +34,9 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # Untrusted fork code runs in this job. Keep the workflow token out of
+          # .git/config so poisoned code cannot reuse it.
+          persist-credentials: false
       - name: Find LaunchDarkly feature flags in diff
         uses: ./ # Uses an action in the root directory
         id: find-flags
@@ -140,7 +80,6 @@ jobs:
   check-success:
     name: "Check Success (Fork)"
     needs:
-      - go-test
       - e2e-tests
     if: always()
     runs-on: ubuntu-latest

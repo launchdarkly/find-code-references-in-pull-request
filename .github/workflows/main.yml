@@ -1,8 +1,10 @@
 # Run test file with command:
 #   act pull_request -e testdata/act/pull-request.json
 #
-# Fork PRs only run jobs that do not need repository secrets here. See test-fork-pr.yml
-# for the label-gated workflow that runs go-test and e2e tests on forks.
+# Fork PRs only run jobs that do not need repository secrets here. go-test and
+# generate-docs run for forks under this unprivileged trigger; the steps inside them that
+# need secrets stay gated to same-repo PRs. See test-fork-pr.yml for the label-gated
+# workflow that runs the e2e tests on forks.
 
 name: Test and Generate Docs
 
@@ -10,11 +12,13 @@ on: pull_request
 
 jobs:
   go-test:
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          # This job runs fork-authored code. Don't leave a usable token in .git/config.
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -235,6 +239,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          # This job runs fork-authored code. Don't leave a usable token in .git/config.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
