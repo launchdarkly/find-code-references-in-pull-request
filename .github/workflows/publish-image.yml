@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Image tag without v prefix (e.g. 2.3.0)
+        description: Image tag without v prefix (e.g. 2.3.0). Must match an existing git tag vX.Y.Z.
         required: true
         type: string
       push_latest:
@@ -24,9 +24,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
-
       - name: Resolve version
         id: version
         run: |
@@ -42,8 +39,24 @@ jobs:
             echo "Invalid version: ${VERSION}"
             exit 1
           fi
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version (expected X.Y.Z): ${VERSION}"
+            exit 1
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "push_latest=${PUSH_LATEST}" >> "$GITHUB_OUTPUT"
+          echo "git_tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "image=launchdarkly/find-code-references-in-pull-request:${VERSION}" >> "$GITHUB_OUTPUT"
+          # String "true"/"false" for metadata-action enable= (must be exact).
+          if [[ "${PUSH_LATEST}" == "true" ]]; then
+            echo "push_latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push_latest=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout release tag
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: ${{ steps.version.outputs.git_tag }}
 
       - name: Get Docker Hub credentials
         uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
@@ -75,6 +88,9 @@ jobs:
         uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5.9.0
         with:
           images: launchdarkly/find-code-references-in-pull-request
+          # Only the tags we set below (matches docker/action.yml default image name).
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest,enable=${{ steps.version.outputs.push_latest }}
@@ -83,6 +99,20 @@ jobs:
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          sbom: false
+
+      - name: Verify published image
+        run: |
+          set -euo pipefail
+          IMAGE="${{ steps.version.outputs.image }}"
+          echo "Inspecting ${IMAGE}"
+          docker buildx imagetools inspect "${IMAGE}"
+          docker pull "${IMAGE}"
+          docker run --rm --entrypoint git "${IMAGE}" --version
+          echo "OK: published ${IMAGE} (matches docker/action.yml default image repository)"
