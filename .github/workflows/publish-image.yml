@@ -58,6 +58,14 @@ jobs:
         with:
           ref: ${{ steps.version.outputs.git_tag }}
 
+      - name: Require AWS_ROLE_ARN
+        run: |
+          set -euo pipefail
+          if [[ -z "${{ vars.AWS_ROLE_ARN }}" ]]; then
+            echo "::error::Missing Actions variable AWS_ROLE_ARN. Set it on this repository to the same release role used by ld-find-code-refs (OIDC must trust launchdarkly/find-code-references-in-pull-request)."
+            exit 1
+          fi
+
       - name: Get Docker Hub credentials
         uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
         with:
