@@ -26,7 +26,8 @@ config → LD flags → PR diff → preprocess → match → summarize → outpu
 
 | Package / path | Role |
 | --- | --- |
-| `action.yml` + `Dockerfile` | Action contract and container entrypoint |
+| `action.yml` + `Dockerfile` | Root Action contract and container build (multi-stage; final image has binary + `git`) |
+| `docker/action.yml` | Opt-in composite entry point with `dockerImage` override (`docker run`) |
 | `config/` | Parse/validate `INPUT_*` env vars; GitHub client (incl. GHE) |
 | `diff/` | Preprocess PR diffs; ignore paths; scan hunks into the builder |
 | `search/` | Build matcher via `ld-find-code-refs` + alias generation |
@@ -115,7 +116,7 @@ Do not add reviewers; CODEOWNERS / maintainers handle that ([CONTRIBUTING.md](CO
 
 ### Fork PRs and CI
 
-- Same-repo PRs: `.github/workflows/main.yml` runs `go-test`, `e2e-tests` (needs secrets), and `generate-docs`.
+- Same-repo PRs: `.github/workflows/main.yml` runs `go-test`, `e2e-tests` (needs secrets), `e2e-docker-entrypoint` (local + GHCR mirror `/docker` path), and `generate-docs`.
 - Fork PRs: secret-dependent jobs are skipped on `pull_request`. Maintainers add the **`safe-to-test`** label to run `.github/workflows/test-fork-pr.yml` (`pull_request_target`). `.github/workflows/remove-safe-to-test-label.yml` strips the label on new pushes — do not “fix around” that security gate.
 - e2e uses this action against itself (`uses: ./`) with sandbox project credentials.
 
@@ -125,8 +126,12 @@ Follow [DEVELOPMENT.md](DEVELOPMENT.md):
 
 1. Move `[Unreleased]` notes into a new version section in `CHANGELOG.md`
 2. Set `internal/version/version.go` to match
-3. Publish via GitHub Marketplace release flow (manual publish step)
-4. Maintain major floating tag (`v2` for 2.x) in addition to semver tags
+3. Bump default `dockerImage` in `docker/action.yml` (+ README pins) to the new semver
+4. Publish via GitHub Marketplace release flow (manual publish step)
+5. Maintain major floating tag (`v2` for 2.x) in addition to semver tags
+6. Publish the runtime image `launchdarkly/find-code-references-in-pull-request:X.Y.Z` via `.github/workflows/publish-image.yml` (tag push or `workflow_dispatch`; needs `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`)
+
+Optional follow-up: thin the root `Dockerfile` to `FROM` that published image so default `@v2` users also skip compile-on-run.
 
 ## Security and boundaries
 

@@ -1,0 +1,9 @@
+.git
+.github
+.cursor
+*.md
+images
+testdata
+.pre-commit-config.yaml
+.gitignore
+.DS_Store
