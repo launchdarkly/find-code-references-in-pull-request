@@ -187,5 +187,8 @@ runs:
           -e LD_ACCESS_TOKEN \
           -e LD_BASE_URI \
           -e LD_ENV_KEY \
+          -e GIT_CONFIG_COUNT=1 \
+          -e GIT_CONFIG_KEY_0=safe.directory \
+          -e GIT_CONFIG_VALUE_0="${GITHUB_WORKSPACE}" \
           "${proxy_env[@]}" \
           "${DOCKER_IMAGE}"
