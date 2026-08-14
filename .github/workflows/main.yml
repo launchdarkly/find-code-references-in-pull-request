@@ -230,17 +230,25 @@ jobs:
             exit 1
           fi
 
+  e2e-docker-fail-loud-workspace:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+      - name: Clear GITHUB_WORKSPACE for next step
+        run: echo "GITHUB_WORKSPACE=" >> "$GITHUB_ENV"
+
       - name: Fail-loud missing workspace
         id: missing-ws
         continue-on-error: true
         uses: ./docker
-        env:
-          GITHUB_WORKSPACE: ""
         with:
           access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           skip-comment: true
-          dockerImage: ${{ env.MIRRORED_IMAGE }}
+          dockerImage: alpine:3.21
 
       - name: Assert missing workspace failed
         run: |
