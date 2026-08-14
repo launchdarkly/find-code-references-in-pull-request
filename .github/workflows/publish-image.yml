@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   publish:
@@ -44,14 +45,30 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "push_latest=${PUSH_LATEST}" >> "$GITHUB_OUTPUT"
 
+      - name: Get Docker Hub credentials
+        uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
+        with:
+          aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
+          ssm_parameter_pairs: >-
+            /global/services/docker/public/username = DOCKER_USERNAME,
+            /global/services/docker/public/token = DOCKER_TOKEN
+
+      - name: Verify Docker credentials loaded
+        run: |
+          set -euo pipefail
+          if [[ -z "${DOCKER_USERNAME:-}" || -z "${DOCKER_TOKEN:-}" ]]; then
+            echo "::error::Docker Hub credentials were not loaded from SSM. Ensure vars.AWS_ROLE_ARN is configured for this repository (same release role used by ld-find-code-refs)."
+            exit 1
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
 
       - name: Log in to Docker Hub
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_TOKEN }}
 
       - name: Docker metadata
         id: meta

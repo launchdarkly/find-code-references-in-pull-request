@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Docker Hub image publish workflow loads credentials via `release-secrets` / SSM (same as other public LD images) instead of repo `DOCKERHUB_*` secrets
+
 ### Fixed
 
 ## 2.3.0

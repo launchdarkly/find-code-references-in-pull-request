@@ -129,7 +129,7 @@ Follow [DEVELOPMENT.md](DEVELOPMENT.md):
 3. Bump default `dockerImage` in `docker/action.yml` (+ README pins) to the new semver
 4. Publish via GitHub Marketplace release flow (manual publish step)
 5. Maintain major floating tag (`v2` for 2.x) in addition to semver tags
-6. Publish the runtime image `launchdarkly/find-code-references-in-pull-request:X.Y.Z` via `.github/workflows/publish-image.yml` (tag push or `workflow_dispatch`; needs `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`)
+6. Publish the runtime image `launchdarkly/find-code-references-in-pull-request:X.Y.Z` via `.github/workflows/publish-image.yml` (tag push or `workflow_dispatch`; Hub creds via `release-secrets` + `vars.AWS_ROLE_ARN` / SSM, same as `ld-find-code-refs`)
 
 Optional follow-up: thin the root `Dockerfile` to `FROM` that published image so default `@v2` users also skip compile-on-run.
 

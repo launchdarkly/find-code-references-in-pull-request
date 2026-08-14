@@ -27,7 +27,7 @@ _Read more: [Example commands](https://github.com/nektos/act#example-commands)_
 6. Publish the runtime Docker image to Docker Hub (required for the optional `/docker` entry point):
    - Prefer tagging `vX.Y.Z` on `main` (triggers [.github/workflows/publish-image.yml](.github/workflows/publish-image.yml)), **or**
    - Run **Publish Docker image** via `workflow_dispatch` with `version: X.Y.Z`
-   - Repo secrets required: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
+   - Credentials: same path as other public LD images — `release-secrets` assumes `vars.AWS_ROLE_ARN` and reads `/global/services/docker/public/username` + `token` from SSM (no repo `DOCKERHUB_*` secrets)
    - Image: `launchdarkly/find-code-references-in-pull-request:X.Y.Z` (and `latest` when enabled)
 
 **Publishing** to the Marketplace is a manual step even if automation is used to create a release.
