@@ -136,7 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           docker build -t fcr-pr-local:${{ github.sha }} .
-          docker run --rm fcr-pr-local:${{ github.sha }} git --version
+          docker run --rm --entrypoint git fcr-pr-local:${{ github.sha }} --version
 
       - name: Root Action (control)
         id: root
