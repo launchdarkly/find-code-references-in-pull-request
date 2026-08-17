@@ -167,8 +167,8 @@ github.com/launchdarkly/api-client-go/v17 v17.2.0 h1:5CJxDaL7ZgqALAcohNUMlV7hfXR
 github.com/launchdarkly/api-client-go/v17 v17.2.0/go.mod h1:lMTmhEjepXfam8xm8b0ERBJbV9g8vdu9nbKueDXcB5o=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f h1:jfiPiz2hE/7mHv2NOS4cm07sSJCsKlbxmR7pzPhhvpU=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f/go.mod h1:CHbYdMs8UjvNnS2fatlQvi4UYnBTRYGxRHc/0kQupSQ=
-github.com/launchdarkly/ld-find-code-refs/v2 v2.16.0 h1:i/uTgpZXWTFHDAdn1x1igNTWqlZrCqS0VfHswYTMKKg=
-github.com/launchdarkly/ld-find-code-refs/v2 v2.16.0/go.mod h1:tQGcurYYXuQaJ93wrrLEVHU/FkDf/VAhfHErwM/J/lM=
+github.com/launchdarkly/ld-find-code-refs/v2 v2.17.0 h1:ObTHfjYtlshO6lWL6NGlxTBWoMYlElZD3B0sRrR3cnU=
+github.com/launchdarkly/ld-find-code-refs/v2 v2.17.0/go.mod h1:tQGcurYYXuQaJ93wrrLEVHU/FkDf/VAhfHErwM/J/lM=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
