@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	ldapi "github.com/launchdarkly/api-client-go/v15"
 	lcr "github.com/launchdarkly/find-code-references-in-pull-request/config"
@@ -39,15 +40,38 @@ func GetAllFlags(config *lcr.Config) ([]ldapi.FeatureFlag, error) {
 }
 
 func getFlags(config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error) {
-	url := fmt.Sprintf("%s/api/v2/flags/%s", config.LdInstance, config.LdProject)
+	pageParams := make(url.Values, len(params)+2)
+	for key, values := range params {
+		pageParams[key] = append([]string(nil), values...)
+	}
+	pageParams.Set("limit", "100")
+
 	client := &http.Client{}
+	flags := []ldapi.FeatureFlag{}
+	for offset := 0; ; {
+		pageParams.Set("offset", strconv.Itoa(offset))
+		page, err := getFlagPage(client, config, pageParams)
+		if err != nil {
+			return []ldapi.FeatureFlag{}, err
+		}
+		// A short page does not guarantee that there are no more flags.
+		if len(page) == 0 {
+			return flags, nil
+		}
+		flags = append(flags, page...)
+		offset += len(page)
+	}
+}
+
+func getFlagPage(client *http.Client, config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error) {
+	url := fmt.Sprintf("%s/api/v2/flags/%s", config.LdInstance, config.LdProject)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return []ldapi.FeatureFlag{}, err
 	}
 	req.URL.RawQuery = params.Encode()
 	req.Header.Add("Authorization", config.ApiToken)
-	req.Header.Add("LD-API-Version", "20220603")
+	req.Header.Add("LD-API-Version", "20240415")
 	req.Header.Add("User-Agent", fmt.Sprintf("find-code-references-pr/%s", version.Version))
 
 	resp, err := client.Do(req)
