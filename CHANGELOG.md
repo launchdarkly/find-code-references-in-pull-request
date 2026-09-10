@@ -8,6 +8,10 @@
 
 ### Fixed
 
+- Update flag listing from deprecated REST API version `20220603` to the current version,
+  [`20240415`](https://launchdarkly.com/docs/guides/api/api-migration-guide), including pagination support
+  for active and archived flags
+
 ## 2.3.0
 
 ### Added
