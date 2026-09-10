@@ -96,7 +96,7 @@ func main() {
 			Body: &postedComments,
 		}
 
-		if !config.SkipComment {
+		if config.SkipComment {
 			gha.Log("Skipping comment creation as skip-comment is set to true")
 		} else {
 			err = postGithubComment(ctx, flagsRef, config, existingComment, *event.PullRequest.Number, comment)
