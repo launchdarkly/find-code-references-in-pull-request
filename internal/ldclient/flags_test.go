@@ -42,18 +42,20 @@ func TestGetAllFlagsPagination(t *testing.T) {
 				if collection == 1 {
 					filter, prefix = "state:archived", "archived"
 				}
-				offset := 0
+				keyOffset := 0
+				requestOffset := 0
 				for _, count := range sizes {
 					items := make([]map[string]string, count)
 					for i := range items {
-						key := fmt.Sprintf("%s-%d", prefix, offset+i)
+						key := fmt.Sprintf("%s-%d", prefix, keyOffset+i)
 						items[i] = map[string]string{"key": key}
 						wantKeys = append(wantKeys, key)
 					}
 					body, err := json.Marshal(map[string]any{"items": items})
 					require.NoError(t, err)
-					pages = append(pages, flagPageResponse{offset: offset, filter: filter, body: string(body)})
-					offset += count
+					pages = append(pages, flagPageResponse{offset: requestOffset, filter: filter, body: string(body)})
+					keyOffset += count
+					requestOffset += 100
 				}
 			}
 			config := serveFlagPages(t, tt.archivedPages != nil, pages)
@@ -75,7 +77,7 @@ func TestGetAllFlagsPreservesMetadata(t *testing.T) {
 		{body: `{"items":[{"key":"checkout","name":"Checkout","kind":"boolean","tags":["billing"],
 			"environments":{"production":{"on":true,"_environmentName":"Production",
 			"_site":{"href":"/test-project/production/features/checkout","type":"text/html"}}}}]}`},
-		{offset: 1, body: `{"items":[]}`},
+		{offset: 100, body: `{"items":[]}`},
 	})
 
 	flags, err := GetAllFlags(config)
@@ -103,7 +105,7 @@ func TestGetAllFlagsPreservesMetadata(t *testing.T) {
 func TestGetFlagsPreservesQueryParameters(t *testing.T) {
 	config := serveFlagPages(t, true, []flagPageResponse{
 		{filter: "state:archived", body: `{"items":[{"key":"archived"}]}`},
-		{offset: 1, filter: "state:archived", body: `{"items":[]}`},
+		{offset: 100, filter: "state:archived", body: `{"items":[]}`},
 	})
 	params := url.Values{
 		"env":    {"production"},
@@ -159,14 +161,14 @@ func TestGetAllFlagsErrors(t *testing.T) {
 					if archived {
 						pages = append(pages,
 							flagPageResponse{body: `{"items":[{"key":"active"}]}`},
-							flagPageResponse{offset: 1, body: `{"items":[]}`},
+							flagPageResponse{offset: 100, body: `{"items":[]}`},
 						)
 						filter = "state:archived"
 					}
 					offset := 0
 					if laterPage {
 						pages = append(pages, flagPageResponse{filter: filter, body: `{"items":[{"key":"first"}]}`})
-						offset = 1
+						offset = 100
 					}
 					pages = append(pages, flagPageResponse{offset: offset, filter: filter, status: tt.status, body: tt.body})
 					config := serveFlagPages(t, archived, pages)

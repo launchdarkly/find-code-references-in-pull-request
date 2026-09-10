@@ -44,22 +44,22 @@ func getFlags(config *lcr.Config, params url.Values) ([]ldapi.FeatureFlag, error
 	for key, values := range params {
 		pageParams[key] = append([]string(nil), values...)
 	}
-	pageParams.Set("limit", "100")
+	const pageSize = 100
+	pageParams.Set("limit", strconv.Itoa(pageSize))
 
 	client := &http.Client{}
 	flags := []ldapi.FeatureFlag{}
-	for offset := 0; ; {
+	for offset := 0; ; offset += pageSize {
 		pageParams.Set("offset", strconv.Itoa(offset))
 		page, err := getFlagPage(client, config, pageParams)
 		if err != nil {
 			return []ldapi.FeatureFlag{}, err
 		}
-		// A short page does not guarantee that there are no more flags.
+		// The migration guide uses an empty page to signal completion.
 		if len(page) == 0 {
 			return flags, nil
 		}
 		flags = append(flags, page...)
-		offset += len(page)
 	}
 }
 
