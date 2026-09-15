@@ -109,13 +109,13 @@ jobs:
       - name: Find flags
         id: find-flags
         # Pin to a release that includes the docker/ entry point and published image (see changelog).
-        uses: launchdarkly/find-code-references-in-pull-request/docker@v2.3.0
+        uses: launchdarkly/find-code-references-in-pull-request/docker@v2.3.1
         with:
           project-key: default
           environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          dockerImage: your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.0
+          dockerImage: your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.1
 ```
 
 This entry point requires a Docker CLI on the runner (included on GitHub-hosted `ubuntu-*` runners). Existing workflows that use the root Action do not need to change.

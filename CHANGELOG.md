@@ -4,10 +4,20 @@
 
 ### Changed
 
+### Fixed
+
+## 2.3.1
+
+### Added
+
+### Changed
+
 - Docker Hub image publish workflow loads credentials via `release-secrets` / SSM (same as other public LD images) instead of repo `DOCKERHUB_*` secrets
+- Run fork pull request unit tests on the unprivileged `pull_request` workflow instead of `pull_request_target`
 
 ### Fixed
 
+- `skip-comment` input had inverted behavior in v2.3.0 (`true` still posted PR comments; `false` skipped)
 - Update flag listing from deprecated REST API version `20220603` to the current version,
   [`20240415`](https://launchdarkly.com/docs/guides/api/api-migration-guide), including pagination support
   for active and archived flags

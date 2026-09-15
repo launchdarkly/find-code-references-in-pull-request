@@ -55,12 +55,12 @@ inputs:
     description: >-
       Container image to run. Defaults to the public Docker Hub runtime image.
       Set this to your mirrored/proxy image (for example
-      your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.0).
+      your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.1).
       Authenticate to private registries with docker/login-action (or equivalent)
       in a prior step. Requires a runner with a Docker CLI (GitHub-hosted
       ubuntu-* runners include one).
     required: false
-    default: "launchdarkly/find-code-references-in-pull-request:2.3.0"
+    default: "launchdarkly/find-code-references-in-pull-request:2.3.1"
 
 outputs:
   any-modified:
