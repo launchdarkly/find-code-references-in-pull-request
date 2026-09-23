@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM golang:1.26.8-alpine AS builder
 
 RUN apk add --no-cache git
 
@@ -7,7 +7,7 @@ COPY . .
 ENV GO111MODULE=on
 RUN go build -mod=vendor -o /find-code-references-in-pull-request .
 
-FROM alpine:3.21
+FROM alpine:3.24.2
 
 LABEL com.github.actions.name="LaunchDarkly Find Flags"
 LABEL com.github.actions.description="Flags"
