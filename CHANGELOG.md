@@ -6,8 +6,19 @@
 
 ### Fixed
 
+## 2.3.3
+
+### Fixed
+
 - Retry rate-limited feature flag requests using applicable quota reset times and `Retry-After`
 - Preserve cancellation and timeout errors while reading feature flag responses
+- Bumped `github.com/pelletier/go-toml/v2` to v2.4.3, clearing a reported denial-of-service finding (XRAY-1033007). The module arrives indirectly through `spf13/viper`; the upstream release bounds array and inline-table nesting depth to prevent a stack-overflow crash
+
+## 2.3.2
+
+### Changed
+
+- Pinned the Go toolchain to 1.26.8 via a `toolchain` directive and bumped `ld-find-code-refs` to v2.18.1 along with `x/crypto`, `x/text` and `go-git`, clearing 22 reachable standard library vulnerabilities and 8 in imported packages. The builder image is pinned to `golang:1.26.8-alpine` instead of the floating `golang:alpine`, and the runtime base moves from `alpine:3.21` to `alpine:3.24.2`
 
 ## 2.3.1
 
