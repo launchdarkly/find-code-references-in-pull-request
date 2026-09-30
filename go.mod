@@ -7,6 +7,7 @@ toolchain go1.26.8
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 	github.com/sourcegraph/go-diff v0.6.1
 	github.com/spf13/viper v1.21.0
@@ -52,7 +53,6 @@ require (
 	github.com/go-git/go-git/v5 v5.19.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/kyoh86/xdg v1.2.0 // indirect

@@ -38,7 +38,7 @@ func main() {
 		failExit(err)
 	}
 
-	flags, err := ldclient.GetAllFlags(config)
+	flags, err := ldclient.GetAllFlags(ctx, config)
 	failExit(err)
 
 	if len(flags) == 0 {

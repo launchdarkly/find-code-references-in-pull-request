@@ -1,6 +1,7 @@
 package ldapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -60,7 +61,7 @@ func TestGetAllFlagsPagination(t *testing.T) {
 			}
 			config := serveFlagPages(t, tt.archivedPages != nil, pages)
 
-			flags, err := GetAllFlags(config)
+			flags, err := GetAllFlags(context.Background(), config)
 
 			require.NoError(t, err)
 			gotKeys := make([]string, len(flags))
@@ -80,7 +81,7 @@ func TestGetAllFlagsPreservesMetadata(t *testing.T) {
 		{offset: 100, body: `{"items":[]}`},
 	})
 
-	flags, err := GetAllFlags(config)
+	flags, err := GetAllFlags(context.Background(), config)
 
 	require.NoError(t, err)
 	require.Len(t, flags, 1)
@@ -120,7 +121,8 @@ func TestGetFlagsPreservesQueryParameters(t *testing.T) {
 		"offset": {"42"},
 	}
 
-	flags, err := getFlags(config, params)
+	fetcher, _ := newTestFetcher(t)
+	flags, err := fetcher.getFlags(config, params, flagCollectionArchived, false)
 
 	require.NoError(t, err)
 	assert.Len(t, flags, 1)
@@ -144,11 +146,11 @@ func TestGetAllFlagsErrors(t *testing.T) {
 		},
 		{
 			name: "non-JSON error", status: http.StatusBadGateway,
-			body: "bad gateway", wantError: "502. unable to parse response",
+			body: "bad gateway", wantError: "status=502 reason=http_error",
 		},
 		{
 			name: "invalid success JSON", status: http.StatusOK,
-			body: "not JSON", wantError: "invalid character",
+			body: "not JSON", wantError: "status=200 reason=decode_error",
 		},
 	}
 	for _, tt := range tests {
@@ -173,7 +175,7 @@ func TestGetAllFlagsErrors(t *testing.T) {
 					pages = append(pages, flagPageResponse{offset: offset, filter: filter, status: tt.status, body: tt.body})
 					config := serveFlagPages(t, archived, pages)
 
-					flags, err := GetAllFlags(config)
+					flags, err := GetAllFlags(context.Background(), config)
 
 					require.ErrorContains(t, err, tt.wantError)
 					assert.Empty(t, flags)
@@ -184,10 +186,11 @@ func TestGetAllFlagsErrors(t *testing.T) {
 }
 
 type flagPageResponse struct {
-	offset int
-	filter string
-	status int
-	body   string
+	offset  int
+	filter  string
+	status  int
+	body    string
+	headers http.Header
 }
 
 func serveFlagPages(t *testing.T, includeArchived bool, pages []flagPageResponse) *lcr.Config {
@@ -215,6 +218,11 @@ func serveFlagPages(t *testing.T, includeArchived bool, pages []flagPageResponse
 		}
 		assert.Equal(t, query, r.URL.Query())
 		w.Header().Set("Content-Type", "application/json")
+		for name, values := range page.headers {
+			for _, value := range values {
+				w.Header().Add(name, value)
+			}
+		}
 		status := page.status
 		if status == 0 {
 			status = http.StatusOK

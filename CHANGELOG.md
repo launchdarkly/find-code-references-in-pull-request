@@ -6,6 +6,9 @@
 
 ### Fixed
 
+- Retry rate-limited feature flag requests using applicable quota reset times and `Retry-After`
+- Preserve cancellation and timeout errors while reading feature flag responses
+
 ## 2.3.1
 
 ### Added
