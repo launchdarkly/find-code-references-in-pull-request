@@ -2,7 +2,7 @@ module github.com/launchdarkly/find-code-references-in-pull-request
 
 go 1.26.0
 
-toolchain go1.26.8
+toolchain go1.26.10
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
