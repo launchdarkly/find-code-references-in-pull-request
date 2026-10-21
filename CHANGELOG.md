@@ -6,6 +6,12 @@
 
 ### Fixed
 
+## 2.3.4
+
+### Fixed
+
+- Builds with Go 1.26.10 so `crypto/x509` rejects certificate chains through the distrusted eMudhra intermediates (INC-289, golang/go#82345). The `toolchain` directive in `go.mod` and the `golang:` builder image in the `Dockerfile` move from 1.26.8 to 1.26.10. There are no application code changes
+
 ## 2.3.3
 
 ### Fixed
