@@ -64,7 +64,7 @@ go mod tidy && go mod vendor
 act -e testdata/act/pull-request.json
 ```
 
-Go version comes from `go.mod` (`go-version-file: go.mod` in CI). Current module requires **Go 1.25**.
+Go version comes from `go.mod` (`go-version-file: go.mod` in CI). The module targets `go 1.26.0` and pins the build toolchain with `toolchain go1.26.10`; keep the `golang:` builder image in the Dockerfile in sync.
 
 ## Changing behavior — required sync points
 
