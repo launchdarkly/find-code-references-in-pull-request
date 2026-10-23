@@ -1,10 +1,6 @@
-## [Unreleased]
+# Changelog
 
-### Added
-
-### Changed
-
-### Fixed
+All notable changes to find-code-references-in-pull-request are documented in this file. This project adheres to [Semantic Versioning](https://semver.org).
 
 ## 2.3.4
 

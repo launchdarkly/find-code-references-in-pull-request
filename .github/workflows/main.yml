@@ -8,7 +8,12 @@
 
 name: Test and Generate Docs
 
-on: pull_request
+on:
+  pull_request:
+  # release-please opens its PR with GITHUB_TOKEN, which does not trigger
+  # pull_request runs; release-please.yml dispatches this workflow instead.
+  # The e2e jobs need a pull_request event, so they skip on dispatch.
+  workflow_dispatch:
 
 jobs:
   go-test:
