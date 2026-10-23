@@ -73,7 +73,7 @@ When you add/change an input or output:
 1. Update `action.yml`
 2. Wire parsing/defaults in `config/config.go` (and use in `main.go` / packages)
 3. Run `make docs` so README tables stay in sync (`<!-- action-docs-* -->` blocks)
-4. Add a `CHANGELOG.md` entry under `## [Unreleased]`
+4. Give the PR a Conventional Commit title (`fix:`, `feat:`); release-please builds `CHANGELOG.md` from it
 5. Add/extend unit tests near the logic (`diff/`, `comments/`, `internal/references/`)
 
 When bumping dependencies:
@@ -101,13 +101,13 @@ Recent merges use conventional-ish prefixes:
 
 - `feat:`, `fix:`, `chore:`, `docs:`, `chore(deps):`
 - Optional Jira: `[REL-xxxxx]` in title/body when tracked
-- Release prep: `prepare X.Y.Z release` — bump `CHANGELOG.md` + `internal/version/version.go` together
+- Titles must be Conventional Commits (`lint-pr-title.yml`); release-please derives the version and changelog from them
 
 **PR checklist for agents:**
 
 - [ ] Scope is focused; avoid mixing feature work with large unrelated vendor bumps
 - [ ] Tests for classification / comment / config behavior when logic changes
-- [ ] `CHANGELOG.md` `[Unreleased]` updated for user-visible changes
+- [ ] PR title uses `fix:` / `feat:` for user-visible changes (do not hand-edit `CHANGELOG.md` outside a release PR)
 - [ ] `make docs` if `action.yml` changed
 - [ ] `go mod vendor` committed when modules change
 - [ ] No hand-edits under `vendor/` except via `go mod vendor`
@@ -122,14 +122,7 @@ Do not add reviewers; CODEOWNERS / maintainers handle that ([CONTRIBUTING.md](CO
 
 ## Releases
 
-Follow [DEVELOPMENT.md](DEVELOPMENT.md):
-
-1. Move `[Unreleased]` notes into a new version section in `CHANGELOG.md`
-2. Set `internal/version/version.go` to match
-3. Bump default `dockerImage` in `docker/action.yml` (+ README pins) to the new semver
-4. Publish via GitHub Marketplace release flow (manual publish step)
-5. Maintain major floating tag (`v2` for 2.x) in addition to semver tags
-6. Publish the runtime image `launchdarkly/find-code-references-in-pull-request:X.Y.Z` via `.github/workflows/publish-image.yml` (tag push or `workflow_dispatch`; Hub creds via `release-secrets` + `vars.AWS_ROLE_ARN` / SSM, same as `ld-find-code-refs`)
+release-please handles releases; see [DEVELOPMENT.md](DEVELOPMENT.md#publishing-a-release). Do not open `prepare X.Y.Z release` PRs or bump `internal/version/version.go`, `docker/action.yml` or README pins by hand: merging the `chore(main): release X.Y.Z` PR tags the release, publishes `launchdarkly/find-code-references-in-pull-request:X.Y.Z`, publishes the GitHub release and moves `v2`.
 
 Optional follow-up: thin the root `Dockerfile` to `FROM` that published image so default `@v2` users also skip compile-on-run.
 
