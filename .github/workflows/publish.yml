@@ -26,6 +26,8 @@ permissions:
 jobs:
   image:
     runs-on: ubuntu-latest
+    outputs:
+      newest: ${{ steps.version.outputs.newest }}
     permissions:
       id-token: write # assume vars.AWS_ROLE_ARN for the Docker Hub credentials
       contents: read
@@ -40,6 +42,7 @@ jobs:
       - name: Check tag matches version
         id: version
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
@@ -56,6 +59,17 @@ jobs:
           if ! grep -qF "default: \"launchdarkly/find-code-references-in-pull-request:${version}\"" docker/action.yml; then
             echo "::error::docker/action.yml default dockerImage does not match $TAG"
             exit 1
+          fi
+          # Only the newest release in the series gets latest and the major tag,
+          # so publishing an older tag again cannot move them backwards.
+          major="${TAG%%.*}"
+          newest=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${major}." --paginate --jq '.[].ref' \
+            | sed -nE 's|^refs/tags/(v[0-9]+\.[0-9]+\.[0-9]+)$|\1|p' | sort -V | tail -n1)
+          if [[ "$newest" == "$TAG" ]]; then
+            echo "newest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::${TAG} is not the newest ${major} release (${newest}); not moving latest or ${major}."
+            echo "newest=false" >> "$GITHUB_OUTPUT"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "image=launchdarkly/find-code-references-in-pull-request:${version}" >> "$GITHUB_OUTPUT"
@@ -94,13 +108,13 @@ jobs:
         with:
           images: launchdarkly/find-code-references-in-pull-request
           # Only the tags we set below (matches docker/action.yml default image name).
-          # latest follows the published release, so a recovery run that only
-          # re-pushes an older image does not move it.
+          # latest follows the newest published release, so a recovery run that
+          # only re-pushes an image, or publishes an older tag, does not move it.
           flavor: |
             latest=false
           tags: |
             type=raw,value=${{ steps.version.outputs.version }}
-            type=raw,value=latest,enable=${{ inputs.publish_release }}
+            type=raw,value=latest,enable=${{ inputs.publish_release && steps.version.outputs.newest == 'true' }}
 
       - name: Build and push
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
@@ -138,10 +152,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
-        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          LATEST: ${{ needs.image.outputs.newest }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest="$LATEST"
 
       # Users reference the Action as @v2, so this is the step that ships the release.
       - name: Move major version tag
+        if: ${{ needs.image.outputs.newest == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
