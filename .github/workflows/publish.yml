@@ -1,0 +1,173 @@
+name: Publish
+
+# Shared by release-please.yml and manual-publish.yml so releases and
+# recovery runs build with the same steps.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Existing release tag to build (vX.Y.Z)
+        required: true
+        type: string
+      dry_run:
+        description: Build the image only; push nothing
+        required: false
+        type: boolean
+        default: true
+      publish_release:
+        description: Un-draft the release, push latest and move the major tag (v2) to it
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    outputs:
+      newest: ${{ steps.version.outputs.newest }}
+    permissions:
+      id-token: write # assume vars.AWS_ROLE_ARN for the Docker Hub credentials
+      contents: read
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: ${{ inputs.tag }}
+
+      # The image tag, version.go and the docker/ Action's default image must
+      # all name the same version, or /docker users pull an image that is not there.
+      - name: Check tag matches version
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid tag (expected vX.Y.Z): $TAG"
+            exit 1
+          fi
+          version="${TAG#v}"
+          code_version=$(sed -nE 's/^const Version = "([^"]+)".*/\1/p' internal/version/version.go)
+          if [[ "$code_version" != "$version" ]]; then
+            echo "::error::internal/version/version.go is $code_version but tag is $TAG"
+            exit 1
+          fi
+          if ! grep -qF "default: \"launchdarkly/find-code-references-in-pull-request:${version}\"" docker/action.yml; then
+            echo "::error::docker/action.yml default dockerImage does not match $TAG"
+            exit 1
+          fi
+          # Only the newest release in the series gets latest and the major tag,
+          # so publishing an older tag again cannot move them backwards.
+          major="${TAG%%.*}"
+          newest=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${major}." --paginate --jq '.[].ref' \
+            | sed -nE 's|^refs/tags/(v[0-9]+\.[0-9]+\.[0-9]+)$|\1|p' | sort -V | tail -n1)
+          if [[ "$newest" == "$TAG" ]]; then
+            echo "newest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::${TAG} is not the newest ${major} release (${newest}); not moving latest or ${major}."
+            echo "newest=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "image=launchdarkly/find-code-references-in-pull-request:${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Get Docker Hub credentials
+        if: ${{ !inputs.dry_run }}
+        uses: launchdarkly/gh-actions/actions/release-secrets@release-secrets-v1.2.0
+        with:
+          aws_assume_role: ${{ vars.AWS_ROLE_ARN }}
+          ssm_parameter_pairs: >-
+            /global/services/docker/public/username = DOCKER_USERNAME,
+            /global/services/docker/public/token = DOCKER_TOKEN
+
+      - name: Verify Docker credentials loaded
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${DOCKER_USERNAME:-}" || -z "${DOCKER_TOKEN:-}" ]]; then
+            echo "::error::Docker Hub credentials were not loaded from SSM. Ensure vars.AWS_ROLE_ARN is configured for this repository (same release role used by ld-find-code-refs)."
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
+
+      - name: Log in to Docker Hub
+        if: ${{ !inputs.dry_run }}
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5.9.0
+        with:
+          images: launchdarkly/find-code-references-in-pull-request
+          # Only the tags we set below (matches docker/action.yml default image name).
+          # latest follows the newest published release, so a recovery run that
+          # only re-pushes an image, or publishes an older tag, does not move it.
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ inputs.publish_release && steps.version.outputs.newest == 'true' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: ${{ !inputs.dry_run }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          sbom: false
+
+      - name: Verify published image
+        if: ${{ !inputs.dry_run }}
+        env:
+          IMAGE: ${{ steps.version.outputs.image }}
+        run: |
+          set -euo pipefail
+          echo "Inspecting ${IMAGE}"
+          docker buildx imagetools inspect "${IMAGE}"
+          docker pull "${IMAGE}"
+          docker run --rm --entrypoint git "${IMAGE}" --version
+          echo "OK: published ${IMAGE} (matches docker/action.yml default image repository)"
+
+  # Only release once the image exists: the docker/ Action at this tag defaults to it.
+  release:
+    needs: image
+    if: ${{ !inputs.dry_run && inputs.publish_release }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # publish the release and move the major tag
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          LATEST: ${{ needs.image.outputs.newest }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest="$LATEST"
+
+      # Users reference the Action as @v2, so this is the step that ships the release.
+      - name: Move major version tag
+        if: ${{ needs.image.outputs.newest == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          major="${TAG%%.*}"
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${TAG}" --jq .sha)
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${major}" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${major}" -f sha="${sha}" -F force=true >/dev/null
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${major}" -f sha="${sha}" >/dev/null
+          fi
+          echo "Moved ${major} to ${TAG} (${sha})." | tee -a "$GITHUB_STEP_SUMMARY"

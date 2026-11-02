@@ -1,0 +1,35 @@
+name: Manual Publish
+
+# Dry-run the image build, or re-publish a release whose publish job failed.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build (vX.Y.Z)
+        required: true
+        type: string
+      dry_run:
+        description: Build the image only; push nothing
+        required: false
+        type: boolean
+        default: true
+      publish_release:
+        description: Un-draft the release, push latest and move the major tag (v2) to it
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    permissions:
+      id-token: write
+      contents: write
+    uses: ./.github/workflows/publish.yml
+    with:
+      tag: ${{ inputs.tag }}
+      dry_run: ${{ inputs.dry_run }}
+      publish_release: ${{ inputs.publish_release }}
+    secrets: inherit

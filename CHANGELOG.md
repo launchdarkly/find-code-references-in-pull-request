@@ -1,10 +1,69 @@
-## [Unreleased]
+# Changelog
+
+All notable changes to find-code-references-in-pull-request are documented in this file. This project adheres to [Semantic Versioning](https://semver.org).
+
+## 2.3.4
+
+### Fixed
+
+- Builds with Go 1.26.10 so `crypto/x509` rejects certificate chains through the distrusted eMudhra intermediates (INC-289, golang/go#82345). The `toolchain` directive in `go.mod` and the `golang:` builder image in the `Dockerfile` move from 1.26.8 to 1.26.10. There are no application code changes
+
+## 2.3.3
+
+### Fixed
+
+- Retry rate-limited feature flag requests using applicable quota reset times and `Retry-After`
+- Preserve cancellation and timeout errors while reading feature flag responses
+- Bumped `github.com/pelletier/go-toml/v2` to v2.4.3, clearing a reported denial-of-service finding (XRAY-1033007). The module arrives indirectly through `spf13/viper`; the upstream release bounds array and inline-table nesting depth to prevent a stack-overflow crash
+
+## 2.3.2
+
+### Changed
+
+- Pinned the Go toolchain to 1.26.8 via a `toolchain` directive and bumped `ld-find-code-refs` to v2.18.1 along with `x/crypto`, `x/text` and `go-git`, clearing 22 reachable standard library vulnerabilities and 8 in imported packages. The builder image is pinned to `golang:1.26.8-alpine` instead of the floating `golang:alpine`, and the runtime base moves from `alpine:3.21` to `alpine:3.24.2`
+
+## 2.3.1
 
 ### Added
 
 ### Changed
 
+- Docker Hub image publish workflow loads credentials via `release-secrets` / SSM (same as other public LD images) instead of repo `DOCKERHUB_*` secrets
+- Run fork pull request unit tests on the unprivileged `pull_request` workflow instead of `pull_request_target`
+
 ### Fixed
+
+- `skip-comment` input had inverted behavior in v2.3.0 (`true` still posted PR comments; `false` skipped)
+- Update flag listing from deprecated REST API version `20220603` to the current version,
+  [`20240415`](https://launchdarkly.com/docs/guides/api/api-migration-guide), including pagination support
+  for active and archived flags
+
+## 2.3.0
+
+### Added
+
+- optional GitHub Action entry point `launchdarkly/find-code-references-in-pull-request/docker` with a `dockerImage` input so workflows can pull a prebuilt runtime image from a private registry or Docker Hub proxy. The root Action is unchanged.
+- multi-stage `Dockerfile` and Docker Hub publish workflow for `launchdarkly/find-code-references-in-pull-request` runtime images
+
+### Changed
+
+### Fixed
+
+## 2.2.0
+
+### Added
+
+- Support for large pull request diffs by falling back to `git diff` when the GitHub API returns a 406 response
+
+### Changed
+
+- Update dependencies
+- Update Go version
+
+### Fixed
+
+- False flag removals when `max-flags` stopped scanning mid-file
+- Delete-then-re-add flag churn is now reported as modified instead of removed
 
 ## 2.1.0
 

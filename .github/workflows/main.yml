@@ -1,9 +1,19 @@
 # Run test file with command:
 #   act pull_request -e testdata/act/pull-request.json
+#
+# Fork PRs only run jobs that do not need repository secrets here. go-test and
+# generate-docs run for forks under this unprivileged trigger; the steps inside them that
+# need secrets stay gated to same-repo PRs. See test-fork-pr.yml for the label-gated
+# workflow that runs the e2e tests on forks.
 
 name: Test and Generate Docs
 
-on: pull_request
+on:
+  pull_request:
+  # release-please opens its PR with GITHUB_TOKEN, which does not trigger
+  # pull_request runs; release-please.yml dispatches this workflow instead.
+  # The e2e jobs need a pull_request event, so they skip on dispatch.
+  workflow_dispatch:
 
 jobs:
   go-test:
@@ -11,6 +21,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          # This job runs fork-authored code. Don't leave a usable token in .git/config.
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
@@ -59,6 +72,7 @@ jobs:
             -- -tags=launchdarkly_easyjson -p=1
 
       - name: Publish JUnit Tests
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: ./.github/actions/publish-junit
         env:
           DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
@@ -67,10 +81,12 @@ jobs:
           name: find-code-references-in-pull-request
           datadog: 'true'
           github: 'true'
-      
 
   e2e-tests:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
@@ -78,8 +94,8 @@ jobs:
         uses: ./ # Uses an action in the root directory
         id: find-flags
         with:
-          project-key: demo-dan-042021-2
-          environment-key: development
+          project-key: developer-toolbar-sandbox
+          environment-key: test
           access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           base-uri: https://app.launchdarkly.com
@@ -113,12 +129,124 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-  
+
+  e2e-docker-entrypoint:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+      - name: Build local runtime image
+        run: |
+          set -euo pipefail
+          docker build -t fcr-pr-local:${{ github.sha }} .
+          docker run --rm --entrypoint git fcr-pr-local:${{ github.sha }} --version
+
+      - name: Root Action (control)
+        id: root
+        uses: ./
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: false
+          skip-comment: true
+
+      - name: /docker Action (local image)
+        id: docker-local
+        uses: ./docker
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: false
+          skip-comment: true
+          dockerImage: fcr-pr-local:${{ github.sha }}
+
+      - name: Assert output parity
+        run: |
+          set -euo pipefail
+          echo "root any-changed=${{ steps.root.outputs.any-changed }} count=${{ steps.root.outputs.changed-flags-count }}"
+          echo "docker any-changed=${{ steps.docker-local.outputs.any-changed }} count=${{ steps.docker-local.outputs.changed-flags-count }}"
+          if [[ "${{ steps.root.outputs.any-changed }}" != "${{ steps.docker-local.outputs.any-changed }}" ]]; then
+            echo "any-changed mismatch"
+            exit 1
+          fi
+          if [[ "${{ steps.root.outputs.changed-flags-count }}" != "${{ steps.docker-local.outputs.changed-flags-count }}" ]]; then
+            echo "changed-flags-count mismatch"
+            exit 1
+          fi
+
+      - name: Mirror image to GHCR
+        run: |
+          set -euo pipefail
+          DEST=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          docker tag fcr-pr-local:${{ github.sha }} "$DEST"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$DEST"
+          # Drop local tags so the next step must pull from GHCR.
+          docker image rm "$DEST" fcr-pr-local:${{ github.sha }}
+          echo "MIRRORED_IMAGE=$DEST" >> "$GITHUB_ENV"
+
+      - name: /docker Action (GHCR mirror)
+        id: docker-mirror
+        uses: ./docker
+        with:
+          project-key: developer-toolbar-sandbox
+          environment-key: test
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          base-uri: https://app.launchdarkly.com
+          max-flags: 200
+          create-flag-links: false
+          skip-comment: true
+          dockerImage: ${{ env.MIRRORED_IMAGE }}
+
+      - name: Assert mirror outputs
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.root.outputs.any-changed }}" != "${{ steps.docker-mirror.outputs.any-changed }}" ]]; then
+            echo "mirror any-changed mismatch"
+            exit 1
+          fi
+
+      - name: Fail-loud empty dockerImage
+        id: empty-image
+        continue-on-error: true
+        uses: ./docker
+        with:
+          access-token: ${{ secrets.LD_ACCESS_TOKEN_WRITER }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-comment: true
+          dockerImage: ""
+
+      - name: Assert empty dockerImage failed
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.empty-image.outcome }}" != "failure" ]]; then
+            echo "expected empty dockerImage to fail"
+            exit 1
+          fi
+
   generate-docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          # This job runs fork-authored code. Don't leave a usable token in .git/config.
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548

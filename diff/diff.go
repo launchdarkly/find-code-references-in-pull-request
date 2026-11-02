@@ -69,6 +69,10 @@ func checkDiffFile(parsedDiff *diff.FileDiff, workspace string) (filePath string
 }
 
 func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.ReferenceSummaryBuilder) {
+	if builder.MaxReferences() {
+		return
+	}
+
 	diffLines := strings.Split(string(contents), "\n")
 	for _, line := range diffLines {
 		op := diff_util.LineOperation(line)
@@ -85,9 +89,6 @@ func ProcessDiffs(matcher lsearch.Matcher, contents []byte, builder *refs.Refere
 			if err != nil {
 				fmt.Println(err)
 			}
-		}
-		if builder.MaxReferences() {
-			break
 		}
 	}
 }

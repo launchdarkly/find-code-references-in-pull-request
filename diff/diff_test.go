@@ -249,3 +249,45 @@ func TestProcessDiffs_BuildReferences(t *testing.T) {
 		})
 	}
 }
+
+func TestProcessDiffs_finishesFileBeforeMaxFlagsCap(t *testing.T) {
+	processor := newProcessFlagAccEnv()
+	processor.Builder = refs.NewReferenceSummaryBuilder(1, false)
+
+	elements := []lsearch.ElementMatcher{
+		lsearch.NewElementMatcher("default", "", "", processor.flagKeys(), map[string][]string{}),
+	}
+	matcher := lsearch.Matcher{Elements: elements}
+
+	// With max-flags=1, an early mid-file stop would classify example-flag as removed
+	// before the re-add line is scanned.
+	body := `
+-example-flag
++example-flag
++sample-flag
+`
+	ProcessDiffs(matcher, []byte(body), processor.Builder)
+	flagsRef := processor.Builder.Build()
+
+	assert.Contains(t, flagsRef.FlagsAdded, "example-flag")
+	assert.NotContains(t, flagsRef.FlagsRemoved, "example-flag")
+}
+
+func TestProcessDiffs_skipsSubsequentFilesAtMaxFlags(t *testing.T) {
+	processor := newProcessFlagAccEnv()
+	processor.Builder = refs.NewReferenceSummaryBuilder(1, false)
+
+	elements := []lsearch.ElementMatcher{
+		lsearch.NewElementMatcher("default", "", "", processor.flagKeys(), map[string][]string{}),
+	}
+	matcher := lsearch.Matcher{Elements: elements}
+
+	ProcessDiffs(matcher, []byte("+example-flag\n"), processor.Builder)
+	assert.True(t, processor.Builder.MaxReferences())
+
+	ProcessDiffs(matcher, []byte("+sample-flag\n"), processor.Builder)
+	flagsRef := processor.Builder.Build()
+
+	assert.Contains(t, flagsRef.FlagsAdded, "example-flag")
+	assert.NotContains(t, flagsRef.FlagsAdded, "sample-flag")
+}
