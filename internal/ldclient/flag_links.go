@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/go-github/v68/github"
 
@@ -18,6 +19,16 @@ import (
 	"github.com/launchdarkly/find-code-references-in-pull-request/internal/version"
 
 	flags "github.com/launchdarkly/find-code-references-in-pull-request/internal/references"
+)
+
+// Limits enforced by the LaunchDarkly flag links API. The API compares byte
+// length (Go len), not character count, so multi-byte UTF-8 counts fully.
+const (
+	flagLinkTitleMaxBytes       = 256
+	flagLinkDescriptionMaxBytes = 3761
+
+	descriptionTruncationSuffix = "\n\n…(truncated, see the pull request for the full description)"
+	titleTruncationSuffix       = "…"
 )
 
 func CreateFlagLinks(config *lcr.Config, flagsRef flags.ReferenceSummary, event *github.PullRequestEvent) {
@@ -89,7 +100,11 @@ func postFlagLink(config *lcr.Config, link ldapi.FlagLinkPost, flagKey string) {
 	case http.StatusConflict:
 		gha.Log("[POST %s] Flag link already exists [url=%s]", url, *link.DeepLink)
 	default:
-		gha.SetWarning("Failed to create flag link for %s", flagKey)
+		if msg := apiErrorMessage(body); msg != "" {
+			gha.SetWarning("Failed to create flag link for %s: %s", flagKey, msg)
+		} else {
+			gha.SetWarning("Failed to create flag link for %s", flagKey)
+		}
 		gha.Log("[POST %s] Flag link request failed [status=%d]", url, resp.StatusCode)
 	}
 
@@ -138,6 +153,7 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 	if description == "" {
 		description = "Empty PR Body"
 	}
+	description = truncateUTF8(description, flagLinkDescriptionMaxBytes, descriptionTruncationSuffix)
 	return &ldapi.FlagLinkPost{
 		DeepLink:       pr.HTMLURL,
 		Key:            &key,
@@ -150,25 +166,59 @@ func makeFlagLinkRep(event *github.PullRequestEvent, flagKey, message string) *l
 }
 
 func getLinkTitle(event *github.PullRequestEvent) *string {
-	builder := new(strings.Builder)
-	builder.WriteString(fmt.Sprintf("[%s]", utils.SafeString(event.Repo.FullName)))
+	prefix := fmt.Sprintf("[%s]", utils.SafeString(event.Repo.FullName))
 
 	pr := event.PullRequest
+	var title string
 	if pr.Title != nil {
-		builder.WriteString(" ")
-		builder.WriteString(utils.SafeString(pr.Title))
+		suffix := ""
 		if pr.Number != nil {
-			builder.WriteString(fmt.Sprintf(" (#%d)", *pr.Number))
+			suffix = fmt.Sprintf(" (#%d)", *pr.Number)
 		}
+		// Truncate the PR title itself so the repo name and PR number survive.
+		prTitle := truncateUTF8(utils.SafeString(pr.Title), flagLinkTitleMaxBytes-len(prefix)-len(" ")-len(suffix), titleTruncationSuffix)
+		title = prefix + " " + prTitle + suffix
 	} else if pr.Number != nil {
-		builder.WriteString(fmt.Sprintf(" PR #%d", *pr.Number))
+		title = fmt.Sprintf("%s PR #%d", prefix, *pr.Number)
 	} else {
-		builder.WriteString(" pull request")
+		title = prefix + " pull request"
 	}
 
-	title := builder.String()
+	// Safety net for pathological repo names.
+	title = truncateUTF8(title, flagLinkTitleMaxBytes, titleTruncationSuffix)
 
 	return &title
+}
+
+// truncateUTF8 returns s unchanged if it fits in maxBytes. Otherwise it cuts s
+// on a UTF-8 rune boundary and appends suffix so the result is at most
+// maxBytes. If suffix does not fit, it is omitted.
+func truncateUTF8(s string, maxBytes int, suffix string) string {
+	if maxBytes <= 0 {
+		return ""
+	}
+	if len(s) <= maxBytes {
+		return s
+	}
+	if len(suffix) >= maxBytes {
+		suffix = ""
+	}
+	limit := maxBytes - len(suffix)
+	for limit > 0 && !utf8.RuneStart(s[limit]) {
+		limit--
+	}
+	return s[:limit] + suffix
+}
+
+// apiErrorMessage extracts the "message" field from a LaunchDarkly API error body.
+func apiErrorMessage(body []byte) string {
+	var rep struct {
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &rep); err != nil {
+		return ""
+	}
+	return rep.Message
 }
 
 func buildLinkMessage(key string, aliases []string, action string, added, removed int) string {
