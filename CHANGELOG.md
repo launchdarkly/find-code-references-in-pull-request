@@ -2,6 +2,13 @@
 
 All notable changes to find-code-references-in-pull-request are documented in this file. This project adheres to [Semantic Versioning](https://semver.org).
 
+## [2.3.5](https://github.com/launchdarkly/find-code-references-in-pull-request/compare/v2.3.4...v2.3.5) (2026-11-16)
+
+
+### Bug Fixes
+
+* truncate flag link description and title to API limits ([#261](https://github.com/launchdarkly/find-code-references-in-pull-request/issues/261)) ([c6cfd23](https://github.com/launchdarkly/find-code-references-in-pull-request/commit/c6cfd2324596e52f72cc0b23888921af07b8dfc1))
+
 ## 2.3.4
 
 ### Fixed
@@ -161,4 +168,4 @@ Initial release!
 
 Find flags that have changed in your pull requests.
 
-Read docs: https://github.com/launchdarkly/find-code-references-in-pull-request 
+Read docs: https://github.com/launchdarkly/find-code-references-in-pull-request
