@@ -2,9 +2,6 @@
 
 All notable changes to find-code-references-in-pull-request are documented in this file. This project adheres to [Semantic Versioning](https://semver.org).
 
-- Truncate flag link descriptions and titles to the LaunchDarkly API limits (3761 and 256 bytes) so pull requests with long bodies, such as AI-written ones, still get flag links instead of failing with a 400. Truncation happens on a UTF-8 character boundary and appends a note pointing to the pull request. The full body is still sent in the link's `prBody` metadata
-- Include the API error message in the warning when flag link creation fails
-
 ## 2.3.4
 
 ### Fixed
