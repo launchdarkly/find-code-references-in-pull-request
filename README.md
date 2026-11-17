@@ -115,7 +115,7 @@ jobs:
           environment-key: production
           access-token: ${{ secrets.LD_ACCESS_TOKEN }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          dockerImage: your.registry.example/launchdarkly/find-code-references-in-pull-request:2.3.5
+          dockerImage: your.registry.example/launchdarkly/find-code-references-in-pull-request:2.4.0
 ```
 <!-- x-release-please-end -->
 
