@@ -53,6 +53,10 @@ inputs:
     description: Skip commenting on PR. If set to true, the action will not comment on the PR, but will still set outputs.
     required: false
     default: "false"
+  mask-tokens:
+    description: Register `access-token` and `repo-token` with the runner's log masker using the `::add-mask::` workflow command. This writes the token values to the container's stdout, which the GitHub runner consumes and removes from the workflow log, but any other process that captures raw container stdout will see them. Leave this `false` when tokens come from `secrets.*` or `github.token`, which the runner already redacts.
+    required: false
+    default: "false"
 outputs:
   any-modified:
     description: Returns true if any flags have been added or modified in PR

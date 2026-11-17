@@ -29,15 +29,27 @@ type Config struct {
 	CheckExtinctions     bool
 	CreateFlagLinks      bool
 	SkipComment          bool
+	MaskTokens           bool
 }
 
 func ValidateInputandParse(ctx context.Context) (*Config, error) {
-	// mask tokens
-	if accessToken := os.Getenv("INPUT_ACCESS-TOKEN"); len(accessToken) > 0 {
-		gha.MaskInput(accessToken)
+	// Token values are only written to stdout (via ::add-mask::) when the user
+	// opts in with mask-tokens. Runners or wrappers may keep a raw copy of
+	// container stdout outside the GitHub log pipeline. Tokens passed as GitHub
+	// secrets are already redacted from the workflow log by the runner.
+	// This runs first so masks are registered before any other output.
+	maskTokens, err := strconv.ParseBool(os.Getenv("INPUT_MASK-TOKENS"))
+	if err != nil {
+		// ignore error - default is false
+		maskTokens = false
 	}
-	if repoToken := os.Getenv("INPUT_REPO-TOKEN"); len(repoToken) > 0 {
-		gha.MaskInput(repoToken)
+	if maskTokens {
+		if accessToken := os.Getenv("INPUT_ACCESS-TOKEN"); len(accessToken) > 0 {
+			gha.MaskInput(accessToken)
+		}
+		if repoToken := os.Getenv("INPUT_REPO-TOKEN"); len(repoToken) > 0 {
+			gha.MaskInput(repoToken)
+		}
 	}
 
 	// init config with defaults
@@ -45,6 +57,7 @@ func ValidateInputandParse(ctx context.Context) (*Config, error) {
 		MaxFlags:             5,
 		IncludeArchivedFlags: true,
 		CheckExtinctions:     true,
+		MaskTokens:           maskTokens,
 	}
 
 	config.LdProject = os.Getenv("INPUT_PROJECT-KEY")

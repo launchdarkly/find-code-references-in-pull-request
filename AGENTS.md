@@ -91,7 +91,7 @@ When bumping `ld-find-code-refs`, note behavioral changes that affect scanning (
 - **Large diffs**: GitHub API may return **406**; fallback path uses `git diff` between merge-base and head ([#172](https://github.com/launchdarkly/find-code-references-in-pull-request/pull/172)). Preserve that path and keep `git` in the Docker image.
 - **Comment identity**: Existing comments are found by body containing `LaunchDarkly flag references`. Do not change that marker without a migration plan.
 - **`skip-comment` polarity**: Always call `setOutputs` and still build the comment body for flag-link dedupe. When `skip-comment` is `true`, do **not** call `postGithubComment` (skip ⇒ no GitHub comment write). Match `action.yml` / README, not any inverted condition in `main.go`.
-- **Tokens**: Mask `access-token` / `repo-token` via `gha.MaskInput`. Never log secrets. Never commit `.secrets` or real tokens (only `.secrets.example.env`).
+- **Tokens**: Do not write `access-token` / `repo-token` values to stdout or stderr. Some runners keep a raw copy of container output outside the GitHub log pipeline. The only exception is `gha.MaskInput` (`::add-mask::`), and only when the user opts in with `mask-tokens: true` (default `false`). Keep that masking first in `ValidateInputandParse`. Tokens are expected to be passed as GitHub secrets, which the runner already redacts. `config/config_test.go` guards both modes. Never log secrets. Never commit `.secrets` or real tokens (only `.secrets.example.env`).
 - **GHE**: Non-`https://github.com` `GITHUB_SERVER_URL` must keep Enterprise client URLs (`config.getGithubClient`).
 - **Defaults**: Treat `action.yml` defaults as the product contract (`create-flag-links` default `true` was a v2 breaking change).
 

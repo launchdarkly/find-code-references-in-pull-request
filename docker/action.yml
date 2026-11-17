@@ -51,6 +51,10 @@ inputs:
     description: Skip commenting on PR. If set to true, the action will not comment on the PR, but will still set outputs.
     required: false
     default: "false"
+  mask-tokens:
+    description: Register `access-token` and `repo-token` with the runner's log masker using the `::add-mask::` workflow command. This writes the token values to the container's stdout, which the GitHub runner consumes and removes from the workflow log, but any other process that captures raw container stdout will see them. Leave this `false` when tokens come from `secrets.*` or `github.token`, which the runner already redacts.
+    required: false
+    default: "false"
   # x-release-please-start-version
   dockerImage:
     description: >-
@@ -121,6 +125,7 @@ runs:
         INPUT_CHECK-EXTINCTIONS: ${{ inputs.check-extinctions }}
         INPUT_CREATE-FLAG-LINKS: ${{ inputs.create-flag-links }}
         INPUT_SKIP-COMMENT: ${{ inputs.skip-comment }}
+        INPUT_MASK-TOKENS: ${{ inputs.mask-tokens }}
         GITHUB_TOKEN: ${{ inputs.repo-token }}
         LD_PROJ_KEY: ${{ inputs.project-key }}
         LD_ACCESS_TOKEN: ${{ inputs.access-token }}
@@ -185,6 +190,7 @@ runs:
           -e "INPUT_CHECK-EXTINCTIONS" \
           -e "INPUT_CREATE-FLAG-LINKS" \
           -e "INPUT_SKIP-COMMENT" \
+          -e "INPUT_MASK-TOKENS" \
           -e LD_PROJ_KEY \
           -e LD_ACCESS_TOKEN \
           -e LD_BASE_URI \
