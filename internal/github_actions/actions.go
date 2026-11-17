@@ -25,6 +25,9 @@ func setOutput(name, value string) error {
 	return err
 }
 
+// MaskInput registers value with the runner's secret masker. The
+// ::add-mask:: workflow command is defined to be read from stdout, so this
+// writes value to stdout. Only call it when the user opted in (mask-tokens).
 func MaskInput(input string) {
 	fmt.Printf("::add-mask::%s\n", input)
 }

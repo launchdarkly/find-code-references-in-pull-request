@@ -13,7 +13,7 @@ This action requires a [LaunchDarkly access token](https://docs.launchdarkly.com
 * Read access for the designated `project-key`
 * (Optional) the `createFlagLink` action, when [`create-flag-links` input is `true` (default behavior)](#inputs)
 
-Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+Access tokens should be stored as an [encrypted secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets). The runner redacts secrets from workflow logs. By default the action does not write token values to its output, so it does not register them with `::add-mask::`. If you pass `access-token` or `repo-token` from somewhere other than `secrets.*` or `github.token`, either mask the value yourself in an earlier step or set `mask-tokens: true`. With `mask-tokens: true`, the action writes `::add-mask::<token>` to stdout. The runner removes those lines from the workflow log, but anything else that captures raw container stdout will see the tokens.
 
 To add a comment to a PR, the `repo-token` used requires `write` permission for PRs. You can also specify permissions for the workflow with:
 
@@ -147,6 +147,7 @@ This action does not support monorepos or searching for flags across LaunchDarkl
 | `check-extinctions` | <p>Check if removed flags still exist in codebase</p> | `false` | `true` |
 | `create-flag-links` | <p>Create links to flags in LaunchDarkly. To use this feature you must use an access token with the <code>createFlagLink</code> role. To learn more, read <a href="https://docs.launchdarkly.com/home/organize/links">Flag links</a>.</p> | `false` | `true` |
 | `skip-comment` | <p>Skip commenting on PR. If set to true, the action will not comment on the PR, but will still set outputs.</p> | `false` | `false` |
+| `mask-tokens` | <p>Register <code>access-token</code> and <code>repo-token</code> with the runner's log masker using the <code>::add-mask::</code> workflow command. This writes the token values to the container's stdout, which the GitHub runner consumes and removes from the workflow log, but any other process that captures raw container stdout will see them. Leave this <code>false</code> when tokens come from <code>secrets.*</code> or <code>github.token</code>, which the runner already redacts.</p> | `false` | `false` |
 <!-- action-docs-inputs source="action.yml" -->
 
 <!-- action-docs-outputs source="action.yml" -->
